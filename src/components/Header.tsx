@@ -1,0 +1,84 @@
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Menu, X, Mountain } from "lucide-react";
+import { useState } from "react";
+
+const navLinks = [
+  { to: "/", label: "Home" },
+  { to: "/destinos", label: "Destinos" },
+  { to: "/sobre", label: "Sobre" },
+  { to: "/contato", label: "Contato" },
+];
+
+export function Header() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur">
+      <div className="container-tight flex h-16 items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 text-foreground">
+          <Mountain className="h-6 w-6 text-primary" />
+          <span className="font-display text-xl tracking-tight">Aventura Organizada</span>
+        </Link>
+
+        <nav className="hidden items-center gap-8 md:flex">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.to;
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`text-sm font-medium transition-colors ${
+                  isActive
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+          <Link
+            to="/contato"
+            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Planejar viagem
+          </Link>
+        </nav>
+
+        <button
+          type="button"
+          className="inline-flex items-center justify-center rounded-md p-2 text-foreground md:hidden"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
+        >
+          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {mobileOpen && (
+        <div className="border-t border-border/50 bg-background md:hidden">
+          <div className="container-tight flex flex-col gap-4 py-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setMobileOpen(false)}
+                className="text-base font-medium text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link
+              to="/contato"
+              onClick={() => setMobileOpen(false)}
+              className="mt-2 inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+            >
+              Planejar viagem
+            </Link>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
