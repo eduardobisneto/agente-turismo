@@ -78,17 +78,17 @@ export function Hero() {
         type="button"
         onClick={() => goTo(index - 1)}
         aria-label="Destino anterior"
-        className="absolute left-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-sand-50/10 p-2 text-sand-50 backdrop-blur-sm transition-colors hover:bg-sand-50/20 md:inline-flex lg:left-8"
+        className="absolute left-2 top-1/2 inline-flex -translate-y-1/2 rounded-full bg-sand-50/10 p-1.5 text-sand-50 backdrop-blur-sm transition-colors hover:bg-sand-50/20 sm:left-4 sm:p-2 lg:left-8"
       >
-        <ChevronLeft className="h-6 w-6" />
+        <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
       <button
         type="button"
         onClick={() => goTo(index + 1)}
         aria-label="Próximo destino"
-        className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-sand-50/10 p-2 text-sand-50 backdrop-blur-sm transition-colors hover:bg-sand-50/20 md:inline-flex lg:right-8"
+        className="absolute right-2 top-1/2 inline-flex -translate-y-1/2 rounded-full bg-sand-50/10 p-1.5 text-sand-50 backdrop-blur-sm transition-colors hover:bg-sand-50/20 sm:right-4 sm:p-2 lg:right-8"
       >
-        <ChevronRight className="h-6 w-6" />
+        <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
       </button>
 
       <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2">
