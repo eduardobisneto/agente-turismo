@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as DestinosRouteImport } from './routes/destinos'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as SobreRouteImport } from './routes/sobre'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as DestinosSlugRouteImport } from './routes/destinos_.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -30,9 +32,19 @@ const DestinosRoute = DestinosRouteImport.update({
   path: '/destinos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SobreRoute = SobreRouteImport.update({
   id: '/sobre',
   path: '/sobre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DestinosSlugRoute = DestinosSlugRouteImport.update({
@@ -45,14 +57,18 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contato': typeof ContatoRoute
   '/destinos': typeof DestinosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
+  '/termos': typeof TermosRoute
   '/destinos/$slug': typeof DestinosSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contato': typeof ContatoRoute
   '/destinos': typeof DestinosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
+  '/termos': typeof TermosRoute
   '/destinos/$slug': typeof DestinosSlugRoute
 }
 export interface FileRoutesById {
@@ -60,23 +76,48 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/contato': typeof ContatoRoute
   '/destinos': typeof DestinosRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
+  '/termos': typeof TermosRoute
   '/destinos_/$slug': typeof DestinosSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/contato' | '/destinos' | '/sobre' | '/destinos/$slug'
+  fullPaths:
+    | '/'
+    | '/contato'
+    | '/destinos'
+    | '/privacidade'
+    | '/sobre'
+    | '/termos'
+    | '/destinos/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/contato' | '/destinos' | '/sobre' | '/destinos/$slug'
+  to:
+    | '/'
+    | '/contato'
+    | '/destinos'
+    | '/privacidade'
+    | '/sobre'
+    | '/termos'
+    | '/destinos/$slug'
   id:
-    '__root__' | '/' | '/contato' | '/destinos' | '/sobre' | '/destinos_/$slug'
+    | '__root__'
+    | '/'
+    | '/contato'
+    | '/destinos'
+    | '/privacidade'
+    | '/sobre'
+    | '/termos'
+    | '/destinos_/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContatoRoute: typeof ContatoRoute
   DestinosRoute: typeof DestinosRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   SobreRoute: typeof SobreRoute
+  TermosRoute: typeof TermosRoute
   DestinosSlugRoute: typeof DestinosSlugRoute
 }
 
@@ -103,11 +144,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DestinosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sobre': {
       id: '/sobre'
       path: '/sobre'
       fullPath: '/sobre'
       preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/destinos_/$slug': {
@@ -124,7 +179,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContatoRoute: ContatoRoute,
   DestinosRoute: DestinosRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   SobreRoute: SobreRoute,
+  TermosRoute: TermosRoute,
   DestinosSlugRoute: DestinosSlugRoute,
 }
 export const routeTree = rootRouteImport

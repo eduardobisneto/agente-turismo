@@ -9,6 +9,7 @@ import type { ReactNode } from "react";
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CookieConsent } from "@/components/CookieConsent";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
@@ -42,6 +43,7 @@ function RootComponent() {
       <Header />
       <Outlet />
       <Footer />
+      <CookieConsent />
     </RootDocument>
   );
 }

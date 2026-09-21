@@ -88,9 +88,22 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-forest-800 pt-8 text-center text-xs text-forest-400">
-          © {new Date().getFullYear()} Aventura Organizada. Todos os direitos
-          reservados.
+        <div className="mt-12 flex flex-col items-center gap-4 border-t border-forest-800 pt-8 text-center text-xs text-forest-400 sm:flex-row sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} Aventura Organizada. Todos os direitos
+            reservados.
+          </p>
+          <div className="flex gap-4">
+            <Link to="/termos" className="transition-colors hover:text-sand-50">
+              Termos de Uso
+            </Link>
+            <Link
+              to="/privacidade"
+              className="transition-colors hover:text-sand-50"
+            >
+              Política de Privacidade
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
