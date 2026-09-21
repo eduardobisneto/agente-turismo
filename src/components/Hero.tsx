@@ -19,7 +19,7 @@ export function Hero() {
 
       <div className="container-tight relative flex min-h-[80vh] flex-col justify-center py-20 md:min-h-[85vh]">
         <div className="max-w-2xl space-y-6 text-sand-50">
-          <div className="inline-flex items-center gap-2 rounded-full bg-forest-800/60 px-4 py-2 text-sm font-medium backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 rounded-full bg-forest-800/60 px-4 py-2 text-sm font-medium uppercase tracking-wide backdrop-blur-sm">
             <MapPin className="h-4 w-4 text-forest-300" />
             <span>Bonito · Socorro · Brotas · Ubatuba</span>
           </div>
@@ -37,14 +37,14 @@ export function Hero() {
           <div className="flex flex-wrap gap-4 pt-4">
             <Link
               to="/destinos"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-all hover:bg-primary/90"
             >
               Conhecer destinos
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/contato"
-              className="inline-flex items-center gap-2 rounded-full border border-sand-50/30 bg-sand-50/10 px-6 py-3 text-sm font-semibold text-sand-50 backdrop-blur-sm transition-all hover:bg-sand-50/20"
+              className="inline-flex items-center gap-2 rounded-full border border-sand-50/30 bg-sand-50/10 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-sand-50 backdrop-blur-sm transition-all hover:bg-sand-50/20"
             >
               Planejar minha viagem
             </Link>

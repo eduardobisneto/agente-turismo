@@ -30,7 +30,7 @@ export function Header() {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-sm font-medium uppercase tracking-wide transition-colors ${
                   isActive
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -42,7 +42,7 @@ export function Header() {
           })}
           <Link
             to="/contato"
-            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Planejar viagem
           </Link>
@@ -70,7 +70,7 @@ export function Header() {
                 key={link.to}
                 to={link.to}
                 onClick={() => setMobileOpen(false)}
-                className="text-base font-medium text-foreground"
+                className="text-base font-medium uppercase tracking-wide text-foreground"
               >
                 {link.label}
               </Link>
@@ -78,7 +78,7 @@ export function Header() {
             <Link
               to="/contato"
               onClick={() => setMobileOpen(false)}
-              className="mt-2 inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+              className="mt-2 inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground"
             >
               Planejar viagem
             </Link>
