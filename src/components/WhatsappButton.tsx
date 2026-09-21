@@ -7,7 +7,7 @@ export function WhatsappButton({
 }) {
   const numero = "5511999999999";
   const mensagem = encodeURIComponent(
-    "Olá! Quero saber mais sobre os pacotes de turismo de aventura para Bonito e Socorro.",
+    "Olá! Quero saber mais sobre os pacotes de turismo de aventura para Bonito, Socorro, Brotas e Ubatuba.",
   );
 
   const baseClasses =

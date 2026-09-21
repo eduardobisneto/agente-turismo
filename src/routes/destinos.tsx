@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DestinoCard } from "@/components/DestinoCard";
 import destinoBonitoImg from "@/assets/destino-bonito.jpeg";
 import destinoSocorroImg from "@/assets/destino-socorro.jpeg";
+import destinoBrotasImg from "@/assets/download.jpeg";
+import destinoUbatubaImg from "@/assets/destino-ubatuba.jpeg";
 
 export const Route = createFileRoute("/destinos")({
   component: DestinosPage,
@@ -30,6 +32,28 @@ const destinos = [
     alt: "Paisagem de montanhas e vegetação em Socorro, SP",
     duracao: "3 dias / 2 noites",
     grupo: "Grupos de até 20 pessoas",
+  },
+  {
+    slug: "brotas",
+    nome: "Brotas, SP",
+    tagline: "Rios, cachoeiras e adrenalina",
+    descricao:
+      "Rafting, bóia-cross, tirolesas e cachoeiras em um dos points de esportes de aventura mais completos do interior paulista.",
+    imagem: destinoBrotasImg,
+    alt: "Foto ilustrativa do destino Brotas, SP",
+    duracao: "3 dias / 2 noites",
+    grupo: "Grupos de até 20 pessoas",
+  },
+  {
+    slug: "ubatuba",
+    nome: "Ubatuba, SP",
+    tagline: "Praias e trilhas na Mata Atlântica",
+    descricao:
+      "Mais de 100 praias, trilhas na mata atlântica preservada e passeios de barco até ilhas e piscinas naturais no litoral norte de SP.",
+    imagem: destinoUbatubaImg,
+    alt: "Praia de areia clara cercada por mata atlântica e mar em Ubatuba, SP",
+    duracao: "4 dias / 3 noites",
+    grupo: "Grupos de até 15 pessoas",
   },
 ];
 

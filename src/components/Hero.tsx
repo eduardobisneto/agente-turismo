@@ -21,7 +21,7 @@ export function Hero() {
         <div className="max-w-2xl space-y-6 text-sand-50">
           <div className="inline-flex items-center gap-2 rounded-full bg-forest-800/60 px-4 py-2 text-sm font-medium backdrop-blur-sm">
             <MapPin className="h-4 w-4 text-forest-300" />
-            <span>Bonito · MS e Socorro · SP</span>
+            <span>Bonito · Socorro · Brotas · Ubatuba</span>
           </div>
 
           <h1 className="text-balance text-4xl leading-[1.1] md:text-6xl lg:text-7xl">
@@ -30,8 +30,8 @@ export function Hero() {
 
           <p className="max-w-xl text-balance text-lg leading-relaxed text-forest-100 md:text-xl">
             Nós montamos a viagem completa: transporte, hospedagem, alimentação
-            e ingressos. Você só precisa aproveitar as paisagens de Bonito e
-            Socorro.
+            e ingressos. Você só precisa aproveitar as paisagens dos nossos
+            destinos.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-4">

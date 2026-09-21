@@ -38,7 +38,7 @@ function ContatoPage() {
           </h1>
           <p className="mt-4 text-muted-foreground">
             Fale com a gente pelo WhatsApp e monte um roteiro sob medida para o
-            seu grupo em Bonito ou Socorro.
+            seu grupo em qualquer um dos nossos destinos.
           </p>
           <div className="mt-8 flex justify-center">
             <WhatsappButton variant="solid" />

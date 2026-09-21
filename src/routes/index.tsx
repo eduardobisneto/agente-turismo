@@ -22,7 +22,7 @@ function HomePage() {
           </h2>
           <p className="max-w-xl text-forest-100">
             Fale com a gente pelo WhatsApp e monte o roteiro ideal para o seu
-            grupo em Bonito ou Socorro.
+            grupo em qualquer um dos nossos destinos.
           </p>
           <WhatsappButton variant="solid" />
         </div>

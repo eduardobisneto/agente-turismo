@@ -14,8 +14,9 @@ export function Footer() {
               </span>
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-forest-300">
-              Viagens de turismo de aventura em Bonito e Socorro. Cuidamos de
-              toda a logística para você aproveitar cada momento.
+              Viagens de turismo de aventura em Bonito, Socorro, Brotas e
+              Ubatuba. Cuidamos de toda a logística para você aproveitar cada
+              momento.
             </p>
           </div>
 
