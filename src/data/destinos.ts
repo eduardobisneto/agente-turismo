@@ -112,9 +112,16 @@ export const destinos: Destino[] = [
       {
         nome: "Parque dos Sonhos",
         descricao:
-          "Um dos maiores parques de aventura do Brasil, com tirolesas, quadriciclo e trilhas com vista para o vale.",
+          "Um dos maiores parques de aventura do Brasil, com tirolesa, rafting e escalada, além de trilhas com vista para o vale.",
         imagem: destinoSocorroImg,
         alt: "Foto ilustrativa do Parque dos Sonhos, em Socorro",
+      },
+      {
+        nome: "Monjolinho",
+        descricao:
+          "Point com estrutura completa de esportes de aventura: escalada, rafting, arvorismo, caiaque e cachoeira, tudo em um só lugar.",
+        imagem: destinoSocorroImg,
+        alt: "Foto ilustrativa do Monjolinho, em Socorro",
       },
       {
         nome: "Cachoeira do Paraíso",
