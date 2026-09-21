@@ -4,8 +4,10 @@ import destinoBrotasImg from "@/assets/download.jpeg";
 import destinoUbatubaImg from "@/assets/destino-ubatuba.jpeg";
 import flutuacaoImg from "@/assets/flutuacao.jpeg";
 import cachoeiraImg from "@/assets/cachoeira.jpeg";
-import trilhasImg from "@/assets/trilhas.jpeg";
 import standUpPaddleImg from "@/assets/stand-up-paddle.jpeg";
+import trilhaSetePraiasImg from "@/assets/trilha-sete-praias.jpeg";
+import projetoTamarImg from "@/assets/projeto-tamar.jpeg";
+import surfItamambucaImg from "@/assets/surf-itamambuca.jpeg";
 
 export interface Atracao {
   nome: string;
@@ -176,25 +178,25 @@ export const destinos: Destino[] = [
     mapsZoom: 7,
     atracoes: [
       {
-        nome: "Praia do Félix",
+        nome: "Trilha das Sete Praias",
         descricao:
-          "Uma das praias mais conhecidas de Ubatuba, com boas ondas para o surfe e cercada por mata preservada.",
-        imagem: destinoUbatubaImg,
-        alt: "Foto ilustrativa de praia cercada por mata atlântica em Ubatuba",
+          "Trilha à beira-mar que liga sete praias diferentes, com mirantes ao longo do caminho — um dos programas mais conhecidos de Ubatuba para quem gosta de caminhar de praia em praia.",
+        imagem: trilhaSetePraiasImg,
+        alt: "Foto ilustrativa da Trilha das Sete Praias, em Ubatuba",
       },
       {
-        nome: "Ilha Anchieta",
+        nome: "Projeto Tamar",
         descricao:
-          "Ilha com trilhas, praias desertas e as ruínas de um antigo presídio, acessível por passeio de barco.",
-        imagem: destinoUbatubaImg,
-        alt: "Foto ilustrativa de ilha com mata preservada em Ubatuba",
+          "Base de conservação de tartarugas marinhas aberta para visitação, com tanques e exposições educativas sobre a preservação das espécies que desovam no litoral de Ubatuba.",
+        imagem: projetoTamarImg,
+        alt: "Foto ilustrativa da região costeira próxima ao Projeto Tamar, em Ubatuba",
       },
       {
-        nome: "Trilha da Praia da Fazenda",
+        nome: "Aulas de surfe em Itamambuca",
         descricao:
-          "Trilha dentro do Parque Estadual da Serra do Mar, terminando em uma das praias mais preservadas da região.",
-        imagem: trilhasImg,
-        alt: "Foto ilustrativa de trilha na Mata Atlântica",
+          "Itamambuca é uma das praias mais famosas do surfe brasileiro, com escolinhas de surfe para todos os níveis, de iniciantes a mais experientes.",
+        imagem: surfItamambucaImg,
+        alt: "Foto ilustrativa da praia de Itamambuca, em Ubatuba",
       },
     ],
   },
