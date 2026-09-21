@@ -13,7 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as DestinosRouteImport } from './routes/destinos'
 import { Route as SobreRouteImport } from './routes/sobre'
-import { Route as DestinosSlugRouteImport } from './routes/destinos.$slug'
+import { Route as DestinosSlugRouteImport } from './routes/destinos_.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -36,22 +36,22 @@ const SobreRoute = SobreRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const DestinosSlugRoute = DestinosSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => DestinosRoute,
+  id: '/destinos_/$slug',
+  path: '/destinos/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contato': typeof ContatoRoute
-  '/destinos': typeof DestinosRouteWithChildren
+  '/destinos': typeof DestinosRoute
   '/sobre': typeof SobreRoute
   '/destinos/$slug': typeof DestinosSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contato': typeof ContatoRoute
-  '/destinos': typeof DestinosRouteWithChildren
+  '/destinos': typeof DestinosRoute
   '/sobre': typeof SobreRoute
   '/destinos/$slug': typeof DestinosSlugRoute
 }
@@ -59,23 +59,25 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/contato': typeof ContatoRoute
-  '/destinos': typeof DestinosRouteWithChildren
+  '/destinos': typeof DestinosRoute
   '/sobre': typeof SobreRoute
-  '/destinos/$slug': typeof DestinosSlugRoute
+  '/destinos_/$slug': typeof DestinosSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/contato' | '/destinos' | '/sobre' | '/destinos/$slug'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/contato' | '/destinos' | '/sobre' | '/destinos/$slug'
-  id: '__root__' | '/' | '/contato' | '/destinos' | '/sobre' | '/destinos/$slug'
+  id:
+    '__root__' | '/' | '/contato' | '/destinos' | '/sobre' | '/destinos_/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContatoRoute: typeof ContatoRoute
-  DestinosRoute: typeof DestinosRouteWithChildren
+  DestinosRoute: typeof DestinosRoute
   SobreRoute: typeof SobreRoute
+  DestinosSlugRoute: typeof DestinosSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -108,33 +110,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SobreRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/destinos/$slug': {
-      id: '/destinos/$slug'
-      path: '/$slug'
+    '/destinos_/$slug': {
+      id: '/destinos_/$slug'
+      path: '/destinos/$slug'
       fullPath: '/destinos/$slug'
       preLoaderRoute: typeof DestinosSlugRouteImport
-      parentRoute: typeof DestinosRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface DestinosRouteChildren {
-  DestinosSlugRoute: typeof DestinosSlugRoute
-}
-
-const DestinosRouteChildren: DestinosRouteChildren = {
-  DestinosSlugRoute: DestinosSlugRoute,
-}
-
-const DestinosRouteWithChildren = DestinosRoute._addFileChildren(
-  DestinosRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContatoRoute: ContatoRoute,
-  DestinosRoute: DestinosRouteWithChildren,
+  DestinosRoute: DestinosRoute,
   SobreRoute: SobreRoute,
+  DestinosSlugRoute: DestinosSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

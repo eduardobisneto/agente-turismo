@@ -4,7 +4,7 @@ import { ArrowLeft, CalendarDays, Check, Users } from "lucide-react";
 import { WhatsappButton } from "@/components/WhatsappButton";
 import { getDestino } from "@/data/destinos";
 
-export const Route = createFileRoute("/destinos/$slug")({
+export const Route = createFileRoute("/destinos_/$slug")({
   loader: ({ params }) => {
     const destino = getDestino(params.slug);
     if (!destino) throw notFound();
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/destinos/$slug")({
 
 function DestinoRoteiroPage() {
   const destino = Route.useLoaderData();
+  const mapsSrc = `https://www.google.com/maps?q=${encodeURIComponent(destino.mapsQuery)}&z=${destino.mapsZoom}&output=embed`;
 
   return (
     <>
@@ -43,22 +44,7 @@ function DestinoRoteiroPage() {
 
       <section className="section-padding">
         <div className="container-tight grid gap-12 lg:grid-cols-[2fr_1fr]">
-          <div>
-            <p className="text-muted-foreground">{destino.descricao}</p>
-
-            <h2 className="mt-10 text-balance text-2xl md:text-3xl">Roteiro</h2>
-            <ol className="mt-6 space-y-6 border-l border-border pl-6">
-              {destino.roteiro.map((dia) => (
-                <li key={dia.titulo} className="relative">
-                  <span className="absolute -left-[1.6rem] top-1.5 h-2.5 w-2.5 rounded-full bg-primary" />
-                  <h3 className="font-display text-lg">{dia.titulo}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {dia.descricao}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          </div>
+          <p className="text-muted-foreground">{destino.descricao}</p>
 
           <aside className="h-fit rounded-2xl border border-border bg-card p-6">
             <div className="flex flex-wrap gap-3 text-xs font-medium text-foreground">
@@ -89,6 +75,77 @@ function DestinoRoteiroPage() {
               <WhatsappButton variant="solid" />
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section className="section-padding bg-sand-100">
+        <div className="container-tight">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+              Localização
+            </span>
+            <h2 className="mt-3 text-balance text-3xl md:text-4xl">
+              Onde fica {destino.nome}
+            </h2>
+          </div>
+
+          <div className="mt-8 overflow-hidden rounded-2xl border border-border">
+            <iframe
+              title={`Mapa de ${destino.nome}`}
+              src={mapsSrc}
+              className="h-[400px] w-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="section-padding">
+        <div className="container-tight">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+              Atrações
+            </span>
+            <h2 className="mt-3 text-balance text-3xl md:text-4xl">
+              Principais pontos do roteiro
+            </h2>
+          </div>
+
+          <div className="mt-12 space-y-16">
+            {destino.atracoes.map((atracao, index) => (
+              <div
+                key={atracao.nome}
+                className="grid gap-8 md:grid-cols-2 md:items-center"
+              >
+                <img
+                  src={atracao.imagem}
+                  alt={atracao.alt}
+                  className={`aspect-[4/3] w-full rounded-2xl object-cover ${
+                    index % 2 === 1 ? "md:order-2" : ""
+                  }`}
+                  loading="lazy"
+                />
+                <div className={index % 2 === 1 ? "md:order-1" : ""}>
+                  <h3 className="text-balance text-2xl md:text-3xl">
+                    {atracao.nome}
+                  </h3>
+                  <p className="mt-4 text-muted-foreground">
+                    {atracao.descricao}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section-padding bg-forest-900 text-sand-50">
+        <div className="container-tight flex flex-col items-center gap-6 text-center">
+          <h2 className="text-balance text-3xl md:text-4xl">
+            Vamos planejar a sua viagem para {destino.nome}?
+          </h2>
+          <WhatsappButton variant="solid" />
         </div>
       </section>
     </>

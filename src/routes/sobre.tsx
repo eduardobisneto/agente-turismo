@@ -1,24 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChefHat, Landmark } from "lucide-react";
 
 import { WhatsappButton } from "@/components/WhatsappButton";
 import transporteImg from "@/assets/transporte.jpeg";
 import hospedagemImg from "@/assets/hospedagem.jpeg";
-
-const experienciasAdicionais = [
-  {
-    icon: ChefHat,
-    titulo: "Experiências gastronômicas",
-    descricao:
-      "Do café da manhã reforçado aos jantares com pratos típicos de cada região, incluímos paradas gastronômicas que fazem parte da experiência — não só refeições no meio do caminho.",
-  },
-  {
-    icon: Landmark,
-    titulo: "Experiências culturais",
-    descricao:
-      "Visitas a mercados locais, artesanato regional e contato com a cultura de cada destino, para conhecer não só a paisagem, mas também a história e as pessoas de cada lugar.",
-  },
-];
+import gastronomiaImg from "@/assets/download.jpeg";
+import culturaImg from "@/assets/destino-bonito.jpeg";
 
 export const Route = createFileRoute("/sobre")({
   component: SobrePage,
@@ -91,36 +77,53 @@ function SobrePage() {
       </section>
 
       <section className="section-padding bg-sand-100">
-        <div className="container-tight">
-          <div className="mx-auto max-w-2xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-              Experiências
-            </span>
-            <h2 className="mt-3 text-balance text-3xl md:text-4xl">
-              Mais do que aventura: gastronomia e cultura local
+        <div className="container-tight grid gap-8 md:grid-cols-2 md:items-center">
+          <img
+            src={gastronomiaImg}
+            alt="Foto ilustrativa de experiência gastronômica regional"
+            className="aspect-[4/3] w-full rounded-2xl object-cover"
+            loading="lazy"
+          />
+          <div>
+            <h2 className="text-balance text-2xl md:text-3xl">
+              Experiências gastronômicas
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Cada roteiro também inclui momentos para provar a culinária e
-              conhecer a cultura de cada destino.
+              Do café da manhã reforçado aos jantares com pratos típicos de cada
+              região, incluímos paradas gastronômicas que fazem parte da
+              experiência — não só refeições no meio do caminho.
             </p>
           </div>
+        </div>
+      </section>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2">
-            {experienciasAdicionais.map((item) => (
-              <div
-                key={item.titulo}
-                className="rounded-2xl border border-border bg-background p-6"
-              >
-                <div className="mb-4 inline-flex rounded-xl bg-secondary p-3">
-                  <item.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-display text-xl">{item.titulo}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {item.descricao}
-                </p>
-              </div>
-            ))}
+      <section className="section-padding">
+        <div className="container-tight grid gap-8 md:grid-cols-2 md:items-center">
+          <div className="order-2 md:order-1">
+            <h2 className="text-balance text-2xl md:text-3xl">
+              Experiências culturais
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Visitas a mercados locais, artesanato regional e contato com a
+              cultura de cada destino, para conhecer não só a paisagem, mas
+              também a história e as pessoas de cada lugar.
+            </p>
           </div>
+          <img
+            src={culturaImg}
+            alt="Foto ilustrativa de experiência cultural regional"
+            className="order-1 aspect-[4/3] w-full rounded-2xl object-cover md:order-2"
+            loading="lazy"
+          />
+        </div>
+      </section>
+
+      <section className="section-padding">
+        <div className="container-tight">
+          <p className="mx-auto max-w-3xl text-balance text-center font-display text-2xl leading-snug text-forest-800 md:text-3xl">
+            Aventura, sabor e cultura — cada viagem é uma história completa, não
+            só um destino no mapa.
+          </p>
         </div>
       </section>
 
