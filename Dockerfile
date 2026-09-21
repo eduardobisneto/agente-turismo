@@ -1,17 +1,21 @@
-FROM node:latest AS build
+# syntax=docker/dockerfile:1
+
+FROM oven/bun:1 AS build
 WORKDIR /app
 
-#copy everything
-COPY . ./
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-#restore as distinct layers
-RUN npm install
+COPY . .
+RUN bun run build
 
-#build and publish a release
-RUN npm run build
+FROM node:22-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOST=0.0.0.0
 
-#Serve the app with nginx server
-FROM nginx:alpine
-COPY --from=build /app/dist/greatgrandson.sinucabrasiloficial.score.app/browser /usr/share/nginx/html
+COPY --from=build /app/.output ./.output
 
-EXPOSE 80
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]
