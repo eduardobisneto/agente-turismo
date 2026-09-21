@@ -12,7 +12,7 @@ const canais = [
     icon: Phone,
     titulo: "Telefone",
     valor: "(11) 96322-0494",
-    href: "tel:+5511963220494",
+    href: "https://wa.me/5511963220494",
   },
   {
     icon: Mail,

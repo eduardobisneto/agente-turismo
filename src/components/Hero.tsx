@@ -41,7 +41,7 @@ export function Hero() {
       </div>
 
       <div className="container-tight relative flex min-h-[80vh] flex-col justify-center py-20 md:min-h-[85vh]">
-        <div className="max-w-2xl space-y-6 text-sand-50">
+        <div className="mx-8 max-w-2xl space-y-6 text-sand-50 sm:mx-0">
           <div className="inline-flex items-center gap-2 rounded-full bg-forest-800/60 px-4 py-2 text-sm font-medium uppercase tracking-wide backdrop-blur-sm">
             <MapPin className="h-4 w-4 text-forest-300" />
             <span>{destino.nome}</span>
@@ -71,6 +71,14 @@ export function Hero() {
               Planejar minha viagem
             </Link>
           </div>
+
+          <Link
+            to="/destinos"
+            className="inline-flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-sand-50/90 underline-offset-4 transition-colors hover:text-sand-50 hover:underline"
+          >
+            Ver todos os destinos
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
 

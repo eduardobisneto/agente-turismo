@@ -61,7 +61,9 @@ export function Footer() {
               <li className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-forest-300" />
                 <a
-                  href="tel:+5511963220494"
+                  href="https://wa.me/5511963220494"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="transition-colors hover:text-sand-50"
                 >
                   (11) 96322-0494
