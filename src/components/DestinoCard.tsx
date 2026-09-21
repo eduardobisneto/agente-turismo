@@ -57,8 +57,8 @@ export function DestinoCard({
         </div>
 
         <Link
-          to="/destinos"
-          hash={slug}
+          to="/destinos/$slug"
+          params={{ slug }}
           className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
         >
           Ver roteiro
