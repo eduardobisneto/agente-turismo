@@ -1,8 +1,7 @@
-import flutuacaoImg from "../assets/flutuacao.jpg";
-import botesImg from "../assets/botes.jpg";
-import trilhasImg from "../assets/trilhas.jpg";
-import cachoeiraImg from "../assets/cachoeira.jpg";
-import standUpPaddleImg from "../assets/stand-up-paddle.jpg";
+import flutuacaoImg from "../assets/flutuacao.jpeg";
+import trilhasImg from "../assets/trilhas.jpeg";
+import cachoeiraImg from "../assets/cachoeira.jpeg";
+import standUpPaddleImg from "../assets/stand-up-paddle.jpeg";
 
 const experiencias = [
   {
@@ -12,14 +11,9 @@ const experiencias = [
     alt: "Pessoas fazendo flutuação em rio cristalino cercado por vegetação",
   },
   {
-    titulo: "Botes e Rafting",
-    descricao: "Aventura em corredeiras com segurança e muita adrenalina.",
-    imagem: botesImg,
-    alt: "Grupo em bote amarelo fazendo rafting em rio com corredeiras",
-  },
-  {
     titulo: "Trilhas",
-    descricao: "Caminhadas por trilhas entre montanhas e florestas preservadas.",
+    descricao:
+      "Caminhadas por trilhas entre montanhas e florestas preservadas.",
     imagem: trilhasImg,
     alt: "Grupo de pessoas caminhando em trilha na floresta",
   },
@@ -49,12 +43,13 @@ export function ExperienciasGallery() {
             Atividades que fazem parte dos nossos roteiros
           </h2>
           <p className="mt-4 text-muted-foreground">
-            De experiências tranquilas às mais emocionantes, montamos o pacote ideal para o seu grupo.
+            De experiências tranquilas às mais emocionantes, montamos o pacote
+            ideal para o seu grupo.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {experiencias.slice(0, 3).map((exp) => (
+        <div className="mt-12 grid gap-4 sm:grid-cols-2">
+          {experiencias.slice(0, 2).map((exp) => (
             <div
               key={exp.titulo}
               className="group relative overflow-hidden rounded-2xl"
@@ -77,7 +72,7 @@ export function ExperienciasGallery() {
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {experiencias.slice(3).map((exp) => (
+          {experiencias.slice(2).map((exp) => (
             <div
               key={exp.titulo}
               className="group relative overflow-hidden rounded-2xl"

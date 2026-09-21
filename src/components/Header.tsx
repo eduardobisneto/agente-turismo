@@ -18,7 +18,9 @@ export function Header() {
       <div className="container-tight flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 text-foreground">
           <Mountain className="h-6 w-6 text-primary" />
-          <span className="font-display text-xl tracking-tight">Aventura Organizada</span>
+          <span className="font-display text-xl tracking-tight">
+            Aventura Organizada
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -52,7 +54,11 @@ export function Header() {
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
         >
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {mobileOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </button>
       </div>
 

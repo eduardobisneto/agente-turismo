@@ -9,10 +9,13 @@ export function Footer() {
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2 text-sand-50">
               <Mountain className="h-6 w-6 text-forest-300" />
-              <span className="font-display text-xl tracking-tight">Aventura Organizada</span>
+              <span className="font-display text-xl tracking-tight">
+                Aventura Organizada
+              </span>
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-forest-300">
-              Viagens de turismo de aventura em Bonito e Socorro. Cuidamos de toda a logística para você aproveitar cada momento.
+              Viagens de turismo de aventura em Bonito e Socorro. Cuidamos de
+              toda a logística para você aproveitar cada momento.
             </p>
           </div>
 
@@ -25,17 +28,26 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/destinos" className="transition-colors hover:text-sand-50">
+                <Link
+                  to="/destinos"
+                  className="transition-colors hover:text-sand-50"
+                >
                   Destinos
                 </Link>
               </li>
               <li>
-                <Link to="/sobre" className="transition-colors hover:text-sand-50">
+                <Link
+                  to="/sobre"
+                  className="transition-colors hover:text-sand-50"
+                >
                   Sobre nós
                 </Link>
               </li>
               <li>
-                <Link to="/contato" className="transition-colors hover:text-sand-50">
+                <Link
+                  to="/contato"
+                  className="transition-colors hover:text-sand-50"
+                >
                   Contato
                 </Link>
               </li>
@@ -62,7 +74,8 @@ export function Footer() {
         </div>
 
         <div className="mt-12 border-t border-forest-800 pt-8 text-center text-xs text-forest-400">
-          © {new Date().getFullYear()} Aventura Organizada. Todos os direitos reservados.
+          © {new Date().getFullYear()} Aventura Organizada. Todos os direitos
+          reservados.
         </div>
       </div>
     </footer>

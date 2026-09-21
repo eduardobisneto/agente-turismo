@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, MapPin } from "lucide-react";
-import heroImage from "../assets/hero-adventure.jpg";
+import heroImage from "../assets/hero.jpeg";
 
 export function Hero() {
   return (
@@ -29,8 +29,9 @@ export function Hero() {
           </h1>
 
           <p className="max-w-xl text-balance text-lg leading-relaxed text-forest-100 md:text-xl">
-            Nós montamos a viagem completa: transporte, hospedagem, alimentação e ingressos. 
-            Você só precisa aproveitar as paisagens de Bonito e Socorro.
+            Nós montamos a viagem completa: transporte, hospedagem, alimentação
+            e ingressos. Você só precisa aproveitar as paisagens de Bonito e
+            Socorro.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-4">
