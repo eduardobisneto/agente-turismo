@@ -11,8 +11,8 @@ const canais = [
   {
     icon: Phone,
     titulo: "Telefone",
-    valor: "(XX) XXXXX-XXXX",
-    href: undefined,
+    valor: "(11) 96322-0494",
+    href: "tel:+5511963220494",
   },
   {
     icon: Mail,
