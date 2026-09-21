@@ -37,7 +37,7 @@ export function Hero() {
             fetchPriority={i === 0 ? "high" : undefined}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-r from-forest-900/85 via-forest-900/60 to-forest-900/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-forest-900/70 via-forest-900/40 to-forest-900/10" />
       </div>
 
       <div className="container-tight relative flex min-h-[80vh] flex-col justify-center py-20 md:min-h-[85vh]">
@@ -72,38 +72,38 @@ export function Hero() {
             </Link>
           </div>
         </div>
+      </div>
 
-        <button
-          type="button"
-          onClick={() => goTo(index - 1)}
-          aria-label="Destino anterior"
-          className="absolute left-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-sand-50/10 p-2 text-sand-50 backdrop-blur-sm transition-colors hover:bg-sand-50/20 md:inline-flex"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </button>
-        <button
-          type="button"
-          onClick={() => goTo(index + 1)}
-          aria-label="Próximo destino"
-          className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-sand-50/10 p-2 text-sand-50 backdrop-blur-sm transition-colors hover:bg-sand-50/20 md:inline-flex"
-        >
-          <ChevronRight className="h-6 w-6" />
-        </button>
+      <button
+        type="button"
+        onClick={() => goTo(index - 1)}
+        aria-label="Destino anterior"
+        className="absolute left-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-sand-50/10 p-2 text-sand-50 backdrop-blur-sm transition-colors hover:bg-sand-50/20 md:inline-flex lg:left-8"
+      >
+        <ChevronLeft className="h-6 w-6" />
+      </button>
+      <button
+        type="button"
+        onClick={() => goTo(index + 1)}
+        aria-label="Próximo destino"
+        className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-sand-50/10 p-2 text-sand-50 backdrop-blur-sm transition-colors hover:bg-sand-50/20 md:inline-flex lg:right-8"
+      >
+        <ChevronRight className="h-6 w-6" />
+      </button>
 
-        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2">
-          {destinos.map((d, i) => (
-            <button
-              key={d.slug}
-              type="button"
-              onClick={() => goTo(i)}
-              aria-label={`Ver ${d.nome}`}
-              aria-current={i === index}
-              className={`h-2 rounded-full transition-all ${
-                i === index ? "w-6 bg-sand-50" : "w-2 bg-sand-50/40"
-              }`}
-            />
-          ))}
-        </div>
+      <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2">
+        {destinos.map((d, i) => (
+          <button
+            key={d.slug}
+            type="button"
+            onClick={() => goTo(i)}
+            aria-label={`Ver ${d.nome}`}
+            aria-current={i === index}
+            className={`h-2 rounded-full transition-all ${
+              i === index ? "w-6 bg-sand-50" : "w-2 bg-sand-50/40"
+            }`}
+          />
+        ))}
       </div>
     </section>
   );

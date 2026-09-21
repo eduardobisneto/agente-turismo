@@ -8,7 +8,6 @@ import destinoBrotasImg from "../assets/download.jpeg";
 import destinoSocorroImg from "../assets/destino-socorro.jpeg";
 import heroImg from "../assets/hero.jpeg";
 import destinoBonitoImg from "../assets/destino-bonito.jpeg";
-import trilhaSetePraiasImg from "../assets/trilha-sete-praias.jpeg";
 
 const experiencias = [
   {
@@ -79,8 +78,8 @@ const experiencias = [
     titulo: "Escalada",
     descricao:
       "Escale paredões naturais com equipamento e monitores especializados.",
-    imagem: trilhaSetePraiasImg,
-    alt: "Foto ilustrativa de trilha com formações rochosas",
+    imagem: cachoeiraImg,
+    alt: "Foto ilustrativa de paredão rochoso natural",
   },
 ];
 
