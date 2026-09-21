@@ -23,7 +23,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         {
           name: "description",
           content:
-            "Pacotes completos de turismo de aventura em Bonito (MS), Socorro, Brotas e Ubatuba (SP): transporte, hospedagem, alimentação e ingressos organizados de ponta a ponta.",
+            "Pacotes completos de turismo de aventura em Bonito (MS), Socorro, Brotas e Ubatuba (SP): mobilidade, estadia e experiências gastronômicas e culturais organizadas de ponta a ponta.",
         },
       ],
       links: [

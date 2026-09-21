@@ -19,8 +19,8 @@ function DestinosPage() {
             Para onde vamos na próxima aventura?
           </h1>
           <p className="mt-4 text-muted-foreground">
-            Cada destino tem um roteiro montado com transporte, hospedagem,
-            alimentação e ingressos inclusos.
+            Cada destino tem um roteiro montado com mobilidade, estadia e
+            experiências gastronômicas e culturais inclusas.
           </p>
         </div>
 

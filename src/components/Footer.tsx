@@ -68,7 +68,14 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Instagram className="h-4 w-4 text-forest-300" />
-                <span>@aventuraorganizada</span>
+                <a
+                  href="https://www.instagram.com/aventuraorganizada/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-sand-50"
+                >
+                  @aventuraorganizada
+                </a>
               </li>
             </ul>
           </div>
