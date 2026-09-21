@@ -159,6 +159,13 @@ export const destinos: Destino[] = [
     mapsZoom: 7,
     atracoes: [
       {
+        nome: "Parque de Aventuras e Ecoturismo",
+        descricao:
+          "Estrutura completa de esportes de aventura com rafting, bóia-cross, tirolesas e trilhas, reunindo boa parte do ecoturismo de Brotas em um só lugar.",
+        imagem: destinoBrotasImg,
+        alt: "Foto ilustrativa do Parque de Aventuras e Ecoturismo, em Brotas",
+      },
+      {
         nome: "Rio Jacaré-Pepira",
         descricao:
           "Palco do rafting e do bóia-cross que colocaram Brotas no mapa dos esportes de aventura no Brasil.",
