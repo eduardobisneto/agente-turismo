@@ -14,6 +14,8 @@ export interface Atracao {
   descricao: string;
   imagem: string;
   alt: string;
+  /** Slugs de experiências (ver src/data/experiencias.ts) oferecidas neste ponto. */
+  experiencias?: string[];
 }
 
 export interface NumeroDestino {
@@ -72,6 +74,7 @@ export const destinos: Destino[] = [
           "Nascente de águas azul-turquesa, ótima para flutuação e observação da vida aquática bem de perto.",
         imagem: flutuacaoImg,
         alt: "Foto ilustrativa de flutuação em nascente de águas cristalinas",
+        experiencias: ["flutuacao"],
       },
       {
         nome: "Ceita Corê",
@@ -79,6 +82,7 @@ export const destinos: Destino[] = [
           "Parque com trilhas, cânions e piscinas naturais, ótima opção para quem gosta de caminhar em contato com a natureza.",
         imagem: destinoBonitoImg,
         alt: "Foto ilustrativa do parque Ceita Corê, em Bonito",
+        experiencias: ["trilhas"],
       },
       {
         nome: "Parque Ecológico",
@@ -133,6 +137,7 @@ export const destinos: Destino[] = [
           "Um dos maiores parques de aventura do Brasil, com tirolesa, rafting e escalada, além de trilhas com vista para o vale.",
         imagem: destinoSocorroImg,
         alt: "Foto ilustrativa do Parque dos Sonhos, em Socorro",
+        experiencias: ["tirolesa", "rafting", "escalada", "trilhas"],
       },
       {
         nome: "Monjolinho",
@@ -140,6 +145,13 @@ export const destinos: Destino[] = [
           "Point com estrutura completa de esportes de aventura: escalada, rafting, arvorismo, caiaque e cachoeira, tudo em um só lugar.",
         imagem: destinoSocorroImg,
         alt: "Foto ilustrativa do Monjolinho, em Socorro",
+        experiencias: [
+          "escalada",
+          "rafting",
+          "arvorismo",
+          "caiaque",
+          "cachoeiras",
+        ],
       },
       {
         nome: "Cachoeira do Paraíso",
@@ -147,6 +159,7 @@ export const destinos: Destino[] = [
           "Cachoeira com piscina natural cercada de mata, ótima para refrescar depois de um dia de trilhas.",
         imagem: cachoeiraImg,
         alt: "Foto ilustrativa de cachoeira com piscina natural",
+        experiencias: ["cachoeiras"],
       },
       {
         nome: "Lago dos Espelhos",
@@ -154,6 +167,7 @@ export const destinos: Destino[] = [
           "Represa que vira praia de água doce na cidade, com areia e estrutura para passar o dia em família.",
         imagem: destinoSocorroImg,
         alt: "Foto ilustrativa do Lago dos Espelhos, em Socorro",
+        experiencias: ["praias"],
       },
     ],
     historia: [
@@ -193,6 +207,7 @@ export const destinos: Destino[] = [
           "Estrutura completa de esportes de aventura com rafting, bóia-cross, tirolesas e trilhas, reunindo boa parte do ecoturismo de Brotas em um só lugar.",
         imagem: destinoBrotasImg,
         alt: "Foto ilustrativa do Parque de Aventuras e Ecoturismo, em Brotas",
+        experiencias: ["rafting", "tirolesa", "trilhas"],
       },
       {
         nome: "Rio Jacaré-Pepira",
@@ -200,6 +215,7 @@ export const destinos: Destino[] = [
           "Palco do rafting e do bóia-cross que colocaram Brotas no mapa dos esportes de aventura no Brasil.",
         imagem: standUpPaddleImg,
         alt: "Foto ilustrativa de esporte de aventura em rio",
+        experiencias: ["rafting"],
       },
       {
         nome: "Cachoeira Véu da Noiva",
@@ -207,6 +223,7 @@ export const destinos: Destino[] = [
           "Queda d'água cercada de mata fechada, com trilha de acesso e poço para banho.",
         imagem: cachoeiraImg,
         alt: "Foto ilustrativa da Cachoeira Véu da Noiva, em Brotas",
+        experiencias: ["cachoeiras"],
       },
       {
         nome: "Balneário Municipal",
@@ -253,6 +270,7 @@ export const destinos: Destino[] = [
           "Trilha à beira-mar que liga sete praias diferentes, com mirantes ao longo do caminho — um dos programas mais conhecidos de Ubatuba para quem gosta de caminhar de praia em praia.",
         imagem: trilhaSetePraiasImg,
         alt: "Foto ilustrativa da Trilha das Sete Praias, em Ubatuba",
+        experiencias: ["trilhas", "praias"],
       },
       {
         nome: "Projeto Tamar",
@@ -267,6 +285,7 @@ export const destinos: Destino[] = [
           "Itamambuca é uma das praias mais famosas do surfe brasileiro, com escolinhas de surfe para todos os níveis, de iniciantes a mais experientes.",
         imagem: surfItamambucaImg,
         alt: "Foto ilustrativa da praia de Itamambuca, em Ubatuba",
+        experiencias: ["aulas-de-surf", "praias"],
       },
     ],
     historia: [

@@ -3,18 +3,22 @@ import { ArrowLeft, CalendarDays, Check, Users } from "lucide-react";
 
 import { WhatsappButton } from "@/components/WhatsappButton";
 import { getDestino } from "@/data/destinos";
+import { getExperienciasPorDestino } from "@/data/experiencias";
 
 export const Route = createFileRoute("/destinos_/$slug")({
   loader: ({ params }) => {
     const destino = getDestino(params.slug);
     if (!destino) throw notFound();
-    return destino;
+    return {
+      destino,
+      experiencias: getExperienciasPorDestino(params.slug),
+    };
   },
   component: DestinoRoteiroPage,
 });
 
 function DestinoRoteiroPage() {
-  const destino = Route.useLoaderData();
+  const { destino, experiencias } = Route.useLoaderData();
   const mapsSrc = `https://www.google.com/maps?q=${encodeURIComponent(destino.mapsQuery)}&z=${destino.mapsZoom}&output=embed`;
 
   return (
@@ -115,6 +119,62 @@ function DestinoRoteiroPage() {
               referrerPolicy="no-referrer-when-downgrade"
             />
           </div>
+
+          {experiencias.length > 0 && (
+            <div className="mt-16">
+              <div className="mx-auto max-w-2xl text-center">
+                <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+                  Experiências
+                </span>
+                <h2 className="mt-3 text-balance text-3xl md:text-4xl">
+                  O que você vive em {destino.nome.split(",")[0]}
+                </h2>
+              </div>
+
+              <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {experiencias.map((exp) => {
+                  const Icon = exp.icon;
+                  return exp.imagem ? (
+                    <Link
+                      key={exp.slug}
+                      to="/experiencias/$slug"
+                      params={{ slug: exp.slug }}
+                      className="group relative overflow-hidden rounded-2xl"
+                    >
+                      <img
+                        src={exp.imagem}
+                        alt={exp.alt}
+                        className="aspect-[4/3] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-sand-50">
+                        <h3 className="font-display text-2xl">{exp.titulo}</h3>
+                        <p className="mt-1 text-sm text-forest-100">
+                          {exp.descricao}
+                        </p>
+                      </div>
+                    </Link>
+                  ) : (
+                    <Link
+                      key={exp.slug}
+                      to="/experiencias/$slug"
+                      params={{ slug: exp.slug }}
+                      className="relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-2xl bg-forest-800 p-6 text-sand-50 transition-colors hover:bg-forest-700"
+                    >
+                      {Icon && (
+                        <Icon className="absolute right-4 top-4 h-10 w-10 text-forest-500" />
+                      )}
+                      <h3 className="font-display text-2xl">{exp.titulo}</h3>
+                      <p className="mt-1 text-sm text-forest-100">
+                        {exp.descricao}
+                      </p>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
