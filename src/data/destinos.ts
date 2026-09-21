@@ -16,6 +16,11 @@ export interface Atracao {
   alt: string;
 }
 
+export interface NumeroDestino {
+  valor: string;
+  label: string;
+}
+
 export interface Destino {
   slug: string;
   nome: string;
@@ -30,6 +35,8 @@ export interface Destino {
   mapsZoom: number;
   atracoes: Atracao[];
   totalAtracoes?: number;
+  historia: string[];
+  numeros: NumeroDestino[];
 }
 
 export const destinos: Destino[] = [
@@ -89,6 +96,17 @@ export const destinos: Destino[] = [
       },
     ],
     totalAtracoes: 60,
+    historia: [
+      "Por décadas, Bonito foi só mais uma cidade agropecuária no interior do Mato Grosso do Sul, cercada pela Serra da Bodoquena, vivendo de gado e de uma agricultura tranquila — ninguém de fora parava por ali.",
+      "Na virada dos anos 1990, moradores e pesquisadores perceberam o valor das águas cristalinas dos rios da região e criaram um modelo pioneiro de turismo controlado: número limitado de visitantes por atrativo, guia obrigatório em todos os passeios e fiscalização ambiental séria, para proteger o que tornaria a cidade famosa.",
+      "O modelo deu tão certo que virou referência mundial de ecoturismo sustentável, citado como exemplo por organizações de turismo ao redor do planeta — hoje o mundo literalmente olha para esses rios.",
+      "A cidade cresceu em torno do turismo: pousadas, agências, guias e famílias inteiras vivem da hospitalidade, mas sem perder o jeito interiorano — apesar da fama internacional, Bonito segue pequena, onde o visitante é recebido como convidado, não como número.",
+    ],
+    numeros: [
+      { valor: "~22 mil", label: "habitantes" },
+      { valor: "60+", label: "atrações turísticas" },
+      { valor: "desde 1995", label: "turismo com visitação controlada" },
+    ],
   },
   {
     slug: "socorro",
@@ -137,6 +155,17 @@ export const destinos: Destino[] = [
         imagem: destinoSocorroImg,
         alt: "Foto ilustrativa do Lago dos Espelhos, em Socorro",
       },
+    ],
+    historia: [
+      "Socorro nasceu no século 18 como povoado ligado à mineração e, mais tarde, à cultura do café, na região serrana ao norte de Campinas — por muito tempo, uma cidade tranquila do interior paulista, conhecida pelo clima ameno e a arquitetura colonial.",
+      "Foi só nos anos 1990 que empreendedores locais começaram a explorar o relevo montanhoso e os rios da região para esportes como rapel, tirolesa e rafting, acompanhando o crescimento do turismo de aventura no Brasil.",
+      "O investimento constante em infraestrutura — parques, trilhas, equipamentos — rendeu a Socorro o título de Capital Nacional do Turismo de Aventura, hoje parte da identidade da cidade.",
+      "Boa parte da economia local gira em torno do turismo de aventura, com famílias que trabalham há gerações como monitores, guias e donos de pousada, mantendo viva a tradição de receber bem quem chega em busca de adrenalina.",
+    ],
+    numeros: [
+      { valor: "~38 mil", label: "habitantes" },
+      { valor: "4", label: "principais pontos de aventura" },
+      { valor: "desde os anos 1990", label: "polo de turismo de aventura" },
     ],
   },
   {
@@ -187,6 +216,17 @@ export const destinos: Destino[] = [
         alt: "Foto ilustrativa do Balneário Municipal de Brotas",
       },
     ],
+    historia: [
+      "Brotas surgiu no século 19 como cidade ligada à cultura do café e, mais tarde, à citricultura, no interior paulista — cortada pelo Rio Jacaré-Pepira, que décadas depois se tornaria o motivo de sua fama.",
+      "Foi só nos anos 1990 que um grupo de moradores enxergou potencial nas corredeiras do rio para o rafting, então uma novidade no Brasil, com os primeiros passeios organizados de forma quase artesanal.",
+      "O crescimento foi rápido: em poucos anos Brotas se tornou uma das principais referências de turismo de aventura do país, atraindo operadoras, investimentos e turistas de todo o Brasil em busca de rafting, bóia-cross e tirolesas.",
+      "A cidade vive hoje essa transformação — de município agrícola tranquilo a point nacional de esportes de aventura — sem deixar de lado a vida simples do interior, onde ainda é possível conhecer pessoalmente quem fundou as primeiras operadoras de turismo da região.",
+    ],
+    numeros: [
+      { valor: "~24 mil", label: "habitantes" },
+      { valor: "4", label: "principais pontos de aventura" },
+      { valor: "desde os anos 1990", label: "pioneira do rafting no Brasil" },
+    ],
   },
   {
     slug: "ubatuba",
@@ -228,6 +268,17 @@ export const destinos: Destino[] = [
         imagem: surfItamambucaImg,
         alt: "Foto ilustrativa da praia de Itamambuca, em Ubatuba",
       },
+    ],
+    historia: [
+      "Ubatuba fica no litoral norte de São Paulo, num trecho onde a Serra do Mar avança quase até o oceano, criando uma das maiores faixas contínuas de Mata Atlântica preservada do país, com mais de 100 praias entre costões rochosos e ilhas.",
+      "Com o crescimento do turismo e a especulação imobiliária a partir das décadas de 1970 e 1980, parte da vegetação nativa ao redor das praias chegou a ser desmatada para loteamentos e casas de veraneio.",
+      "A resposta veio com a criação e expansão do Parque Estadual da Serra do Mar, que hoje protege a maior parte do território de Ubatuba, limitando novas construções e permitindo que a mata voltasse a crescer em áreas antes degradadas.",
+      "Hoje Ubatuba equilibra turismo e preservação: pescadores, caiçaras e famílias que vivem do mar dividem espaço com trilhas ecológicas e praias cercadas de mata fechada — um raro exemplo de litoral que cresceu sem perder a floresta.",
+    ],
+    numeros: [
+      { valor: "100+", label: "praias" },
+      { valor: "~93 mil", label: "habitantes" },
+      { valor: "80%+", label: "do território em área de preservação" },
     ],
   },
 ];
