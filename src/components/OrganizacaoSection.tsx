@@ -39,7 +39,8 @@ export function OrganizacaoSection() {
             A gente cuida da logística. Você curte a aventura.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Nossos pacotes são pensados para que você não precise se preocupar com nada.
+            Nossos pacotes são pensados para que você não precise se preocupar
+            com nada.
           </p>
         </div>
 
