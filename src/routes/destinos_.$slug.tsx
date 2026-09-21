@@ -44,7 +44,24 @@ function DestinoRoteiroPage() {
 
       <section className="section-padding">
         <div className="container-tight grid gap-12 lg:grid-cols-[2fr_1fr]">
-          <p className="text-muted-foreground">{destino.descricao}</p>
+          <div className="space-y-4 text-muted-foreground">
+            {destino.historia.map((paragrafo, index) => (
+              <p key={index}>{paragrafo}</p>
+            ))}
+
+            <div className="grid gap-6 pt-4 sm:grid-cols-3">
+              {destino.numeros.map((numero) => (
+                <div key={numero.label}>
+                  <p className="font-display text-3xl text-primary md:text-4xl">
+                    {numero.valor}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {numero.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <aside className="h-fit rounded-2xl border border-border bg-card p-6">
             <div className="flex flex-wrap gap-3 text-xs font-medium text-foreground">
@@ -75,38 +92,6 @@ function DestinoRoteiroPage() {
               <WhatsappButton variant="solid" />
             </div>
           </aside>
-        </div>
-      </section>
-
-      <section className="section-padding">
-        <div className="container-tight">
-          <div className="mx-auto max-w-2xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-              Nossa história
-            </span>
-            <h2 className="mt-3 text-balance text-3xl md:text-4xl">
-              A história por trás de {destino.nome}
-            </h2>
-          </div>
-
-          <div className="mx-auto mt-8 max-w-3xl space-y-4 text-muted-foreground">
-            {destino.historia.map((paragrafo, index) => (
-              <p key={index}>{paragrafo}</p>
-            ))}
-          </div>
-
-          <div className="mx-auto mt-12 grid max-w-3xl gap-6 sm:grid-cols-3">
-            {destino.numeros.map((numero) => (
-              <div key={numero.label} className="text-center">
-                <p className="font-display text-3xl text-primary md:text-4xl">
-                  {numero.valor}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {numero.label}
-                </p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
