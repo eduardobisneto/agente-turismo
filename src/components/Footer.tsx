@@ -60,7 +60,14 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-forest-300">
               <li className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-forest-300" />
-                <span>(XX) XXXXX-XXXX</span>
+                <a
+                  href="https://wa.me/5511963220494"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-sand-50"
+                >
+                  (11) 96322-0494
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-forest-300" />
@@ -68,7 +75,14 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Instagram className="h-4 w-4 text-forest-300" />
-                <span>@aventuraorganizada</span>
+                <a
+                  href="https://www.instagram.com/aventuraorganizada/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:text-sand-50"
+                >
+                  @aventuraorganizada
+                </a>
               </li>
             </ul>
           </div>

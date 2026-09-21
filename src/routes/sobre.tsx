@@ -25,9 +25,10 @@ function SobrePage() {
             <p className="mt-4 text-muted-foreground">
               A Aventura Organizada nasceu para tirar do papel viagens de
               turismo de aventura sem a dor de cabeça de planejar cada detalhe
-              sozinho. Cuidamos de transporte, hospedagem, alimentação e
-              ingressos, para que você só precise aproveitar a experiência —
-              seja em grupo, com os amigos ou em família.
+              sozinho. Cuidamos da mobilidade, da estadia, das experiências
+              gastronômicas e das experiências culturais e de entretenimento,
+              para que você só precise aproveitar a viagem — seja em grupo, com
+              os amigos ou em família.
             </p>
           </div>
         </div>
@@ -43,10 +44,10 @@ function SobrePage() {
           />
           <div>
             <h2 className="text-balance text-2xl md:text-3xl">
-              Logística pensada para grupos, amigos e família
+              Mobilidade pensada para grupos, amigos e família
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Trabalhamos com transporte exclusivo, motoristas experientes e
+              Trabalhamos com mobilidade exclusiva, motoristas experientes e
               paradas estratégicas para que o trajeto seja tão bom quanto o
               destino — seja para o grupo da empresa, a turma de amigos ou a
               família toda.
@@ -59,7 +60,7 @@ function SobrePage() {
         <div className="container-tight grid gap-8 md:grid-cols-2 md:items-center">
           <div className="order-2 md:order-1">
             <h2 className="text-balance text-2xl md:text-3xl">
-              Hospedagem próxima das atrações
+              Experiências de estadia perto das atrações
             </h2>
             <p className="mt-4 text-muted-foreground">
               Selecionamos pousadas com conforto, café da manhã regional e

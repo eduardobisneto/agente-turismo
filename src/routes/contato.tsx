@@ -11,17 +11,20 @@ const canais = [
   {
     icon: Phone,
     titulo: "Telefone",
-    valor: "(XX) XXXXX-XXXX",
+    valor: "(11) 96322-0494",
+    href: "https://wa.me/5511963220494",
   },
   {
     icon: Mail,
     titulo: "E-mail",
     valor: "contato@aventuraorganizada.com.br",
+    href: undefined,
   },
   {
     icon: Instagram,
     titulo: "Instagram",
     valor: "@aventuraorganizada",
+    href: "https://www.instagram.com/aventuraorganizada/",
   },
 ];
 
@@ -55,9 +58,20 @@ function ContatoPage() {
                 <canal.icon className="h-6 w-6 text-primary" />
               </div>
               <h3 className="font-display text-lg">{canal.titulo}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {canal.valor}
-              </p>
+              {canal.href ? (
+                <a
+                  href={canal.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-sm text-primary transition-colors hover:text-primary/80"
+                >
+                  {canal.valor}
+                </a>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {canal.valor}
+                </p>
+              )}
             </div>
           ))}
         </div>
