@@ -97,10 +97,10 @@ export const destinos: Destino[] = [
     ],
     totalAtracoes: 60,
     historia: [
-      "Por décadas, Bonito foi só mais uma cidade agropecuária no interior do Mato Grosso do Sul, cercada pela Serra da Bodoquena, vivendo de gado e de uma agricultura tranquila — ninguém de fora parava por ali.",
-      "Na virada dos anos 1990, moradores e pesquisadores perceberam o valor das águas cristalinas dos rios da região e criaram um modelo pioneiro de turismo controlado: número limitado de visitantes por atrativo, guia obrigatório em todos os passeios e fiscalização ambiental séria, para proteger o que tornaria a cidade famosa.",
-      "O modelo deu tão certo que virou referência mundial de ecoturismo sustentável, citado como exemplo por organizações de turismo ao redor do planeta — hoje o mundo literalmente olha para esses rios.",
-      "A cidade cresceu em torno do turismo: pousadas, agências, guias e famílias inteiras vivem da hospitalidade, mas sem perder o jeito interiorano — apesar da fama internacional, Bonito segue pequena, onde o visitante é recebido como convidado, não como número.",
+      "Por décadas, Bonito foi só mais uma cidade agropecuária no interior do Mato Grosso do Sul, cercada pela Serra da Bodoquena — até descobrir que suas águas escondiam um tesouro que mudaria a cidade para sempre.",
+      "Na virada dos anos 1990, Bonito apostou em um modelo de turismo controlado e sustentável: número limitado de visitantes por atrativo, guia obrigatório em todos os passeios e fiscalização ambiental séria — tudo pensado para proteger a natureza e, ao mesmo tempo, receber famílias com a segurança e a estrutura que uma viagem inesquecível exige.",
+      "O cuidado deu tão certo que Bonito virou referência mundial em ecoturismo sustentável — e também um dos destinos preferidos por famílias brasileiras, pela combinação rara de aventura leve, natureza preservada e passeios pensados para todas as idades, das crianças aos avós.",
+      "Não é à toa que quem visita Bonito uma vez, volta: é o tipo de viagem que vira história contada por anos na roda da família — um lugar feito para ser lembrado para a vida toda.",
     ],
     numeros: [
       { valor: "~22 mil", label: "habitantes" },
@@ -157,10 +157,10 @@ export const destinos: Destino[] = [
       },
     ],
     historia: [
-      "Socorro nasceu no século 18 como povoado ligado à mineração e, mais tarde, à cultura do café, na região serrana ao norte de Campinas — por muito tempo, uma cidade tranquila do interior paulista, conhecida pelo clima ameno e a arquitetura colonial.",
-      "Foi só nos anos 1990 que empreendedores locais começaram a explorar o relevo montanhoso e os rios da região para esportes como rapel, tirolesa e rafting, acompanhando o crescimento do turismo de aventura no Brasil.",
-      "O investimento constante em infraestrutura — parques, trilhas, equipamentos — rendeu a Socorro o título de Capital Nacional do Turismo de Aventura, hoje parte da identidade da cidade.",
-      "Boa parte da economia local gira em torno do turismo de aventura, com famílias que trabalham há gerações como monitores, guias e donos de pousada, mantendo viva a tradição de receber bem quem chega em busca de adrenalina.",
+      "Socorro nasceu no século 18 como povoado ligado à mineração e, mais tarde, à cultura do café, na região serrana ao norte de Campinas — uma cidade tranquila de arquitetura colonial e clima ameno.",
+      "Nos anos 1990, Socorro reinventou seu relevo montanhoso e transformou trilhas e paredões em uma estrutura de turismo de aventura pensada para todos os níveis, do iniciante em família ao aventureiro mais experiente.",
+      "O investimento contínuo em segurança e infraestrutura rendeu à cidade o título oficial de Capital Nacional do Turismo de Aventura — e fez de Socorro um dos destinos preferidos de famílias que buscam adrenalina com tranquilidade, sabendo que cada passeio segue protocolos rígidos de segurança.",
+      "É um lugar onde pais reencontram a coragem da infância e filhos descobrem que aventura pode ser em família — memórias que ficam muito depois da viagem terminar.",
     ],
     numeros: [
       { valor: "~38 mil", label: "habitantes" },
@@ -217,10 +217,10 @@ export const destinos: Destino[] = [
       },
     ],
     historia: [
-      "Brotas surgiu no século 19 como cidade ligada à cultura do café e, mais tarde, à citricultura, no interior paulista — cortada pelo Rio Jacaré-Pepira, que décadas depois se tornaria o motivo de sua fama.",
-      "Foi só nos anos 1990 que um grupo de moradores enxergou potencial nas corredeiras do rio para o rafting, então uma novidade no Brasil, com os primeiros passeios organizados de forma quase artesanal.",
-      "O crescimento foi rápido: em poucos anos Brotas se tornou uma das principais referências de turismo de aventura do país, atraindo operadoras, investimentos e turistas de todo o Brasil em busca de rafting, bóia-cross e tirolesas.",
-      "A cidade vive hoje essa transformação — de município agrícola tranquilo a point nacional de esportes de aventura — sem deixar de lado a vida simples do interior, onde ainda é possível conhecer pessoalmente quem fundou as primeiras operadoras de turismo da região.",
+      "Brotas surgiu no século 19 como cidade ligada à cultura do café e, mais tarde, à citricultura, no interior paulista — cortada pelo Rio Jacaré-Pepira, o mesmo rio que décadas depois mudaria seu destino.",
+      "Nos anos 1990, moradores enxergaram nas corredeiras do rio o potencial para o rafting, então uma novidade no Brasil, e começaram, aos poucos, a montar a estrutura que hoje recebe visitantes com segurança e conforto.",
+      "O crescimento foi rápido, e Brotas se tornou uma das principais referências do país em turismo de aventura — reconhecida por famílias e grupos de amigos como um destino onde é possível viver adrenalina de verdade sem abrir mão de conforto e cuidado.",
+      'Depois de conhecer Brotas, é comum ouvir a mesma frase: "precisamos voltar" — sinal de que a cidade conquistou um lugar cativo no roteiro de férias de muita gente.',
     ],
     numeros: [
       { valor: "~24 mil", label: "habitantes" },
@@ -270,10 +270,10 @@ export const destinos: Destino[] = [
       },
     ],
     historia: [
-      "Ubatuba fica no litoral norte de São Paulo, num trecho onde a Serra do Mar avança quase até o oceano, criando uma das maiores faixas contínuas de Mata Atlântica preservada do país, com mais de 100 praias entre costões rochosos e ilhas.",
-      "Com o crescimento do turismo e a especulação imobiliária a partir das décadas de 1970 e 1980, parte da vegetação nativa ao redor das praias chegou a ser desmatada para loteamentos e casas de veraneio.",
-      "A resposta veio com a criação e expansão do Parque Estadual da Serra do Mar, que hoje protege a maior parte do território de Ubatuba, limitando novas construções e permitindo que a mata voltasse a crescer em áreas antes degradadas.",
-      "Hoje Ubatuba equilibra turismo e preservação: pescadores, caiçaras e famílias que vivem do mar dividem espaço com trilhas ecológicas e praias cercadas de mata fechada — um raro exemplo de litoral que cresceu sem perder a floresta.",
+      "Ubatuba fica no litoral norte de São Paulo, onde a Serra do Mar avança quase até o oceano, formando mais de 100 praias emolduradas por uma das maiores faixas contínuas de Mata Atlântica preservada do Brasil.",
+      "Entre as décadas de 1970 e 1980, o crescimento do turismo colocou em risco parte dessa vegetação nativa, desmatada para dar lugar a loteamentos e casas de veraneio.",
+      "A cidade respondeu com a expansão do Parque Estadual da Serra do Mar, protegendo a maior parte do seu território — um esforço que hoje garante praias preservadas e seguras, ideais para famílias que buscam natureza de verdade sem abrir mão de estrutura.",
+      "Não é surpresa que Ubatuba seja destino certo de férias em família há gerações: é o tipo de lugar que fica marcado — na memória de quem foi criança ali e hoje leva os próprios filhos para viver a mesma história.",
     ],
     numeros: [
       { valor: "100+", label: "praias" },
