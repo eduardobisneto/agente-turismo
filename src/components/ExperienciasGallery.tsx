@@ -1,4 +1,4 @@
-import { Cable, MountainSnow, Sailboat, TreePine, Waves } from "lucide-react";
+import { Cable, MountainSnow, Sailboat, TreePine } from "lucide-react";
 
 import flutuacaoImg from "../assets/flutuacao.jpeg";
 import trilhasImg from "../assets/trilhas.jpeg";
@@ -6,6 +6,7 @@ import cachoeiraImg from "../assets/cachoeira.jpeg";
 import standUpPaddleImg from "../assets/stand-up-paddle.jpeg";
 import destinoUbatubaImg from "../assets/destino-ubatuba.jpeg";
 import surfItamambucaImg from "../assets/surf-itamambuca.jpeg";
+import raftingImg from "../assets/download.jpeg";
 
 const experienciasComFoto = [
   {
@@ -46,17 +47,18 @@ const experienciasComFoto = [
     imagem: surfItamambucaImg,
     alt: "Foto ilustrativa de praia com ondas para o surfe",
   },
+  {
+    titulo: "Rafting",
+    descricao:
+      "Desça corredeiras em botes infláveis com muita adrenalina em equipe.",
+    imagem: raftingImg,
+    alt: "Foto ilustrativa de rafting em corredeiras",
+  },
 ];
 
 // Sem foto real correspondente ainda — usa ícone em vez de reaproveitar
 // uma foto de outra atividade, pra não mostrar a coisa errada.
 const experienciasSemFoto = [
-  {
-    titulo: "Rafting",
-    descricao:
-      "Desça corredeiras em botes infláveis com muita adrenalina em equipe.",
-    icon: Waves,
-  },
   {
     titulo: "Tirolesa",
     descricao: "Deslize por tirolesas com vista para o vale e o horizonte.",
