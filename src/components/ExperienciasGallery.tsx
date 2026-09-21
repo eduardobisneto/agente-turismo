@@ -1,15 +1,13 @@
+import { Cable, MountainSnow, Sailboat, TreePine, Waves } from "lucide-react";
+
 import flutuacaoImg from "../assets/flutuacao.jpeg";
 import trilhasImg from "../assets/trilhas.jpeg";
 import cachoeiraImg from "../assets/cachoeira.jpeg";
 import standUpPaddleImg from "../assets/stand-up-paddle.jpeg";
 import destinoUbatubaImg from "../assets/destino-ubatuba.jpeg";
 import surfItamambucaImg from "../assets/surf-itamambuca.jpeg";
-import destinoBrotasImg from "../assets/download.jpeg";
-import destinoSocorroImg from "../assets/destino-socorro.jpeg";
-import heroImg from "../assets/hero.jpeg";
-import destinoBonitoImg from "../assets/destino-bonito.jpeg";
 
-const experiencias = [
+const experienciasComFoto = [
   {
     titulo: "Flutuação",
     descricao: "Nade em águas cristalinas e observe a vida aquática de perto.",
@@ -48,38 +46,38 @@ const experiencias = [
     imagem: surfItamambucaImg,
     alt: "Foto ilustrativa de praia com ondas para o surfe",
   },
+];
+
+// Sem foto real correspondente ainda — usa ícone em vez de reaproveitar
+// uma foto de outra atividade, pra não mostrar a coisa errada.
+const experienciasSemFoto = [
   {
     titulo: "Rafting",
     descricao:
       "Desça corredeiras em botes infláveis com muita adrenalina em equipe.",
-    imagem: destinoBrotasImg,
-    alt: "Foto ilustrativa de rafting em corredeiras",
+    icon: Waves,
   },
   {
     titulo: "Tirolesa",
     descricao: "Deslize por tirolesas com vista para o vale e o horizonte.",
-    imagem: destinoSocorroImg,
-    alt: "Foto ilustrativa de tirolesa com vista para o vale",
+    icon: Cable,
   },
   {
     titulo: "Arvorismo",
     descricao:
       "Percursos suspensos entre as árvores, com tirolesas e obstáculos.",
-    imagem: heroImg,
-    alt: "Foto ilustrativa de percurso de arvorismo na floresta",
+    icon: TreePine,
   },
   {
     titulo: "Caiaque",
     descricao: "Reme por rios e lagos em ritmo próprio, sozinho ou em dupla.",
-    imagem: destinoBonitoImg,
-    alt: "Foto ilustrativa de caiaque em rio de águas calmas",
+    icon: Sailboat,
   },
   {
     titulo: "Escalada",
     descricao:
       "Escale paredões naturais com equipamento e monitores especializados.",
-    imagem: cachoeiraImg,
-    alt: "Foto ilustrativa de paredão rochoso natural",
+    icon: MountainSnow,
   },
 ];
 
@@ -101,7 +99,7 @@ export function ExperienciasGallery() {
         </div>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {experiencias.map((exp) => (
+          {experienciasComFoto.map((exp) => (
             <div
               key={exp.titulo}
               className="group relative overflow-hidden rounded-2xl"
@@ -119,6 +117,17 @@ export function ExperienciasGallery() {
                 <h3 className="font-display text-2xl">{exp.titulo}</h3>
                 <p className="mt-1 text-sm text-forest-100">{exp.descricao}</p>
               </div>
+            </div>
+          ))}
+
+          {experienciasSemFoto.map((exp) => (
+            <div
+              key={exp.titulo}
+              className="relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-2xl bg-forest-800 p-6 text-sand-50"
+            >
+              <exp.icon className="absolute right-4 top-4 h-10 w-10 text-forest-500" />
+              <h3 className="font-display text-2xl">{exp.titulo}</h3>
+              <p className="mt-1 text-sm text-forest-100">{exp.descricao}</p>
             </div>
           ))}
         </div>
