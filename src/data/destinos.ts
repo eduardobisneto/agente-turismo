@@ -29,6 +29,7 @@ export interface Destino {
   mapsQuery: string;
   mapsZoom: number;
   atracoes: Atracao[];
+  totalAtracoes?: number;
 }
 
 export const destinos: Destino[] = [
@@ -52,27 +53,42 @@ export const destinos: Destino[] = [
     mapsZoom: 7,
     atracoes: [
       {
-        nome: "Gruta do Lago Azul",
+        nome: "Porto da Ilha",
         descricao:
-          "Uma das grutas mais famosas do Brasil, com um lago subterrâneo de águas azul-turquesa a dezenas de metros de profundidade.",
+          "Point à beira do rio, ideal para passeio de barco e para curtir a paisagem com tranquilidade.",
         imagem: destinoBonitoImg,
-        alt: "Foto ilustrativa da Gruta do Lago Azul, em Bonito",
+        alt: "Foto ilustrativa do Porto da Ilha, em Bonito",
       },
       {
-        nome: "Rio da Prata",
+        nome: "Nascente Azul",
         descricao:
-          "Flutuação em um dos rios mais transparentes do mundo, com visibilidade que permite observar cardumes de peixes bem de perto.",
+          "Nascente de águas azul-turquesa, ótima para flutuação e observação da vida aquática bem de perto.",
         imagem: flutuacaoImg,
-        alt: "Foto ilustrativa de flutuação em rio de águas cristalinas",
+        alt: "Foto ilustrativa de flutuação em nascente de águas cristalinas",
       },
       {
-        nome: "Balneário Municipal",
+        nome: "Ceita Corê",
         descricao:
-          "Ponto de banho de água doce dentro da cidade, ideal para relaxar entre um passeio e outro.",
+          "Parque com trilhas, cânions e piscinas naturais, ótima opção para quem gosta de caminhar em contato com a natureza.",
         imagem: destinoBonitoImg,
-        alt: "Foto ilustrativa do Balneário Municipal de Bonito",
+        alt: "Foto ilustrativa do parque Ceita Corê, em Bonito",
+      },
+      {
+        nome: "Parque Ecológico",
+        descricao:
+          "Point sobre o Rio Formoso, no centro da cidade, ideal para observar peixes e relaxar em contato com a natureza.",
+        imagem: destinoBonitoImg,
+        alt: "Foto ilustrativa do Parque Ecológico do Rio Formoso, em Bonito",
+      },
+      {
+        nome: "Balneário do Sol",
+        descricao:
+          "Balneário de água doce, ótimo para refrescar e passar o dia em família entre um passeio e outro.",
+        imagem: destinoBonitoImg,
+        alt: "Foto ilustrativa do Balneário do Sol, em Bonito",
       },
     ],
+    totalAtracoes: 60,
   },
   {
     slug: "socorro",

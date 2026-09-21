@@ -137,6 +137,14 @@ function DestinoRoteiroPage() {
               </div>
             ))}
           </div>
+
+          {destino.totalAtracoes && (
+            <p className="mx-auto mt-16 max-w-2xl text-balance text-center font-display text-xl leading-snug text-forest-800 md:text-2xl">
+              E olha que isso é só o começo: {destino.nome.split(",")[0]} tem
+              mais de {destino.totalAtracoes} atrações — no seu roteiro, a gente
+              destaca as principais para o tempo que você tiver.
+            </p>
+          )}
         </div>
       </section>
 
