@@ -1,10 +1,14 @@
-import flutuacaoImg from "../assets/flutuacao.jpg";
-import botesImg from "../assets/botes.jpg";
-import trilhasImg from "../assets/trilhas.jpg";
-import cachoeiraImg from "../assets/cachoeira.jpg";
-import standUpPaddleImg from "../assets/stand-up-paddle.jpg";
+import { Cable, MountainSnow, Sailboat, TreePine } from "lucide-react";
 
-const experiencias = [
+import flutuacaoImg from "../assets/flutuacao.jpeg";
+import trilhasImg from "../assets/trilhas.jpeg";
+import cachoeiraImg from "../assets/cachoeira.jpeg";
+import standUpPaddleImg from "../assets/stand-up-paddle.jpeg";
+import destinoUbatubaImg from "../assets/destino-ubatuba.jpeg";
+import surfItamambucaImg from "../assets/surf-itamambuca.jpeg";
+import raftingImg from "../assets/download.jpeg";
+
+const experienciasComFoto = [
   {
     titulo: "Flutuação",
     descricao: "Nade em águas cristalinas e observe a vida aquática de perto.",
@@ -12,14 +16,9 @@ const experiencias = [
     alt: "Pessoas fazendo flutuação em rio cristalino cercado por vegetação",
   },
   {
-    titulo: "Botes e Rafting",
-    descricao: "Aventura em corredeiras com segurança e muita adrenalina.",
-    imagem: botesImg,
-    alt: "Grupo em bote amarelo fazendo rafting em rio com corredeiras",
-  },
-  {
     titulo: "Trilhas",
-    descricao: "Caminhadas por trilhas entre montanhas e florestas preservadas.",
+    descricao:
+      "Caminhadas por trilhas entre montanhas e florestas preservadas.",
     imagem: trilhasImg,
     alt: "Grupo de pessoas caminhando em trilha na floresta",
   },
@@ -35,6 +34,53 @@ const experiencias = [
     imagem: standUpPaddleImg,
     alt: "Mulher fazendo stand up paddle em rio de água cristalina",
   },
+  {
+    titulo: "Praias",
+    descricao: "Relaxe em praias de areia clara e mar convidativo.",
+    imagem: destinoUbatubaImg,
+    alt: "Praia de areia clara cercada por mata atlântica",
+  },
+  {
+    titulo: "Aulas de Surf",
+    descricao:
+      "Aprenda a surfar com instrutores em praias com ondas para todos os níveis.",
+    imagem: surfItamambucaImg,
+    alt: "Foto ilustrativa de praia com ondas para o surfe",
+  },
+  {
+    titulo: "Rafting",
+    descricao:
+      "Desça corredeiras em botes infláveis com muita adrenalina em equipe.",
+    imagem: raftingImg,
+    alt: "Foto ilustrativa de rafting em corredeiras",
+  },
+];
+
+// Sem foto real correspondente ainda — usa ícone em vez de reaproveitar
+// uma foto de outra atividade, pra não mostrar a coisa errada.
+const experienciasSemFoto = [
+  {
+    titulo: "Tirolesa",
+    descricao: "Deslize por tirolesas com vista para o vale e o horizonte.",
+    icon: Cable,
+  },
+  {
+    titulo: "Arvorismo",
+    descricao:
+      "Percursos suspensos entre as árvores, com tirolesas e obstáculos.",
+    icon: TreePine,
+  },
+  {
+    titulo: "Caiaque",
+    descricao: "Reme por rios e lagos em ritmo próprio, sozinho ou em dupla.",
+    icon: Sailboat,
+  },
+  {
+    titulo: "Escalada",
+    descricao:
+      "Escale paredões naturais com equipamento e monitores especializados.",
+    icon: MountainSnow,
+  },
 ];
 
 export function ExperienciasGallery() {
@@ -49,12 +95,13 @@ export function ExperienciasGallery() {
             Atividades que fazem parte dos nossos roteiros
           </h2>
           <p className="mt-4 text-muted-foreground">
-            De experiências tranquilas às mais emocionantes, montamos o pacote ideal para o seu grupo.
+            De experiências tranquilas às mais emocionantes, montamos o pacote
+            ideal para o seu grupo.
           </p>
         </div>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {experiencias.slice(0, 3).map((exp) => (
+          {experienciasComFoto.map((exp) => (
             <div
               key={exp.titulo}
               className="group relative overflow-hidden rounded-2xl"
@@ -74,27 +121,15 @@ export function ExperienciasGallery() {
               </div>
             </div>
           ))}
-        </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {experiencias.slice(3).map((exp) => (
+          {experienciasSemFoto.map((exp) => (
             <div
               key={exp.titulo}
-              className="group relative overflow-hidden rounded-2xl"
+              className="relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-2xl bg-forest-800 p-6 text-sand-50"
             >
-              <img
-                src={exp.imagem}
-                alt={exp.alt}
-                className="aspect-[16/9] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-                width={1024}
-                height={768}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-sand-50">
-                <h3 className="font-display text-2xl">{exp.titulo}</h3>
-                <p className="mt-1 text-sm text-forest-100">{exp.descricao}</p>
-              </div>
+              <exp.icon className="absolute right-4 top-4 h-10 w-10 text-forest-500" />
+              <h3 className="font-display text-2xl">{exp.titulo}</h3>
+              <p className="mt-1 text-sm text-forest-100">{exp.descricao}</p>
             </div>
           ))}
         </div>

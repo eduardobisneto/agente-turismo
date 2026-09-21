@@ -23,7 +23,11 @@ export function DestinoCard({
   grupo,
 }: DestinoCardProps) {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md">
+    <Link
+      to="/destinos/$slug"
+      params={{ slug }}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md"
+    >
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
           src={imagem}
@@ -56,14 +60,11 @@ export function DestinoCard({
           </span>
         </div>
 
-        <Link
-          to={`/destinos#${slug}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
-        >
+        <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors group-hover:text-primary/80">
           Ver roteiro
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </Link>
+        </span>
       </div>
-    </article>
+    </Link>
   );
 }

@@ -3,27 +3,27 @@ import { Bus, BedDouble, Ticket, UtensilsCrossed } from "lucide-react";
 const itens = [
   {
     icon: Bus,
-    titulo: "Transporte",
+    titulo: "Mobilidade",
     descricao:
       "Van ou ônibus exclusivo desde a saída da sua cidade até o destino, com motoristas experientes e paradas estratégicas.",
   },
   {
     icon: BedDouble,
-    titulo: "Hospedagem",
+    titulo: "Experiências de Estadia",
     descricao:
       "Pousadas selecionadas próximas às atrações, com conforto, café da manhã regional e ambiente integrado à natureza.",
   },
   {
     icon: UtensilsCrossed,
-    titulo: "Alimentação",
+    titulo: "Experiências Gastronômicas",
     descricao:
       "Refeições planejadas para manter a energia da aventura: café da manhã, almoço e jantar com opções especiais.",
   },
   {
     icon: Ticket,
-    titulo: "Ingressos",
+    titulo: "Experiências Culturais e Entretenimento",
     descricao:
-      "Reserva antecipada de todos os passeios e atrações: flutuação, cachoeiras, grutas e trilhas. Sem filas, sem estresse.",
+      "Ingressos com reserva antecipada para todos os passeios e atrações: flutuação, cachoeiras, grutas e trilhas. Sem filas, sem estresse.",
   },
 ];
 
@@ -39,7 +39,8 @@ export function OrganizacaoSection() {
             A gente cuida da logística. Você curte a aventura.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Nossos pacotes são pensados para que você não precise se preocupar com nada.
+            Nossos pacotes são pensados para que você não precise se preocupar
+            com nada.
           </p>
         </div>
 
