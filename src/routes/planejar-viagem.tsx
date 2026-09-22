@@ -1418,15 +1418,13 @@ function juntarNomes(nomes: string[]): string {
   return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
 }
 
-type ConsultaStep =
-  "tipo" | "selecao" | "calendario" | "detalhes" | "resumo" | "analise";
+type ConsultaStep = "tipo" | "selecao" | "calendario" | "detalhes" | "analise";
 
 const CONSULTA_STEP_ORDER: ConsultaStep[] = [
   "tipo",
   "selecao",
   "calendario",
   "detalhes",
-  "resumo",
   "analise",
 ];
 
@@ -1435,8 +1433,7 @@ const CONSULTA_STEP_LABELS: Record<ConsultaStep, string> = {
   selecao: "2. Destinos e experiências",
   calendario: "3. Datas e detalhes por destino",
   detalhes: "4. Sobre a viagem",
-  resumo: "5. Resumo",
-  analise: "6. Análise",
+  analise: "5. Análise",
 };
 
 function DetalhePlanoView({
@@ -1563,6 +1560,24 @@ function DetalhePlanoView({
 
             <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
               <div className="order-2 space-y-6 lg:order-1">
+                {exps.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-sand-50">
+                      Experiências em {destinoAtualInfo.nome.split(",")[0]}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {exps.map((exp) => (
+                        <span
+                          key={exp.slug}
+                          className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          {exp.titulo}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {interesses.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-sand-50">
@@ -1605,12 +1620,13 @@ function DetalhePlanoView({
                     </p>
                   </div>
                 )}
-                {interesses.length === 0 &&
+                {exps.length === 0 &&
+                  interesses.length === 0 &&
                   inclusos.length === 0 &&
                   !selecaoAtual.contextoDestino && (
                     <p className="text-sm text-sand-50/70">
-                      Nenhum interesse ou inclusão específica informada para
-                      esse destino.
+                      Nenhuma experiência, interesse ou inclusão específica
+                      informada para esse destino.
                     </p>
                   )}
               </div>
@@ -1624,42 +1640,6 @@ function DetalhePlanoView({
             </div>
           </div>
         </div>
-
-        {exps.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Experiências
-            </p>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {exps.map((exp) => {
-                const Icon = exp.icon;
-                return (
-                  <div
-                    key={exp.slug}
-                    className="relative aspect-[4/3] overflow-hidden rounded-xl"
-                  >
-                    {exp.imagem ? (
-                      <img
-                        src={exp.imagem}
-                        alt={exp.alt}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-forest-800">
-                        {Icon && <Icon className="h-10 w-10 text-forest-500" />}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-forest-900/70 to-transparent" />
-                    <p className="absolute bottom-3 left-3 right-3 font-display text-sm text-sand-50">
-                      {exp.titulo}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -1790,8 +1770,7 @@ function DetalhePlanoView({
                 </div>
               )}
 
-              {(stepConsulta === "calendario" || stepConsulta === "resumo") &&
-                renderPainelDestino()}
+              {stepConsulta === "calendario" && renderPainelDestino()}
 
               {stepConsulta === "detalhes" && (
                 <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6">
