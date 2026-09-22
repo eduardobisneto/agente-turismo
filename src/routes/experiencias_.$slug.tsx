@@ -6,6 +6,7 @@ import {
   ListChecks,
   MapPin,
   Sparkles,
+  Users,
 } from "lucide-react";
 
 import { WhatsappButton } from "@/components/WhatsappButton";
@@ -65,12 +66,24 @@ function ExperienciaPage() {
       <section className="section-padding bg-sand-100">
         <div className="container-tight grid gap-10 lg:grid-cols-[2fr_1fr]">
           <div>
-            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-              Contexto
-            </span>
-            <h2 className="mt-3 text-balance text-3xl md:text-4xl">
+            <h2 className="text-balance text-3xl md:text-4xl">
               O que esperar de {experiencia.titulo.toLowerCase()}
             </h2>
+
+            <div className="mt-6">
+              <h3 className="flex items-center gap-2 font-display text-lg">
+                <Users className="h-5 w-5 text-primary" />
+                Para quem é indicada
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {experiencia.contexto.publico}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground/80">
+                Essa é uma referência geral, não uma norma oficial — a idade
+                mínima e as regras de segurança variam por operador e são sempre
+                confirmadas antes da viagem.
+              </p>
+            </div>
 
             <div className="mt-6">
               <h3 className="flex items-center gap-2 font-display text-lg">

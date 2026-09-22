@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
+import { ExperienciaCard } from "@/components/ExperienciaCard";
 import { experiencias } from "@/data/experiencias";
 
 export const Route = createFileRoute("/experiencias")({
@@ -7,9 +8,6 @@ export const Route = createFileRoute("/experiencias")({
 });
 
 function ExperienciasPage() {
-  const comFoto = experiencias.filter((exp) => exp.imagem);
-  const semFoto = experiencias.filter((exp) => !exp.imagem && exp.icon);
-
   return (
     <section className="section-padding">
       <div className="container-tight">
@@ -26,45 +24,21 @@ function ExperienciasPage() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {comFoto.map((exp) => (
-            <Link
-              key={exp.slug}
-              to="/experiencias/$slug"
-              params={{ slug: exp.slug }}
-              className="group relative overflow-hidden rounded-2xl"
-            >
-              <img
-                src={exp.imagem}
-                alt={exp.alt}
-                className="aspect-[4/3] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-                width={1024}
-                height={768}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 text-sand-50">
-                <h3 className="font-display text-2xl">{exp.titulo}</h3>
-                <p className="mt-1 text-sm text-forest-100">{exp.descricao}</p>
-              </div>
-            </Link>
+        <div className="mt-12 grid gap-8 md:grid-cols-2">
+          {experiencias.map((experiencia) => (
+            <ExperienciaCard
+              key={experiencia.slug}
+              slug={experiencia.slug}
+              titulo={experiencia.titulo}
+              descricao={experiencia.descricao}
+              imagem={experiencia.imagem}
+              alt={experiencia.alt}
+              icon={experiencia.icon}
+              nivel={experiencia.contexto.nivel}
+              faixaEtaria={experiencia.contexto.faixaEtaria}
+              epocaResumo={experiencia.contexto.epocaResumo}
+            />
           ))}
-
-          {semFoto.map((exp) => {
-            const Icon = exp.icon!;
-            return (
-              <Link
-                key={exp.slug}
-                to="/experiencias/$slug"
-                params={{ slug: exp.slug }}
-                className="relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-2xl bg-forest-800 p-6 text-sand-50 transition-colors hover:bg-forest-700"
-              >
-                <Icon className="absolute right-4 top-4 h-10 w-10 text-forest-500" />
-                <h3 className="font-display text-2xl">{exp.titulo}</h3>
-                <p className="mt-1 text-sm text-forest-100">{exp.descricao}</p>
-              </Link>
-            );
-          })}
         </div>
       </div>
     </section>
