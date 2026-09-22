@@ -1190,8 +1190,19 @@ function ResumoStep({
     contexto,
   ]);
 
+  const experienciaSlugsUnicos = Array.from(
+    new Set(
+      destinosSelecionados.flatMap((slug) =>
+        Array.from(selecoesMap[slug] ?? []),
+      ),
+    ),
+  );
+  const experienciasUnicas = experienciaSlugsUnicos
+    .map((s) => experiencias.find((e) => e.slug === s))
+    .filter((e): e is (typeof experiencias)[number] => !!e);
+
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8">
       <div>
         <h2 className="text-balance text-2xl md:text-3xl">
           Confira o resumo da sua viagem
@@ -1202,69 +1213,72 @@ function ResumoStep({
         </p>
       </div>
 
-      <div className="space-y-4">
-        {destinosSelecionados.map((slug) => {
-          const destino = destinos.find((d) => d.slug === slug);
-          const exps = Array.from(selecoesMap[slug] ?? [])
-            .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
-            .filter(Boolean);
-          const inicio = datasInicio[slug];
-          const fim = datasFim[slug];
-          const noites = noitesEntre(inicio, fim);
-          const adultos = adultosMap[slug] ?? 2;
-          const criancas = criancasMap[slug] ?? 0;
-          const interesses = interessesMap[slug] ?? [];
-          const inclusos = inclusosMap[slug] ?? [];
-          const contextoDestino = contextoDestinoMap[slug];
+      <div className="space-y-8">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Destinos
+          </p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {destinosSelecionados.map((slug) => {
+              const destino = destinos.find((d) => d.slug === slug);
+              const inicio = datasInicio[slug];
+              const fim = datasFim[slug];
+              const noites = noitesEntre(inicio, fim);
+              const adultos = adultosMap[slug] ?? 2;
+              const criancas = criancasMap[slug] ?? 0;
+              const contextoDestino = contextoDestinoMap[slug];
 
-          return (
-            <div key={slug} className="relative overflow-hidden rounded-2xl">
-              {destino?.imagem ? (
-                <img
-                  src={destino.imagem}
-                  alt={destino.alt}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-forest-800" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/70 to-forest-900/50" />
-              <div className="relative p-5 text-sand-50">
-                <p className="font-display text-lg">{destino?.nome}</p>
-                <p className="mt-1 text-sm text-sand-50/80">
-                  {inicio && fim
-                    ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                    : "Datas a combinar"}
-                </p>
-                <p className="mt-1 text-sm text-sand-50/80">
-                  {adultos} adulto(s)
-                  {criancas > 0 ? `, ${criancas} criança(s)` : ""}
-                </p>
-                {exps.length > 0 && (
-                  <p className="mt-2 text-sm">{exps.join(", ")}</p>
-                )}
-                {interesses.length > 0 && (
-                  <p className="mt-2 text-sm">
-                    <span className="font-medium">Interesses:</span>{" "}
-                    {interesses.join(", ")}
-                  </p>
-                )}
-                {inclusos.length > 0 && (
-                  <p className="mt-2 text-sm">
-                    <span className="font-medium">Gostaria que incluísse:</span>{" "}
-                    {inclusos.join(", ")}
-                  </p>
-                )}
-                {contextoDestino && (
-                  <p className="mt-2 text-sm">
-                    <span className="font-medium">Contexto:</span>{" "}
-                    {contextoDestino}
-                  </p>
-                )}
-              </div>
+              return (
+                <div
+                  key={slug}
+                  className="relative aspect-[4/3] overflow-hidden rounded-2xl"
+                >
+                  {destino?.imagem ? (
+                    <img
+                      src={destino.imagem}
+                      alt={destino.alt}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-forest-800" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-forest-900/85 via-forest-900/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5 text-sand-50">
+                    <h3 className="font-display text-xl">{destino?.nome}</h3>
+                    <p className="mt-1 text-xs text-sand-50/80">
+                      {inicio && fim
+                        ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites · ${adultos} adulto(s)${criancas > 0 ? `, ${criancas} criança(s)` : ""}`
+                        : "Datas a combinar"}
+                    </p>
+                    <p className="mt-1 text-sm text-forest-100">
+                      {contextoDestino ||
+                        "Sem comentários adicionais para esse destino."}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {experienciasUnicas.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Experiências
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {experienciasUnicas.map((exp) => (
+                <span
+                  key={exp.slug}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary text-primary-foreground px-4 py-2 text-sm font-medium"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  {exp.titulo}
+                </span>
+              ))}
             </div>
-          );
-        })}
+          </div>
+        )}
 
         {contexto && (
           <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
