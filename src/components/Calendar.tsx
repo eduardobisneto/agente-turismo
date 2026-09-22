@@ -31,14 +31,15 @@ function startOfToday(): Date {
 }
 
 interface CalendarProps {
-  value?: string | undefined;
+  rangeStart?: string | undefined;
+  rangeEnd?: string | undefined;
   onSelect: (isoDate: string) => void;
 }
 
-export function Calendar({ value, onSelect }: CalendarProps) {
+export function Calendar({ rangeStart, rangeEnd, onSelect }: CalendarProps) {
   const today = startOfToday();
   const [cursor, setCursor] = useState(() => {
-    const base = value ? new Date(`${value}T00:00:00`) : today;
+    const base = rangeStart ? new Date(`${rangeStart}T00:00:00`) : today;
     return new Date(base.getFullYear(), base.getMonth(), 1);
   });
 
@@ -89,7 +90,10 @@ export function Calendar({ value, onSelect }: CalendarProps) {
 
           const iso = toIsoDate(cell.date);
           const isPast = cell.date < today;
-          const isSelected = value === iso;
+          const isStart = rangeStart === iso;
+          const isEnd = rangeEnd === iso;
+          const isInRange =
+            !!rangeStart && !!rangeEnd && iso > rangeStart && iso < rangeEnd;
 
           return (
             <button
@@ -97,12 +101,14 @@ export function Calendar({ value, onSelect }: CalendarProps) {
               type="button"
               disabled={isPast}
               onClick={() => onSelect(iso)}
-              className={`aspect-square rounded-lg text-sm transition-colors ${
-                isSelected
-                  ? "bg-primary font-semibold text-primary-foreground"
-                  : isPast
-                    ? "text-muted-foreground/40"
-                    : "text-foreground hover:bg-secondary"
+              className={`aspect-square text-sm transition-colors ${
+                isStart || isEnd
+                  ? "rounded-lg bg-primary font-semibold text-primary-foreground"
+                  : isInRange
+                    ? "rounded-none bg-primary/15 text-foreground"
+                    : isPast
+                      ? "rounded-lg text-muted-foreground/40"
+                      : "rounded-lg text-foreground hover:bg-secondary"
               }`}
             >
               {cell.day}

@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Check, MapPin, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  MapPin,
+  Plus,
+  Sparkles,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Calendar } from "@/components/Calendar";
 import { RequireAuth } from "@/components/RequireAuth";
@@ -13,9 +20,10 @@ import {
 } from "@/data/experiencias";
 import { useAuth } from "@/lib/auth-context";
 import {
-  INCLUSOS_DISPONIVEIS,
-  INTERESSES_DISPONIVEIS,
+  getPlanosDoUsuario,
+  noitesEntre,
   salvarPlanoViagem,
+  type PlanoViagem,
   type SelecaoDestino,
 } from "@/lib/trip-plan";
 import heroImg from "@/assets/hero.jpeg";
@@ -31,12 +39,13 @@ export const Route = createFileRoute("/planejar-viagem")({
 type Step = "tipo" | "selecao" | "calendario" | "detalhes" | "resumo";
 type TipoInicial = "destinos" | "experiencias";
 type SelecoesMap = Record<string, Set<string>>;
+type Modo = "lista" | "detalhe" | "wizard";
 
 const STEP_LABELS: Record<Step, string> = {
   tipo: "1. Por onde começar",
   selecao: "2. Destinos e experiências",
-  calendario: "3. Datas",
-  detalhes: "4. Detalhes da viagem",
+  calendario: "3. Datas e detalhes por destino",
+  detalhes: "4. Sobre a viagem",
   resumo: "5. Resumo",
 };
 
@@ -48,24 +57,74 @@ const STEP_ORDER: Step[] = [
   "resumo",
 ];
 
+const ADULTOS_PADRAO = 2;
+const CRIANCAS_PADRAO = 0;
+
 function PlanejarViagemPage() {
   const { user } = useAuth();
+
+  const [modo, setModo] = useState<Modo | null>(null);
+  const [planos, setPlanos] = useState<PlanoViagem[]>([]);
+  const [planoSelecionado, setPlanoSelecionado] = useState<PlanoViagem | null>(
+    null,
+  );
 
   const [step, setStep] = useState<Step>("tipo");
   const [tipoInicial, setTipoInicial] = useState<TipoInicial | null>(null);
   const [selecoesMap, setSelecoesMap] = useState<SelecoesMap>({});
-  const [datas, setDatas] = useState<Record<string, string>>({});
+  const [destinoAtualIndex, setDestinoAtualIndex] = useState(0);
+  const [datasInicio, setDatasInicio] = useState<Record<string, string>>({});
+  const [datasFim, setDatasFim] = useState<Record<string, string>>({});
   const [calendarioAtivo, setCalendarioAtivo] = useState<string | null>(null);
 
-  const [duracaoNoites, setDuracaoNoites] = useState(3);
-  const [interesses, setInteresses] = useState<string[]>([]);
+  const [interessesMap, setInteressesMap] = useState<Record<string, string[]>>(
+    {},
+  );
+  const [adultosMap, setAdultosMap] = useState<Record<string, number>>({});
+  const [criancasMap, setCriancasMap] = useState<Record<string, number>>({});
+  const [inclusosMap, setInclusosMap] = useState<Record<string, string[]>>({});
+
   const [contexto, setContexto] = useState("");
-  const [adultos, setAdultos] = useState(2);
-  const [criancas, setCriancas] = useState(0);
-  const [inclusos, setInclusos] = useState<string[]>([]);
   const [enviado, setEnviado] = useState(false);
 
   const destinosSelecionados = Object.keys(selecoesMap);
+
+  useEffect(() => {
+    if (!user) return;
+    const doUsuario = getPlanosDoUsuario(user.id);
+    setPlanos(doUsuario);
+    setModo(doUsuario.length > 0 ? "lista" : "wizard");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  function iniciarNovoPlanejamento() {
+    setStep("tipo");
+    setTipoInicial(null);
+    setSelecoesMap({});
+    setDestinoAtualIndex(0);
+    setDatasInicio({});
+    setDatasFim({});
+    setCalendarioAtivo(null);
+    setInteressesMap({});
+    setAdultosMap({});
+    setCriancasMap({});
+    setInclusosMap({});
+    setContexto("");
+    setEnviado(false);
+    setModo("wizard");
+  }
+
+  function verMeusPlanos() {
+    if (!user) return;
+    setPlanos(getPlanosDoUsuario(user.id));
+    setPlanoSelecionado(null);
+    setModo("lista");
+  }
+
+  function abrirPlano(plano: PlanoViagem) {
+    setPlanoSelecionado(plano);
+    setModo("detalhe");
+  }
 
   function irPara(novoStep: Step) {
     setStep(novoStep);
@@ -82,6 +141,35 @@ function PlanejarViagemPage() {
       }
       return proximo;
     });
+
+    setAdultosMap((atual) => {
+      if (slug in atual) {
+        const { [slug]: _removido, ...resto } = atual;
+        return resto;
+      }
+      return { ...atual, [slug]: ADULTOS_PADRAO };
+    });
+    setCriancasMap((atual) => {
+      if (slug in atual) {
+        const { [slug]: _removido, ...resto } = atual;
+        return resto;
+      }
+      return { ...atual, [slug]: CRIANCAS_PADRAO };
+    });
+    setInteressesMap((atual) => {
+      if (slug in atual) {
+        const { [slug]: _removido, ...resto } = atual;
+        return resto;
+      }
+      return { ...atual, [slug]: [] };
+    });
+    setInclusosMap((atual) => {
+      if (slug in atual) {
+        const { [slug]: _removido, ...resto } = atual;
+        return resto;
+      }
+      return { ...atual, [slug]: [] };
+    });
   }
 
   function toggleExperienciaDoDestino(destinoSlug: string, expSlug: string) {
@@ -97,20 +185,48 @@ function PlanejarViagemPage() {
     });
   }
 
-  function toggleInteresse(valor: string) {
-    setInteresses((atual) =>
-      atual.includes(valor)
-        ? atual.filter((v) => v !== valor)
-        : [...atual, valor],
-    );
+  function selecionarDataDoDestino(slug: string, iso: string) {
+    const inicioAtual = datasInicio[slug];
+    const fimAtual = datasFim[slug];
+
+    if (!inicioAtual || fimAtual) {
+      // Começando uma seleção nova (ou range anterior já fechado): esse
+      // clique vira o novo início, limpando o fim.
+      setDatasInicio((atual) => ({ ...atual, [slug]: iso }));
+      setDatasFim((atual) => {
+        const { [slug]: _removido, ...resto } = atual;
+        return resto;
+      });
+      return;
+    }
+
+    if (iso < inicioAtual) {
+      // Clicou numa data antes do início escolhido: essa vira o novo início.
+      setDatasInicio((atual) => ({ ...atual, [slug]: iso }));
+      return;
+    }
+
+    setDatasFim((atual) => ({ ...atual, [slug]: iso }));
   }
 
-  function toggleIncluso(valor: string) {
-    setInclusos((atual) =>
-      atual.includes(valor)
-        ? atual.filter((v) => v !== valor)
-        : [...atual, valor],
-    );
+  function toggleInteresseDoDestino(destinoSlug: string, valor: string) {
+    setInteressesMap((atual) => {
+      const atuais = atual[destinoSlug] ?? [];
+      const novos = atuais.includes(valor)
+        ? atuais.filter((v) => v !== valor)
+        : [...atuais, valor];
+      return { ...atual, [destinoSlug]: novos };
+    });
+  }
+
+  function toggleInclusoDoDestino(destinoSlug: string, valor: string) {
+    setInclusosMap((atual) => {
+      const atuais = atual[destinoSlug] ?? [];
+      const novos = atuais.includes(valor)
+        ? atuais.filter((v) => v !== valor)
+        : [...atuais, valor];
+      return { ...atual, [destinoSlug]: novos };
+    });
   }
 
   function handleEnviar() {
@@ -119,25 +235,54 @@ function PlanejarViagemPage() {
     const selecoes: SelecaoDestino[] = destinosSelecionados.map((slug) => ({
       destinoSlug: slug,
       experienciaSlugs: Array.from(selecoesMap[slug] ?? []),
-      data: datas[slug],
+      dataInicio: datasInicio[slug],
+      dataFim: datasFim[slug],
+      adultos: adultosMap[slug] ?? ADULTOS_PADRAO,
+      criancas: criancasMap[slug] ?? CRIANCAS_PADRAO,
+      interesses: interessesMap[slug] ?? [],
+      inclusos: inclusosMap[slug] ?? [],
     }));
 
     salvarPlanoViagem({
       usuarioId: user.id,
       tipoInicial: tipoInicial ?? "destinos",
       selecoes,
-      duracaoNoites,
-      interesses,
       contexto,
-      adultos,
-      criancas,
-      inclusos,
     });
 
     setEnviado(true);
   }
 
   const stepIndex = STEP_ORDER.indexOf(step);
+
+  if (modo === null) {
+    return (
+      <section className="section-padding">
+        <div className="container-tight">
+          <p className="text-center text-sm text-muted-foreground">
+            Carregando...
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  if (modo === "lista") {
+    return (
+      <ListaPlanosView
+        nome={user?.nome.split(" ")[0] ?? ""}
+        planos={planos}
+        onNovoPlanejamento={iniciarNovoPlanejamento}
+        onAbrirPlano={abrirPlano}
+      />
+    );
+  }
+
+  if (modo === "detalhe" && planoSelecionado) {
+    return (
+      <DetalhePlanoView plano={planoSelecionado} onVoltar={verMeusPlanos} />
+    );
+  }
 
   return (
     <section className="section-padding">
@@ -154,15 +299,20 @@ function PlanejarViagemPage() {
         <div className="mx-auto mt-8 flex max-w-2xl items-center justify-between gap-1">
           {STEP_ORDER.map((s, index) => (
             <div key={s} className="flex flex-1 items-center gap-1">
-              <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                  index <= stepIndex
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground"
-                }`}
-              >
-                {index + 1}
-              </div>
+              {index <= stepIndex ? (
+                <button
+                  type="button"
+                  onClick={() => irPara(s)}
+                  aria-label={`Voltar para ${STEP_LABELS[s]}`}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-80"
+                >
+                  {index + 1}
+                </button>
+              ) : (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-muted-foreground">
+                  {index + 1}
+                </div>
+              )}
               {index < STEP_ORDER.length - 1 && (
                 <div
                   className={`h-0.5 flex-1 ${index < stepIndex ? "bg-primary" : "bg-secondary"}`}
@@ -192,20 +342,35 @@ function PlanejarViagemPage() {
               onToggleDestino={toggleDestino}
               onToggleExperiencia={toggleExperienciaDoDestino}
               onVoltar={() => irPara("tipo")}
-              onAvancar={() => irPara("calendario")}
+              onAvancar={() => {
+                setDestinoAtualIndex(0);
+                irPara("calendario");
+              }}
             />
           )}
 
           {step === "calendario" && (
             <CalendarioStep
               destinosSelecionados={destinosSelecionados}
-              datas={datas}
+              destinoAtualIndex={destinoAtualIndex}
+              onIrParaDestino={setDestinoAtualIndex}
+              datasInicio={datasInicio}
+              datasFim={datasFim}
               calendarioAtivo={calendarioAtivo}
               onAbrirCalendario={setCalendarioAtivo}
-              onSelecionarData={(slug, data) => {
-                setDatas((atual) => ({ ...atual, [slug]: data }));
-                setCalendarioAtivo(null);
-              }}
+              onSelecionarData={selecionarDataDoDestino}
+              adultosMap={adultosMap}
+              onAdultosChange={(slug, valor) =>
+                setAdultosMap((atual) => ({ ...atual, [slug]: valor }))
+              }
+              criancasMap={criancasMap}
+              onCriancasChange={(slug, valor) =>
+                setCriancasMap((atual) => ({ ...atual, [slug]: valor }))
+              }
+              interessesMap={interessesMap}
+              onToggleInteresse={toggleInteresseDoDestino}
+              inclusosMap={inclusosMap}
+              onToggleIncluso={toggleInclusoDoDestino}
               onVoltar={() => irPara("selecao")}
               onAvancar={() => irPara("detalhes")}
             />
@@ -213,18 +378,8 @@ function PlanejarViagemPage() {
 
           {step === "detalhes" && (
             <DetalhesStep
-              duracaoNoites={duracaoNoites}
-              onDuracaoChange={setDuracaoNoites}
-              interesses={interesses}
-              onToggleInteresse={toggleInteresse}
               contexto={contexto}
               onContextoChange={setContexto}
-              adultos={adultos}
-              onAdultosChange={setAdultos}
-              criancas={criancas}
-              onCriancasChange={setCriancas}
-              inclusos={inclusos}
-              onToggleIncluso={toggleIncluso}
               onVoltar={() => irPara("calendario")}
               onAvancar={() => irPara("resumo")}
             />
@@ -234,16 +389,17 @@ function PlanejarViagemPage() {
             <ResumoStep
               destinosSelecionados={destinosSelecionados}
               selecoesMap={selecoesMap}
-              datas={datas}
-              duracaoNoites={duracaoNoites}
-              interesses={interesses}
+              datasInicio={datasInicio}
+              datasFim={datasFim}
+              adultosMap={adultosMap}
+              criancasMap={criancasMap}
+              interessesMap={interessesMap}
+              inclusosMap={inclusosMap}
               contexto={contexto}
-              adultos={adultos}
-              criancas={criancas}
-              inclusos={inclusos}
               enviado={enviado}
               onVoltar={() => irPara("detalhes")}
               onEnviar={handleEnviar}
+              onVerMeusPlanos={verMeusPlanos}
             />
           )}
         </div>
@@ -520,91 +676,262 @@ function SelecaoStep({
 
 function CalendarioStep({
   destinosSelecionados,
-  datas,
+  destinoAtualIndex,
+  onIrParaDestino,
+  datasInicio,
+  datasFim,
   calendarioAtivo,
   onAbrirCalendario,
   onSelecionarData,
+  adultosMap,
+  onAdultosChange,
+  criancasMap,
+  onCriancasChange,
+  interessesMap,
+  onToggleInteresse,
+  inclusosMap,
+  onToggleIncluso,
   onVoltar,
   onAvancar,
 }: {
   destinosSelecionados: string[];
-  datas: Record<string, string>;
+  destinoAtualIndex: number;
+  onIrParaDestino: (index: number) => void;
+  datasInicio: Record<string, string>;
+  datasFim: Record<string, string>;
   calendarioAtivo: string | null;
   onAbrirCalendario: (slug: string | null) => void;
   onSelecionarData: (slug: string, data: string) => void;
+  adultosMap: Record<string, number>;
+  onAdultosChange: (slug: string, valor: number) => void;
+  criancasMap: Record<string, number>;
+  onCriancasChange: (slug: string, valor: number) => void;
+  interessesMap: Record<string, string[]>;
+  onToggleInteresse: (slug: string, valor: string) => void;
+  inclusosMap: Record<string, string[]>;
+  onToggleIncluso: (slug: string, valor: string) => void;
   onVoltar: () => void;
   onAvancar: () => void;
 }) {
-  const podeAvancar = destinosSelecionados.every((slug) => datas[slug]);
+  const slug = destinosSelecionados[destinoAtualIndex];
+  const destino = destinos.find((d) => d.slug === slug);
+  if (!slug || !destino) return null;
+
+  const inicio = datasInicio[slug];
+  const fim = datasFim[slug];
+  const noites = noitesEntre(inicio, fim);
+  const ehUltimo = destinoAtualIndex === destinosSelecionados.length - 1;
+
+  // Conflitos entre este destino e outros que já têm datas escolhidas.
+  const conflitosComOutros = destinosSelecionados
+    .filter((s) => s !== slug && datasInicio[s] && datasFim[s])
+    .filter((s) => {
+      if (!inicio || !fim) return false;
+      const oInicio = datasInicio[s]!;
+      const oFim = datasFim[s]!;
+      return inicio < oFim && oInicio < fim;
+    });
+
+  const semFolgaComOutros = destinosSelecionados
+    .filter((s) => s !== slug && datasInicio[s] && datasFim[s])
+    .filter((s) => {
+      if (!inicio || !fim) return false;
+      const oInicio = datasInicio[s]!;
+      const oFim = datasFim[s]!;
+      return fim === oInicio || oFim === inicio;
+    });
+
+  const todasAsDatasPreenchidas = destinosSelecionados.every(
+    (s) => datasInicio[s] && datasFim[s],
+  );
+
+  const podeAvancarDesteDestino =
+    !!inicio && !!fim && conflitosComOutros.length === 0;
+  const podeAvancar = ehUltimo
+    ? podeAvancarDesteDestino && todasAsDatasPreenchidas
+    : podeAvancarDesteDestino;
+
+  function handleVoltar() {
+    if (destinoAtualIndex === 0) onVoltar();
+    else onIrParaDestino(destinoAtualIndex - 1);
+  }
+
+  function handleAvancar() {
+    if (ehUltimo) onAvancar();
+    else onIrParaDestino(destinoAtualIndex + 1);
+  }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-2xl space-y-8">
       <div>
-        <h2 className="text-balance text-2xl md:text-3xl">
-          Quando você quer viajar?
+        <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+          Destino {destinoAtualIndex + 1} de {destinosSelecionados.length}
+        </span>
+        <h2 className="mt-2 text-balance text-2xl md:text-3xl">
+          {destino.nome}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Escolha uma data de início para cada destino selecionado — se forem em
-          épocas diferentes, sem problema.
+          Escolha início e fim, quem vai, interesses e o que gostaria que
+          estivesse incluso nesse destino.
         </p>
       </div>
 
-      <div className="space-y-4">
-        {destinosSelecionados.map((slug) => {
-          const destino = destinos.find((d) => d.slug === slug);
-          if (!destino) return null;
-          const dataEscolhida = datas[slug];
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-foreground">Datas</p>
+            <p className="text-sm text-muted-foreground">
+              {inicio && fim
+                ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                : inicio
+                  ? `Início: ${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} — agora escolha a data de fim`
+                  : "Nenhuma data escolhida ainda"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              onAbrirCalendario(calendarioAtivo === slug ? null : slug)
+            }
+            className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            {inicio && fim ? "Trocar datas" : "Escolher datas"}
+          </button>
+        </div>
 
-          return (
-            <div
-              key={slug}
-              className="rounded-2xl border border-border bg-card p-5"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="font-display text-lg">{destino.nome}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {dataEscolhida
-                      ? `Data escolhida: ${new Date(`${dataEscolhida}T00:00:00`).toLocaleDateString("pt-BR")}`
-                      : "Nenhuma data escolhida ainda"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onAbrirCalendario(calendarioAtivo === slug ? null : slug)
-                  }
-                  className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-                >
-                  {dataEscolhida ? "Trocar data" : "Escolher data"}
-                </button>
-              </div>
-
-              {calendarioAtivo === slug && (
-                <div className="relative mt-5 overflow-hidden rounded-2xl">
-                  <img
-                    src={heroImg}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/50 to-forest-900/30" />
-                  <div className="relative flex justify-center p-6">
-                    <Calendar
-                      value={dataEscolhida}
-                      onSelect={(iso) => onSelecionarData(slug, iso)}
-                    />
-                  </div>
-                </div>
-              )}
+        {calendarioAtivo === slug && (
+          <div className="relative mt-5 overflow-hidden rounded-2xl">
+            <img
+              src={heroImg}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/50 to-forest-900/30" />
+            <div className="relative flex flex-col items-center gap-3 p-6">
+              <p className="text-sm font-medium text-sand-50">
+                {!inicio
+                  ? "Escolha a data de início"
+                  : !fim
+                    ? "Agora escolha a data de fim"
+                    : "Clique numa data pra recomeçar a escolha"}
+              </p>
+              <Calendar
+                rangeStart={inicio}
+                rangeEnd={fim}
+                onSelect={(iso) => onSelecionarData(slug, iso)}
+              />
             </div>
-          );
-        })}
+          </div>
+        )}
+
+        {conflitosComOutros.length > 0 && (
+          <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            Essas datas cruzam com{" "}
+            {conflitosComOutros
+              .map((s) => destinos.find((d) => d.slug === s)?.nome ?? s)
+              .join(", ")}
+            . Ajuste um dos dois períodos — você não pode estar em dois lugares
+            ao mesmo tempo.
+          </p>
+        )}
+        {conflitosComOutros.length === 0 && semFolgaComOutros.length > 0 && (
+          <p className="mt-4 rounded-xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
+            Essas datas encostam direto em{" "}
+            {semFolgaComOutros
+              .map((s) => destinos.find((d) => d.slug === s)?.nome ?? s)
+              .join(", ")}
+            , sem folga pro deslocamento. Vale considerar pelo menos 1 dia a
+            mais entre os destinos.
+          </p>
+        )}
+
+        <div className="mt-5 grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-foreground">
+              Adultos
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={adultosMap[slug] ?? 2}
+              onChange={(e) => onAdultosChange(slug, Number(e.target.value))}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-foreground">
+              Crianças
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={30}
+              value={criancasMap[slug] ?? 0}
+              onChange={(e) => onCriancasChange(slug, Number(e.target.value))}
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+            />
+          </div>
+        </div>
+
+        <div className="mt-5 border-t border-border pt-5">
+          <p className="text-sm font-medium text-foreground">
+            Interesses em {destino.nome.split(",")[0]}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {destino.interessesDisponiveis.map((interesse) => {
+              const marcado = (interessesMap[slug] ?? []).includes(interesse);
+              return (
+                <button
+                  key={interesse}
+                  type="button"
+                  onClick={() => onToggleInteresse(slug, interesse)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                    marcado
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {marcado && <Check className="h-3.5 w-3.5" />}
+                  {interesse}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-5 border-t border-border pt-5">
+          <p className="text-sm font-medium text-foreground">
+            O que gostaria que estivesse incluso em {destino.nome.split(",")[0]}
+            ?
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {destino.inclusosDisponiveis.map((item) => {
+              const marcado = (inclusosMap[slug] ?? []).includes(item);
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => onToggleIncluso(slug, item)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                    marcado
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {marcado && <Check className="h-3.5 w-3.5" />}
+                  {item}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-between border-t border-border pt-6">
         <button
           type="button"
-          onClick={onVoltar}
+          onClick={handleVoltar}
           className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -613,10 +940,10 @@ function CalendarioStep({
         <button
           type="button"
           disabled={!podeAvancar}
-          onClick={onAvancar}
+          onClick={handleAvancar}
           className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
         >
-          Continuar
+          {ehUltimo ? "Continuar" : "Próximo destino"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
@@ -625,33 +952,13 @@ function CalendarioStep({
 }
 
 function DetalhesStep({
-  duracaoNoites,
-  onDuracaoChange,
-  interesses,
-  onToggleInteresse,
   contexto,
   onContextoChange,
-  adultos,
-  onAdultosChange,
-  criancas,
-  onCriancasChange,
-  inclusos,
-  onToggleIncluso,
   onVoltar,
   onAvancar,
 }: {
-  duracaoNoites: number;
-  onDuracaoChange: (valor: number) => void;
-  interesses: string[];
-  onToggleInteresse: (valor: string) => void;
   contexto: string;
   onContextoChange: (valor: string) => void;
-  adultos: number;
-  onAdultosChange: (valor: number) => void;
-  criancas: number;
-  onCriancasChange: (valor: number) => void;
-  inclusos: string[];
-  onToggleIncluso: (valor: string) => void;
   onVoltar: () => void;
   onAvancar: () => void;
 }) {
@@ -659,118 +966,13 @@ function DetalhesStep({
     <div className="mx-auto max-w-2xl space-y-10">
       <div>
         <h2 className="text-balance text-2xl md:text-3xl">
-          Conte mais sobre a viagem
+          Mais algum contexto sobre a viagem?
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Isso ajuda nossa equipe a montar uma proposta sob medida.
+          Isso ajuda nossa equipe a montar uma proposta sob medida — pessoas,
+          interesses e o que incluir já foram definidos por destino no passo
+          anterior.
         </p>
-      </div>
-
-      <div>
-        <label
-          htmlFor="duracao"
-          className="text-sm font-medium text-foreground"
-        >
-          Quantas noites, em cada destino?
-        </label>
-        <input
-          id="duracao"
-          type="number"
-          min={1}
-          max={30}
-          value={duracaoNoites}
-          onChange={(e) => onDuracaoChange(Number(e.target.value))}
-          className="mt-1.5 w-32 rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-        />
-      </div>
-
-      <div>
-        <p className="text-sm font-medium text-foreground">
-          Quais desses interesses combinam com a viagem?
-        </p>
-        <div className="mt-3 flex flex-wrap gap-3">
-          {INTERESSES_DISPONIVEIS.map((interesse) => {
-            const marcado = interesses.includes(interesse);
-            return (
-              <button
-                key={interesse}
-                type="button"
-                onClick={() => onToggleInteresse(interesse)}
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                  marcado
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border text-foreground hover:bg-secondary"
-                }`}
-              >
-                {marcado && <Check className="h-3.5 w-3.5" />}
-                {interesse}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <label
-            htmlFor="adultos"
-            className="text-sm font-medium text-foreground"
-          >
-            Adultos
-          </label>
-          <input
-            id="adultos"
-            type="number"
-            min={1}
-            max={30}
-            value={adultos}
-            onChange={(e) => onAdultosChange(Number(e.target.value))}
-            className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="criancas"
-            className="text-sm font-medium text-foreground"
-          >
-            Crianças
-          </label>
-          <input
-            id="criancas"
-            type="number"
-            min={0}
-            max={30}
-            value={criancas}
-            onChange={(e) => onCriancasChange(Number(e.target.value))}
-            className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-          />
-        </div>
-      </div>
-
-      <div>
-        <p className="text-sm font-medium text-foreground">
-          O que você espera que esteja incluso?
-        </p>
-        <div className="mt-3 flex flex-wrap gap-3">
-          {INCLUSOS_DISPONIVEIS.map((item) => {
-            const marcado = inclusos.includes(item);
-            return (
-              <button
-                key={item}
-                type="button"
-                onClick={() => onToggleIncluso(item)}
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                  marcado
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border text-foreground hover:bg-secondary"
-                }`}
-              >
-                {marcado && <Check className="h-3.5 w-3.5" />}
-                {item}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       <div>
@@ -778,11 +980,11 @@ function DetalhesStep({
           htmlFor="contexto"
           className="text-sm font-medium text-foreground"
         >
-          Mais algum contexto? (opcional)
+          Contexto adicional (opcional)
         </label>
         <textarea
           id="contexto"
-          rows={4}
+          rows={5}
           value={contexto}
           onChange={(e) => onContextoChange(e.target.value)}
           placeholder="Ex: é uma viagem de aniversário de casamento, alguém do grupo tem dificuldade de locomoção, preferimos hospedagem mais rústica, etc."
@@ -815,29 +1017,31 @@ function DetalhesStep({
 function ResumoStep({
   destinosSelecionados,
   selecoesMap,
-  datas,
-  duracaoNoites,
-  interesses,
+  datasInicio,
+  datasFim,
+  adultosMap,
+  criancasMap,
+  interessesMap,
+  inclusosMap,
   contexto,
-  adultos,
-  criancas,
-  inclusos,
   enviado,
   onVoltar,
   onEnviar,
+  onVerMeusPlanos,
 }: {
   destinosSelecionados: string[];
   selecoesMap: SelecoesMap;
-  datas: Record<string, string>;
-  duracaoNoites: number;
-  interesses: string[];
+  datasInicio: Record<string, string>;
+  datasFim: Record<string, string>;
+  adultosMap: Record<string, number>;
+  criancasMap: Record<string, number>;
+  interessesMap: Record<string, string[]>;
+  inclusosMap: Record<string, string[]>;
   contexto: string;
-  adultos: number;
-  criancas: number;
-  inclusos: string[];
   enviado: boolean;
   onVoltar: () => void;
   onEnviar: () => void;
+  onVerMeusPlanos: () => void;
 }) {
   const mensagemWhatsapp = useMemo(() => {
     const linhasDestinos = destinosSelecionados.map((slug) => {
@@ -846,22 +1050,35 @@ function ResumoStep({
         .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
         .filter(Boolean)
         .join(", ");
-      const data = datas[slug]
-        ? new Date(`${datas[slug]}T00:00:00`).toLocaleDateString("pt-BR")
-        : "data a combinar";
-      return `- ${destino?.nome} (${data}): ${exps || "experiências a combinar"}`;
+      const inicio = datasInicio[slug];
+      const fim = datasFim[slug];
+      const noites = noitesEntre(inicio, fim);
+      const periodo =
+        inicio && fim
+          ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")}, ${noites} noites`
+          : "datas a combinar";
+      const adultos = adultosMap[slug] ?? 2;
+      const criancas = criancasMap[slug] ?? 0;
+      const pessoas = `${adultos} adulto(s)${criancas > 0 ? ` e ${criancas} criança(s)` : ""}`;
+      const interesses = interessesMap[slug] ?? [];
+      const inclusos = inclusosMap[slug] ?? [];
+
+      return [
+        `- ${destino?.nome} (${periodo}) — ${pessoas}`,
+        `  Experiências: ${exps || "a combinar"}`,
+        interesses.length > 0 ? `  Interesses: ${interesses.join(", ")}` : null,
+        inclusos.length > 0
+          ? `  Gostaria que incluísse: ${inclusos.join(", ")}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
     });
 
     return encodeURIComponent(
       [
         "Olá! Montei um plano de viagem no site e queria fechar com vocês:",
         ...linhasDestinos,
-        `Duração: ${duracaoNoites} noites por destino`,
-        `Pessoas: ${adultos} adulto(s)${criancas > 0 ? ` e ${criancas} criança(s)` : ""}`,
-        interesses.length > 0 ? `Interesses: ${interesses.join(", ")}` : null,
-        inclusos.length > 0
-          ? `Gostaria que incluísse: ${inclusos.join(", ")}`
-          : null,
         contexto ? `Mais detalhes: ${contexto}` : null,
       ]
         .filter(Boolean)
@@ -870,12 +1087,12 @@ function ResumoStep({
   }, [
     destinosSelecionados,
     selecoesMap,
-    datas,
-    duracaoNoites,
-    adultos,
-    criancas,
-    interesses,
-    inclusos,
+    datasInicio,
+    datasFim,
+    adultosMap,
+    criancasMap,
+    interessesMap,
+    inclusosMap,
     contexto,
   ]);
 
@@ -897,7 +1114,13 @@ function ResumoStep({
           const exps = Array.from(selecoesMap[slug] ?? [])
             .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
             .filter(Boolean);
-          const data = datas[slug];
+          const inicio = datasInicio[slug];
+          const fim = datasFim[slug];
+          const noites = noitesEntre(inicio, fim);
+          const adultos = adultosMap[slug] ?? 2;
+          const criancas = criancasMap[slug] ?? 0;
+          const interesses = interessesMap[slug] ?? [];
+          const inclusos = inclusosMap[slug] ?? [];
 
           return (
             <div
@@ -906,43 +1129,40 @@ function ResumoStep({
             >
               <p className="font-display text-lg">{destino?.nome}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {data
-                  ? new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR")
-                  : "Data a combinar"}{" "}
-                · {duracaoNoites} noites
+                {inicio && fim
+                  ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                  : "Datas a combinar"}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {adultos} adulto(s)
+                {criancas > 0 ? `, ${criancas} criança(s)` : ""}
               </p>
               {exps.length > 0 && (
                 <p className="mt-2 text-sm text-foreground">
                   {exps.join(", ")}
                 </p>
               )}
+              {interesses.length > 0 && (
+                <p className="mt-2 text-sm text-foreground">
+                  <span className="font-medium">Interesses:</span>{" "}
+                  {interesses.join(", ")}
+                </p>
+              )}
+              {inclusos.length > 0 && (
+                <p className="mt-2 text-sm text-foreground">
+                  <span className="font-medium">Gostaria que incluísse:</span>{" "}
+                  {inclusos.join(", ")}
+                </p>
+              )}
             </div>
           );
         })}
 
-        <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
-          <p>
-            <span className="font-medium">Pessoas:</span> {adultos} adulto(s)
-            {criancas > 0 ? `, ${criancas} criança(s)` : ""}
-          </p>
-          {interesses.length > 0 && (
-            <p className="mt-2">
-              <span className="font-medium">Interesses:</span>{" "}
-              {interesses.join(", ")}
-            </p>
-          )}
-          {inclusos.length > 0 && (
-            <p className="mt-2">
-              <span className="font-medium">Gostaria que incluísse:</span>{" "}
-              {inclusos.join(", ")}
-            </p>
-          )}
-          {contexto && (
-            <p className="mt-2">
-              <span className="font-medium">Contexto:</span> {contexto}
-            </p>
-          )}
-        </div>
+        {contexto && (
+          <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+            <span className="font-medium">Contexto:</span> {contexto}
+          </div>
+        )}
       </div>
 
       {enviado ? (
@@ -953,7 +1173,7 @@ function ResumoStep({
             em contato com uma proposta detalhada — ou, se preferir, já fala com
             a gente agora pelo WhatsApp.
           </p>
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 flex flex-col items-center gap-3">
             <a
               href={`https://wa.me/5511963220494?text=${mensagemWhatsapp}`}
               target="_blank"
@@ -961,6 +1181,13 @@ function ResumoStep({
             >
               <WhatsappButton variant="solid" />
             </a>
+            <button
+              type="button"
+              onClick={onVerMeusPlanos}
+              className="text-sm font-semibold uppercase tracking-wide text-sand-50 underline-offset-4 hover:underline"
+            >
+              Ver meus planos de viagem
+            </button>
           </div>
         </div>
       ) : (
@@ -984,5 +1211,169 @@ function ResumoStep({
         </div>
       )}
     </div>
+  );
+}
+
+function ListaPlanosView({
+  nome,
+  planos,
+  onNovoPlanejamento,
+  onAbrirPlano,
+}: {
+  nome: string;
+  planos: PlanoViagem[];
+  onNovoPlanejamento: () => void;
+  onAbrirPlano: (plano: PlanoViagem) => void;
+}) {
+  return (
+    <section className="section-padding">
+      <div className="container-tight">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+              Planejar viagem
+            </span>
+            <h1 className="mt-3 text-balance text-3xl md:text-4xl">
+              Suas viagens, {nome}
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={onNovoPlanejamento}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" />
+            Novo planejamento de viagem
+          </button>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-2xl space-y-4">
+          {planos.map((plano) => {
+            const nomesDestinos = plano.selecoes
+              .map((s) => destinos.find((d) => d.slug === s.destinoSlug)?.nome)
+              .filter(Boolean)
+              .join(", ");
+
+            return (
+              <button
+                key={plano.id}
+                type="button"
+                onClick={() => onAbrirPlano(plano)}
+                className="flex w-full items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:border-primary"
+              >
+                <div>
+                  <p className="font-display text-lg">
+                    {nomesDestinos || "Plano de viagem"}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Enviado em{" "}
+                    {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+                  Em análise
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DetalhePlanoView({
+  plano,
+  onVoltar,
+}: {
+  plano: PlanoViagem;
+  onVoltar: () => void;
+}) {
+  return (
+    <section className="section-padding">
+      <div className="container-tight">
+        <div className="mx-auto max-w-2xl">
+          <button
+            type="button"
+            onClick={onVoltar}
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para minhas viagens
+          </button>
+
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+            <h1 className="text-balance text-2xl md:text-3xl">
+              Detalhes do plano
+            </h1>
+            <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+              Em análise
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enviado em {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}.
+            Nossa equipe está analisando e vai entrar em contato com uma
+            proposta detalhada.
+          </p>
+
+          <div className="mt-8 space-y-4">
+            {plano.selecoes.map((selecao) => {
+              const destino = destinos.find(
+                (d) => d.slug === selecao.destinoSlug,
+              );
+              const exps = selecao.experienciaSlugs
+                .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
+                .filter(Boolean);
+              const noites = noitesEntre(selecao.dataInicio, selecao.dataFim);
+
+              return (
+                <div
+                  key={selecao.destinoSlug}
+                  className="rounded-2xl border border-border bg-card p-5"
+                >
+                  <p className="font-display text-lg">{destino?.nome}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {selecao.dataInicio && selecao.dataFim
+                      ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                      : "Datas a combinar"}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {selecao.adultos} adulto(s)
+                    {selecao.criancas > 0
+                      ? `, ${selecao.criancas} criança(s)`
+                      : ""}
+                  </p>
+                  {exps.length > 0 && (
+                    <p className="mt-2 text-sm text-foreground">
+                      {exps.join(", ")}
+                    </p>
+                  )}
+                  {selecao.interesses.length > 0 && (
+                    <p className="mt-2 text-sm text-foreground">
+                      <span className="font-medium">Interesses:</span>{" "}
+                      {selecao.interesses.join(", ")}
+                    </p>
+                  )}
+                  {selecao.inclusos.length > 0 && (
+                    <p className="mt-2 text-sm text-foreground">
+                      <span className="font-medium">
+                        Gostaria que incluísse:
+                      </span>{" "}
+                      {selecao.inclusos.join(", ")}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+
+            {plano.contexto && (
+              <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+                <span className="font-medium">Contexto:</span> {plano.contexto}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

@@ -34,6 +34,14 @@ export interface Destino {
   duracao: string;
   grupo: string;
   incluso: string[];
+  /**
+   * Subconjuntos de INTERESSES_DISPONIVEIS / INCLUSOS_DISPONIVEIS (ver
+   * src/lib/trip-plan.ts) relevantes para este destino — usados para
+   * filtrar as opções mostradas no formulário de planejar viagem (não faz
+   * sentido oferecer "Experiência Aérea" para Ubatuba, por exemplo).
+   */
+  interessesDisponiveis: string[];
+  inclusosDisponiveis: string[];
   mapsQuery: string;
   mapsZoom: number;
   atracoes: Atracao[];
@@ -58,6 +66,14 @@ export const destinos: Destino[] = [
       "Estadia com café da manhã",
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
+    ],
+    interessesDisponiveis: ["Aventura", "Natureza", "Gastronomia"],
+    inclusosDisponiveis: [
+      "Experiência Aérea",
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
     ],
     mapsQuery: "Bonito, MS, Brasil",
     mapsZoom: 7,
@@ -128,6 +144,14 @@ export const destinos: Destino[] = [
       "Estadia com café da manhã",
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
+    ],
+    interessesDisponiveis: ["Aventura", "Natureza"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Lazer",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
     ],
     mapsQuery: "Socorro, SP, Brasil",
     mapsZoom: 7,
@@ -208,6 +232,14 @@ export const destinos: Destino[] = [
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
     ],
+    interessesDisponiveis: ["Aventura", "Natureza"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Lazer",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
+    ],
     mapsQuery: "Brotas, SP, Brasil",
     mapsZoom: 7,
     atracoes: [
@@ -271,6 +303,15 @@ export const destinos: Destino[] = [
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
     ],
+    interessesDisponiveis: ["Praia", "Natureza", "Aventura"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Experiências Culturais e de Entretenimento",
+      "Lazer",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
+    ],
     mapsQuery: "Ubatuba, SP, Brasil",
     mapsZoom: 7,
     atracoes: [
@@ -325,6 +366,13 @@ export const destinos: Destino[] = [
       "Estadia com café da manhã",
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
+    ],
+    interessesDisponiveis: ["Aventura", "Natureza"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
     ],
     mapsQuery:
       "PETAR - Parque Estadual Turístico do Alto Ribeira, Iporanga, SP, Brasil",
@@ -382,6 +430,15 @@ export const destinos: Destino[] = [
       "Estadia com café da manhã",
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
+    ],
+    interessesDisponiveis: ["Aventura", "Natureza", "Cultura"],
+    inclusosDisponiveis: [
+      "Experiência Aérea",
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Experiências Culturais e de Entretenimento",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
     ],
     mapsQuery: "Parque Nacional do Iguaçu, Foz do Iguaçu, PR, Brasil",
     mapsZoom: 12,
@@ -447,6 +504,14 @@ export const destinos: Destino[] = [
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
     ],
+    interessesDisponiveis: ["Aventura", "Natureza"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Lazer",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
+    ],
     mapsQuery: "São Pedro, SP, Brasil",
     mapsZoom: 7,
     atracoes: [
@@ -502,6 +567,14 @@ export const destinos: Destino[] = [
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
     ],
+    interessesDisponiveis: ["Aventura", "Natureza", "Cultura", "Gastronomia"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Experiências Culturais e de Entretenimento",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
+    ],
     mapsQuery: "Cunha, SP, Brasil",
     mapsZoom: 7,
     atracoes: [
@@ -556,6 +629,14 @@ export const destinos: Destino[] = [
       "Estadia com café da manhã",
       "Passeios e experiências culturais do roteiro",
       "Acompanhamento durante toda a viagem",
+    ],
+    interessesDisponiveis: ["Natureza", "Gastronomia"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Lazer",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
     ],
     mapsQuery: "Olímpia, SP, Brasil",
     mapsZoom: 7,
