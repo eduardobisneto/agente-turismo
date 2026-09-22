@@ -26,7 +26,6 @@ import {
   type PlanoViagem,
   type SelecaoDestino,
 } from "@/lib/trip-plan";
-import heroImg from "@/assets/hero.jpeg";
 
 export const Route = createFileRoute("/planejar-viagem")({
   component: () => (
@@ -76,7 +75,6 @@ function PlanejarViagemPage() {
   const [destinoAtualIndex, setDestinoAtualIndex] = useState(0);
   const [datasInicio, setDatasInicio] = useState<Record<string, string>>({});
   const [datasFim, setDatasFim] = useState<Record<string, string>>({});
-  const [calendarioAtivo, setCalendarioAtivo] = useState<string | null>(null);
 
   const [interessesMap, setInteressesMap] = useState<Record<string, string[]>>(
     {},
@@ -106,7 +104,6 @@ function PlanejarViagemPage() {
     setDestinoAtualIndex(0);
     setDatasInicio({});
     setDatasFim({});
-    setCalendarioAtivo(null);
     setInteressesMap({});
     setAdultosMap({});
     setCriancasMap({});
@@ -212,7 +209,6 @@ function PlanejarViagemPage() {
     }
 
     setDatasFim((atual) => ({ ...atual, [slug]: iso }));
-    setCalendarioAtivo(null);
   }
 
   function toggleInteresseDoDestino(destinoSlug: string, valor: string) {
@@ -371,8 +367,6 @@ function PlanejarViagemPage() {
               onIrParaDestino={setDestinoAtualIndex}
               datasInicio={datasInicio}
               datasFim={datasFim}
-              calendarioAtivo={calendarioAtivo}
-              onAbrirCalendario={setCalendarioAtivo}
               onSelecionarData={selecionarDataDoDestino}
               adultosMap={adultosMap}
               onAdultosChange={(slug, valor) =>
@@ -695,8 +689,6 @@ function CalendarioStep({
   onIrParaDestino,
   datasInicio,
   datasFim,
-  calendarioAtivo,
-  onAbrirCalendario,
   onSelecionarData,
   adultosMap,
   onAdultosChange,
@@ -714,8 +706,6 @@ function CalendarioStep({
   onIrParaDestino: (index: number) => void;
   datasInicio: Record<string, string>;
   datasFim: Record<string, string>;
-  calendarioAtivo: string | null;
-  onAbrirCalendario: (slug: string | null) => void;
   onSelecionarData: (slug: string, data: string) => void;
   adultosMap: Record<string, number>;
   onAdultosChange: (slug: string, valor: number) => void;
@@ -776,15 +766,13 @@ function CalendarioStep({
     else onIrParaDestino(destinoAtualIndex + 1);
   }
 
-  function camposPessoas(escuro: boolean) {
-    const rotulo = escuro ? "text-sand-50" : "text-foreground";
-    const input = escuro
-      ? "mt-1.5 w-full rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-      : "mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary";
+  function camposPessoas() {
+    const input =
+      "mt-1.5 w-full rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary";
     return (
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className={`text-sm font-medium ${rotulo}`}>Adultos</label>
+          <label className="text-sm font-medium text-sand-50">Adultos</label>
           <input
             type="number"
             min={1}
@@ -795,7 +783,7 @@ function CalendarioStep({
           />
         </div>
         <div>
-          <label className={`text-sm font-medium ${rotulo}`}>Crianças</label>
+          <label className="text-sm font-medium text-sand-50">Crianças</label>
           <input
             type="number"
             min={0}
@@ -809,11 +797,10 @@ function CalendarioStep({
     );
   }
 
-  function camposInteresses(escuro: boolean) {
-    const rotulo = escuro ? "text-sand-50" : "text-foreground";
+  function camposInteresses() {
     return (
       <div>
-        <p className={`text-sm font-medium ${rotulo}`}>
+        <p className="text-sm font-medium text-sand-50">
           Interesses em {destino!.nome.split(",")[0]}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -827,9 +814,7 @@ function CalendarioStep({
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   marcado
                     ? "border-primary bg-primary text-primary-foreground"
-                    : escuro
-                      ? "border-sand-50/40 text-sand-50 hover:bg-sand-50/10"
-                      : "border-border text-foreground hover:bg-secondary"
+                    : "border-sand-50/40 text-sand-50 hover:bg-sand-50/10"
                 }`}
               >
                 {marcado && <Check className="h-3.5 w-3.5" />}
@@ -842,11 +827,10 @@ function CalendarioStep({
     );
   }
 
-  function camposInclusos(escuro: boolean) {
-    const rotulo = escuro ? "text-sand-50" : "text-foreground";
+  function camposInclusos() {
     return (
       <div>
-        <p className={`text-sm font-medium ${rotulo}`}>
+        <p className="text-sm font-medium text-sand-50">
           O que gostaria que estivesse incluso em {destino!.nome.split(",")[0]}?
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -860,9 +844,7 @@ function CalendarioStep({
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                   marcado
                     ? "border-primary bg-primary text-primary-foreground"
-                    : escuro
-                      ? "border-sand-50/40 text-sand-50 hover:bg-sand-50/10"
-                      : "border-border text-foreground hover:bg-secondary"
+                    : "border-sand-50/40 text-sand-50 hover:bg-sand-50/10"
                 }`}
               >
                 {marcado && <Check className="h-3.5 w-3.5" />}
@@ -890,70 +872,54 @@ function CalendarioStep({
         </p>
       </div>
 
-      {calendarioAtivo === slug ? (
-        <div className="relative overflow-hidden rounded-2xl">
-          <img
-            src={heroImg}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
-          <div className="relative p-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <p className="text-sm font-medium text-sand-50">
-                {!inicio
-                  ? "Escolha a data de início"
-                  : !fim
-                    ? "Agora escolha a data de fim"
-                    : `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`}
-              </p>
+      {destinosSelecionados.length > 1 && (
+        <div className="flex flex-wrap gap-2 rounded-2xl bg-secondary/60 p-2">
+          {destinosSelecionados.map((s, i) => {
+            const d = destinos.find((dd) => dd.slug === s);
+            const completo = !!datasInicio[s] && !!datasFim[s];
+            const ativo = i === destinoAtualIndex;
+            return (
               <button
+                key={s}
                 type="button"
-                onClick={() => onAbrirCalendario(null)}
-                className="rounded-full border border-sand-50/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-sand-50 transition-colors hover:bg-sand-50/10"
+                onClick={() => onIrParaDestino(i)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${
+                  ativo
+                    ? "bg-primary text-primary-foreground"
+                    : completo
+                      ? "bg-card text-foreground hover:bg-card/70"
+                      : "text-muted-foreground hover:bg-card/50"
+                }`}
               >
-                Fechar
+                {completo && !ativo && <Check className="h-3.5 w-3.5" />}
+                {i + 1}. {d?.nome.split(",")[0] ?? s}
               </button>
-            </div>
-
-            <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
-              <div className="order-2 space-y-6 lg:order-1">
-                {camposPessoas(true)}
-                {camposInteresses(true)}
-                {camposInclusos(true)}
-              </div>
-              <div className="order-1 flex justify-center lg:order-2">
-                <Calendar
-                  rangeStart={inicio}
-                  rangeEnd={fim}
-                  onSelect={(iso) => onSelecionarData(slug, iso)}
-                />
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
-      ) : (
-        <div className="space-y-6 rounded-2xl border border-border bg-card p-5">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-foreground">Datas</p>
-              <p className="text-sm text-muted-foreground">
-                {inicio && fim
-                  ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                  : "Nenhuma data escolhida ainda"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onAbrirCalendario(slug)}
-              className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-            >
-              {inicio && fim ? "Trocar datas" : "Escolher datas"}
-            </button>
-          </div>
+      )}
+
+      <div className="relative overflow-hidden rounded-2xl">
+        <img
+          src={destino.imagem}
+          alt={destino.alt}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
+        <div className="relative p-6">
+          <p className="text-sm font-semibold uppercase tracking-wider text-sand-50">
+            Escolher datas
+          </p>
+          <p className="mt-1 text-sm text-sand-50/80">
+            {!inicio
+              ? "Escolha a data de início"
+              : !fim
+                ? "Agora escolha a data de fim"
+                : `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`}
+          </p>
 
           {conflitosComOutros.length > 0 && (
-            <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <p className="mt-4 rounded-xl bg-destructive px-4 py-3 text-sm text-destructive-foreground">
               Essas datas cruzam com{" "}
               {conflitosComOutros
                 .map((s) => destinos.find((d) => d.slug === s)?.nome ?? s)
@@ -963,7 +929,7 @@ function CalendarioStep({
             </p>
           )}
           {conflitosComOutros.length === 0 && semFolgaComOutros.length > 0 && (
-            <p className="rounded-xl bg-amber-100 px-4 py-3 text-sm text-amber-900">
+            <p className="mt-4 rounded-xl bg-amber-400 px-4 py-3 text-sm text-amber-950">
               Essas datas encostam direto em{" "}
               {semFolgaComOutros
                 .map((s) => destinos.find((d) => d.slug === s)?.nome ?? s)
@@ -973,17 +939,22 @@ function CalendarioStep({
             </p>
           )}
 
-          <div className="border-t border-border pt-5">
-            {camposPessoas(false)}
-          </div>
-          <div className="border-t border-border pt-5">
-            {camposInteresses(false)}
-          </div>
-          <div className="border-t border-border pt-5">
-            {camposInclusos(false)}
+          <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
+            <div className="order-2 space-y-6 lg:order-1">
+              {camposPessoas()}
+              {camposInteresses()}
+              {camposInclusos()}
+            </div>
+            <div className="order-1 flex justify-center lg:order-2">
+              <Calendar
+                rangeStart={inicio}
+                rangeEnd={fim}
+                onSelect={(iso) => onSelecionarData(slug, iso)}
+              />
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
       <div className="flex items-center justify-between border-t border-border pt-6">
         <button
@@ -1226,9 +1197,9 @@ function ResumoStep({
         <div className="rounded-2xl bg-forest-900 p-6 text-center text-sand-50">
           <p className="font-display text-xl">Plano enviado!</p>
           <p className="mt-2 text-sm text-forest-100">
-            Recebemos o seu plano de viagem e já abrimos uma conversa no
-            WhatsApp com o resumo. Nossa equipe vai analisar e entrar em contato
-            com uma proposta detalhada.
+            Recebemos o seu plano de viagem. Nossa equipe vai analisar e entrar
+            em contato com uma proposta detalhada — ou, se preferir, já fala com
+            a gente agora pelo WhatsApp.
           </p>
           <div className="mt-4 flex flex-col items-center gap-3">
             <a
@@ -1259,17 +1230,7 @@ function ResumoStep({
           </button>
           <button
             type="button"
-            onClick={() => {
-              // Precisa ser síncrono no clique — se window.open rodar depois
-              // de um setState/useEffect, o navegador trata como popup e
-              // bloqueia por não vir direto de um gesto do usuário.
-              window.open(
-                `https://wa.me/5511963220494?text=${mensagemWhatsapp}`,
-                "_blank",
-                "noopener,noreferrer",
-              );
-              onEnviar();
-            }}
+            onClick={onEnviar}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Enviar plano de viagem
@@ -1293,59 +1254,67 @@ function ListaPlanosView({
   onAbrirPlano: (plano: PlanoViagem) => void;
 }) {
   return (
-    <section className="section-padding">
-      <div className="container-tight">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-              Planejar viagem
-            </span>
-            <h1 className="mt-3 text-balance text-3xl md:text-4xl">
-              Suas viagens, {nome}
-            </h1>
+    <>
+      <section className="section-padding">
+        <div className="container-tight">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+                Planejar viagem
+              </span>
+              <h1 className="mt-3 text-balance text-3xl md:text-4xl">
+                Suas viagens, {nome}
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={onNovoPlanejamento}
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              Novo planejamento de viagem
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onNovoPlanejamento}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            Novo planejamento de viagem
-          </button>
         </div>
+      </section>
 
-        <div className="mx-auto mt-10 max-w-2xl space-y-4">
-          {planos.map((plano) => {
-            const nomesDestinos = plano.selecoes
-              .map((s) => destinos.find((d) => d.slug === s.destinoSlug)?.nome)
-              .filter(Boolean)
-              .join(", ");
+      <section className="section-padding bg-sand-100">
+        <div className="container-tight">
+          <div className="mx-auto max-w-2xl space-y-4">
+            {planos.map((plano) => {
+              const nomesDestinos = plano.selecoes
+                .map(
+                  (s) => destinos.find((d) => d.slug === s.destinoSlug)?.nome,
+                )
+                .filter(Boolean)
+                .join(", ");
 
-            return (
-              <button
-                key={plano.id}
-                type="button"
-                onClick={() => onAbrirPlano(plano)}
-                className="flex w-full items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:border-primary"
-              >
-                <div>
-                  <p className="font-display text-lg">
-                    {nomesDestinos || "Plano de viagem"}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Enviado em{" "}
-                    {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
-                  Em análise
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={plano.id}
+                  type="button"
+                  onClick={() => onAbrirPlano(plano)}
+                  className="flex w-full items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:border-primary"
+                >
+                  <div>
+                    <p className="font-display text-lg">
+                      {nomesDestinos || "Plano de viagem"}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Enviado em{" "}
+                      {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+                    Em análise
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
 
@@ -1383,109 +1352,168 @@ function DetalhePlanoView({
             proposta detalhada.
           </p>
 
-          <div className="mt-8 space-y-4">
-            {plano.selecoes.map((selecao) => {
+          <div className="mt-8">
+            {plano.selecoes.map((selecao, index) => {
               const destino = destinos.find(
                 (d) => d.slug === selecao.destinoSlug,
               );
               const exps = (selecao.experienciaSlugs ?? [])
-                .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
-                .filter(Boolean);
+                .map((s) => experiencias.find((e) => e.slug === s))
+                .filter((e): e is (typeof experiencias)[number] => !!e);
               const noites = noitesEntre(selecao.dataInicio, selecao.dataFim);
               const interesses = selecao.interesses ?? [];
               const inclusos = selecao.inclusos ?? [];
+              const ehUltimo = index === plano.selecoes.length - 1;
 
               return (
-                <div
-                  key={selecao.destinoSlug}
-                  className="overflow-hidden rounded-2xl border border-border bg-card"
-                >
-                  <div className="flex items-center gap-4 border-b border-border p-5">
-                    {destino?.imagem && (
-                      <img
-                        src={destino.imagem}
-                        alt={destino.alt}
-                        className="h-16 w-16 shrink-0 rounded-xl object-cover"
-                      />
-                    )}
-                    <div>
-                      <p className="font-display text-lg">{destino?.nome}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {selecao.dataInicio && selecao.dataFim
-                          ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                          : "Datas a combinar"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {selecao.adultos ?? 2} adulto(s)
-                        {(selecao.criancas ?? 0) > 0
-                          ? `, ${selecao.criancas} criança(s)`
-                          : ""}
-                      </p>
+                <div key={selecao.destinoSlug} className="relative flex gap-5">
+                  <div className="flex flex-col items-center">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      {index + 1}
                     </div>
+                    {!ehUltimo && (
+                      <div className="my-1 w-0.5 flex-1 bg-border" />
+                    )}
                   </div>
 
-                  <div className="space-y-4 p-5">
-                    {exps.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Experiências
+                  <div
+                    className={`flex-1 overflow-hidden rounded-2xl border border-border bg-card ${ehUltimo ? "" : "mb-8"}`}
+                  >
+                    <div className="relative h-40 overflow-hidden sm:h-48">
+                      {destino?.imagem ? (
+                        <img
+                          src={destino.imagem}
+                          alt={destino.alt}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-forest-800" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-forest-900/85 via-forest-900/20 to-transparent" />
+                      <div className="absolute bottom-4 left-5 right-5 text-sand-50">
+                        <p className="font-display text-xl">{destino?.nome}</p>
+                        <p className="mt-1 text-sm text-sand-50/90">
+                          {selecao.dataInicio && selecao.dataFim
+                            ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                            : "Datas a combinar"}
+                          {" · "}
+                          {selecao.adultos ?? 2} adulto(s)
+                          {(selecao.criancas ?? 0) > 0
+                            ? `, ${selecao.criancas} criança(s)`
+                            : ""}
                         </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {exps.map((titulo) => (
-                            <span
-                              key={titulo}
-                              className="rounded-full border border-border bg-secondary px-3 py-1 text-sm text-secondary-foreground"
-                            >
-                              {titulo}
-                            </span>
-                          ))}
-                        </div>
                       </div>
-                    )}
-                    {interesses.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Interesses
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {interesses.map((interesse) => (
-                            <span
-                              key={interesse}
-                              className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
-                            >
-                              {interesse}
-                            </span>
-                          ))}
+                    </div>
+
+                    <div className="space-y-5 p-5">
+                      {exps.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Experiências
+                          </p>
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            {exps.map((exp) => {
+                              const Icon = exp.icon;
+                              return (
+                                <div
+                                  key={exp.slug}
+                                  className="relative aspect-[4/3] overflow-hidden rounded-xl"
+                                >
+                                  {exp.imagem ? (
+                                    <img
+                                      src={exp.imagem}
+                                      alt={exp.alt}
+                                      className="h-full w-full object-cover"
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center bg-forest-800">
+                                      {Icon && (
+                                        <Icon className="h-10 w-10 text-forest-500" />
+                                      )}
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-forest-900/70 to-transparent" />
+                                  <p className="absolute bottom-3 left-3 right-3 font-display text-sm text-sand-50">
+                                    {exp.titulo}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {inclusos.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Gostaria que incluísse
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {inclusos.map((item) => (
-                            <span
-                              key={item}
-                              className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
-                            >
-                              {item}
-                            </span>
-                          ))}
+                      )}
+                      {interesses.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Interesses
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {interesses.map((interesse) => (
+                              <span
+                                key={interesse}
+                                className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
+                              >
+                                {interesse}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                      {inclusos.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Gostaria que incluísse
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {inclusos.map((item) => (
+                              <span
+                                key={item}
+                                className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
 
             {plano.contexto && (
-              <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+              <div className="mt-2 rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
                 <span className="font-medium">Contexto:</span> {plano.contexto}
               </div>
             )}
+
+            <div className="mt-8 rounded-2xl border border-border bg-card p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Atualizações da nossa equipe
+              </p>
+              <div className="mt-4 space-y-4 border-l-2 border-border pl-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Plano enviado
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(plano.criadoEm).toLocaleDateString("pt-BR")} às{" "}
+                    {new Date(plano.criadoEm).toLocaleTimeString("pt-BR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    · você
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Assim que o analista da Aventura Organizada revisar o plano,
+                  os comentários, ajustes e o status atualizado vão aparecer
+                  aqui — com data, hora e quem fez cada mudança.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

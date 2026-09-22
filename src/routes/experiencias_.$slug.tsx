@@ -64,7 +64,7 @@ function ExperienciaPage() {
         </div>
       </section>
 
-      <section className="section-padding bg-sand-100">
+      <section className="section-padding">
         <div className="container-tight grid gap-10 lg:grid-cols-[2fr_1fr]">
           <div>
             <h2 className="text-balance text-3xl md:text-4xl">
@@ -145,7 +145,7 @@ function ExperienciaPage() {
         </div>
       </section>
 
-      <section className="section-padding">
+      <section className="section-padding bg-sand-100">
         <div className="container-tight">
           <div className="mx-auto max-w-2xl text-center">
             <span className="text-sm font-semibold uppercase tracking-wider text-primary">
