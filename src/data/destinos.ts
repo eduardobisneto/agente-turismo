@@ -392,7 +392,7 @@ export const destinos: Destino[] = [
           "Passarela de cerca de 1,2 km à beira do cânion, com vista panorâmica para a maior parte das quedas do lado brasileiro.",
         imagem: trilhasImg,
         alt: "Foto ilustrativa de trilha com vista para a natureza",
-        experiencias: ["trilhas"],
+        experiencias: ["trilhas", "cachoeiras"],
       },
       {
         nome: "Garganta do Diabo",
@@ -400,13 +400,23 @@ export const destinos: Destino[] = [
           "A queda mais impressionante do conjunto, com passarela que leva bem de frente para a força da água — o ponto alto da visita.",
         imagem: cachoeiraImg,
         alt: "Foto ilustrativa de queda d'água em meio à natureza",
+        experiencias: ["cachoeiras"],
       },
       {
         nome: "Macuco Safari",
         descricao:
-          "Passeio de barco que se aproxima da base das quedas, para sentir de perto a força e a espuma da água — vale levar roupa de troca.",
+          "Passeio guiado que combina um trecho de trilha em veículo elétrico pela mata com um passeio de barco que se aproxima da base das quedas — vale levar roupa de troca.",
         imagem: cachoeiraImg,
         alt: "Foto ilustrativa de queda d'água em meio à natureza",
+        experiencias: ["safaris"],
+      },
+      {
+        nome: "Parque das Aves",
+        descricao:
+          "Parque com viveiros imersivos ao lado do Parque Nacional, com centenas de aves e outros animais em meio à Mata Atlântica.",
+        imagem: trilhasImg,
+        alt: "Foto ilustrativa de trilha em meio à Mata Atlântica",
+        experiencias: ["parques"],
       },
     ],
     historia: [

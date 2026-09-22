@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from "react";
 import {
   ArrowDownToLine,
+  Binoculars,
   Cable,
   Flashlight,
   Gauge,
@@ -9,6 +10,7 @@ import {
   Sailboat,
   Target,
   TreePine,
+  Trees,
 } from "lucide-react";
 
 import flutuacaoImg from "@/assets/flutuacao.jpeg";
@@ -462,6 +464,60 @@ export const experiencias: Experiencia[] = [
       epocaResumo: "O ano todo",
       seguranca:
         "O uso de máscara de proteção facial é obrigatório durante toda a partida, sem exceção, e os marcadores costumam ter a velocidade limitada por normas de segurança do operador. É importante seguir sempre as instruções do monitor sobre as áreas seguras e nunca remover a máscara dentro da arena.",
+    },
+  },
+  {
+    slug: "parques",
+    titulo: "Parques",
+    descricao:
+      "Visitas a parques temáticos e naturais, com estrutura pronta para toda a família.",
+    icon: Trees,
+    contexto: {
+      opcoesTitulo: "Tipos",
+      opcoes: [
+        "Parques temáticos de aventura — várias atividades em um só lugar",
+        "Parques naturais e de observação — foco em fauna e flora",
+      ],
+      beneficios: [
+        "Estrutura pronta, com banheiros, lanchonete e áreas de descanso",
+        "Reúne várias atividades em um só lugar, otimizando o tempo do roteiro",
+        "Opção para todas as idades, do bebê ao avô",
+      ],
+      melhorEpoca:
+        "O ano todo, já que a maioria dos parques tem estrutura preparada e funciona independentemente do clima.",
+      publico:
+        "Parques com estrutura e trilhas planas costumam ser adequados para todas as idades, incluindo crianças pequenas e idosos. Atividades específicas dentro do parque (como tirolesa ou arvorismo) têm suas próprias idades mínimas — vale checar a experiência específica oferecida em cada parque.",
+      nivel: "Fácil",
+      faixaEtaria: "Todas as idades",
+      epocaResumo: "O ano todo",
+    },
+  },
+  {
+    slug: "safaris",
+    titulo: "Safaris",
+    descricao:
+      "Passeios guiados de barco ou veículo por trilhas e rios, bem de perto da natureza.",
+    icon: Binoculars,
+    contexto: {
+      opcoesTitulo: "Modalidade",
+      opcoes: [
+        "Safári de barco — passeio próximo a quedas d'água ou pela costa",
+        "Safári terrestre — passeio guiado por trilha em veículo elétrico ou 4x4",
+      ],
+      beneficios: [
+        "Observação da paisagem e da natureza bem de perto, com guia especializado",
+        "Passeio dinâmico, ótimo para grupos e famílias",
+        "Costuma incluir trechos de adrenalina, como a aproximação de quedas d'água",
+      ],
+      melhorEpoca:
+        "O ano todo, mas o volume de água nas quedas costuma ser maior de outubro a março, deixando o passeio de barco ainda mais intenso.",
+      publico:
+        "Costuma ser liberado para crianças a partir de 5-6 anos, sempre com colete salva-vidas em passeios de barco. Gestantes e pessoas com problemas cardíacos, de coluna ou pressão alta costumam ter restrição em safáris de barco que se aproximam de corredeiras ou quedas d'água, pela intensidade do movimento.",
+      nivel: "Fácil a moderado",
+      faixaEtaria: "A partir de 5 anos",
+      epocaResumo: "O ano todo",
+      seguranca:
+        "Em passeios de barco que se aproximam de quedas d'água, o uso de colete salva-vidas é obrigatório durante todo o trajeto, e a maioria dos operadores restringe a participação de gestantes e de pessoas com problemas cardíacos, de coluna ou pressão alta, pela intensidade do movimento na aproximação das quedas. Vale sempre informar essas condições ao operador antes de contratar o passeio.",
     },
   },
 ];
