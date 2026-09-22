@@ -1267,7 +1267,7 @@ function ListaPlanosView({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-                Planejar viagem
+                Minhas viagens
               </span>
               <h1 className="mt-3 text-balance text-3xl md:text-4xl">
                 Suas viagens, {nome}
@@ -1325,6 +1325,12 @@ function ListaPlanosView({
   );
 }
 
+function juntarNomes(nomes: string[]): string {
+  if (nomes.length <= 1) return nomes[0] ?? "";
+  if (nomes.length === 2) return `${nomes[0]} e ${nomes[1]}`;
+  return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
+}
+
 function DetalhePlanoView({
   plano,
   onVoltar,
@@ -1332,9 +1338,7 @@ function DetalhePlanoView({
   plano: PlanoViagem;
   onVoltar: () => void;
 }) {
-  const [destinoAberto, setDestinoAberto] = useState<string | null>(
-    plano.selecoes[0]?.destinoSlug ?? null,
-  );
+  const [destinoAberto, setDestinoAberto] = useState<string | null>(null);
 
   const selecaoAberta = plano.selecoes.find(
     (s) => s.destinoSlug === destinoAberto,
@@ -1343,9 +1347,28 @@ function DetalhePlanoView({
     ? destinos.find((d) => d.slug === selecaoAberta.destinoSlug)
     : undefined;
 
+  const nomesDestinos = plano.selecoes
+    .map((s) => destinos.find((d) => d.slug === s.destinoSlug)?.nome)
+    .filter((n): n is string => !!n);
+
+  const iniciosValidos = plano.selecoes
+    .map((s) => s.dataInicio)
+    .filter((d): d is string => !!d);
+  const fimValidos = plano.selecoes
+    .map((s) => s.dataFim)
+    .filter((d): d is string => !!d);
+  const inicioGeral =
+    iniciosValidos.length > 0
+      ? iniciosValidos.reduce((min, d) => (d < min ? d : min))
+      : undefined;
+  const fimGeral =
+    fimValidos.length > 0
+      ? fimValidos.reduce((max, d) => (d > max ? d : max))
+      : undefined;
+
   return (
     <>
-      <section className="section-padding">
+      <section className="section-padding bg-sand-100">
         <div className="container-tight">
           <div className="mx-auto max-w-3xl">
             <button
@@ -1370,228 +1393,254 @@ function DetalhePlanoView({
                 Em análise
               </span>
             </div>
+
+            <p className="mt-3 text-sm text-foreground">
+              {juntarNomes(nomesDestinos)}
+              {inicioGeral && fimGeral && (
+                <>
+                  {" · "}
+                  {new Date(`${inicioGeral}T00:00:00`).toLocaleDateString(
+                    "pt-BR",
+                  )}
+                  {" a "}
+                  {new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}
+                </>
+              )}
+            </p>
             <p className="mt-2 text-sm text-muted-foreground">
               Enviado em {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}.
               Nossa equipe está analisando e vai entrar em contato com uma
               proposta detalhada.
             </p>
 
-            <div className="mt-8">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Destinos da viagem
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {plano.selecoes.map((selecao) => {
-                  const destino = destinos.find(
-                    (d) => d.slug === selecao.destinoSlug,
-                  );
-                  const aberto = destinoAberto === selecao.destinoSlug;
-                  return (
-                    <button
-                      key={selecao.destinoSlug}
-                      type="button"
-                      onClick={() => setDestinoAberto(selecao.destinoSlug)}
-                      className={`relative aspect-square overflow-hidden rounded-2xl border-2 text-left transition-all ${
-                        aberto
-                          ? "border-primary"
-                          : "border-transparent hover:border-border"
-                      }`}
-                    >
-                      {destino?.imagem ? (
-                        <img
-                          src={destino.imagem}
-                          alt={destino.alt}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full bg-forest-800" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/10 to-transparent" />
-                      {aberto && (
-                        <div className="absolute right-3 top-3 rounded-full bg-primary p-1.5 text-primary-foreground">
-                          <Check className="h-4 w-4" />
-                        </div>
-                      )}
-                      <p className="absolute bottom-3 left-4 right-4 font-display text-lg text-sand-50">
-                        {destino?.nome}
-                      </p>
-                    </button>
-                  );
-                })}
+            {plano.contexto && (
+              <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+                <span className="font-medium">Contexto:</span> {plano.contexto}
               </div>
+            )}
+          </div>
+        </div>
+      </section>
 
-              {selecaoAberta &&
-                (() => {
-                  const exps = (selecaoAberta.experienciaSlugs ?? [])
-                    .map((s) => experiencias.find((e) => e.slug === s))
-                    .filter((e): e is (typeof experiencias)[number] => !!e);
-                  const noites = noitesEntre(
-                    selecaoAberta.dataInicio,
-                    selecaoAberta.dataFim,
-                  );
-                  const interesses = selecaoAberta.interesses ?? [];
-                  const inclusos = selecaoAberta.inclusos ?? [];
-
-                  return (
-                    <div className="mt-6 space-y-6">
-                      <div className="relative overflow-hidden rounded-2xl">
-                        {destinoAbertoInfo?.imagem ? (
+      <section className="section-padding">
+        <div className="container-tight">
+          <div className="mx-auto max-w-3xl">
+            {!selecaoAberta ? (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Destinos da viagem
+                </p>
+                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {plano.selecoes.map((selecao) => {
+                    const destino = destinos.find(
+                      (d) => d.slug === selecao.destinoSlug,
+                    );
+                    return (
+                      <button
+                        key={selecao.destinoSlug}
+                        type="button"
+                        onClick={() => setDestinoAberto(selecao.destinoSlug)}
+                        className="group relative aspect-[4/3] overflow-hidden rounded-2xl text-left transition-opacity hover:opacity-90"
+                      >
+                        {destino?.imagem ? (
                           <img
-                            src={destinoAbertoInfo.imagem}
-                            alt={destinoAbertoInfo.alt}
-                            className="absolute inset-0 h-full w-full object-cover"
+                            src={destino.imagem}
+                            alt={destino.alt}
+                            className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="absolute inset-0 bg-forest-800" />
+                          <div className="h-full w-full bg-forest-800" />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
-                        <div className="relative p-6">
-                          <p className="text-sm font-semibold uppercase tracking-wider text-sand-50">
-                            {destinoAbertoInfo?.nome}
-                          </p>
-                          <p className="mt-1 text-sm text-sand-50/80">
-                            {selecaoAberta.dataInicio && selecaoAberta.dataFim
-                              ? `${new Date(`${selecaoAberta.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecaoAberta.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                              : "Datas a combinar"}
-                            {" · "}
-                            {selecaoAberta.adultos ?? 2} adulto(s)
-                            {(selecaoAberta.criancas ?? 0) > 0
-                              ? `, ${selecaoAberta.criancas} criança(s)`
-                              : ""}
-                          </p>
+                        <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/10 to-transparent" />
+                        <p className="absolute bottom-3 left-4 right-4 font-display text-lg text-sand-50">
+                          {destino?.nome}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              (() => {
+                const exps = (selecaoAberta.experienciaSlugs ?? [])
+                  .map((s) => experiencias.find((e) => e.slug === s))
+                  .filter((e): e is (typeof experiencias)[number] => !!e);
+                const noites = noitesEntre(
+                  selecaoAberta.dataInicio,
+                  selecaoAberta.dataFim,
+                );
+                const interesses = selecaoAberta.interesses ?? [];
+                const inclusos = selecaoAberta.inclusos ?? [];
 
-                          <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
-                            <div className="order-2 space-y-6 lg:order-1">
-                              {interesses.length > 0 && (
-                                <div>
-                                  <p className="text-sm font-medium text-sand-50">
-                                    Interesses
-                                  </p>
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    {interesses.map((interesse) => (
-                                      <span
-                                        key={interesse}
-                                        className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
-                                      >
-                                        {interesse}
-                                      </span>
-                                    ))}
-                                  </div>
+                return (
+                  <div className="space-y-6">
+                    <button
+                      type="button"
+                      onClick={() => setDestinoAberto(null)}
+                      className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Voltar para os destinos
+                    </button>
+
+                    <div className="relative overflow-hidden rounded-2xl">
+                      {destinoAbertoInfo?.imagem ? (
+                        <img
+                          src={destinoAbertoInfo.imagem}
+                          alt={destinoAbertoInfo.alt}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-forest-800" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
+                      <div className="relative p-6">
+                        <p className="font-display text-xl text-sand-50">
+                          {destinoAbertoInfo?.nome}
+                        </p>
+                        <p className="mt-1 text-sm text-sand-50/80">
+                          {selecaoAberta.dataInicio && selecaoAberta.dataFim
+                            ? `${new Date(`${selecaoAberta.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecaoAberta.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                            : "Datas a combinar"}
+                          {" · "}
+                          {selecaoAberta.adultos ?? 2} adulto(s)
+                          {(selecaoAberta.criancas ?? 0) > 0
+                            ? `, ${selecaoAberta.criancas} criança(s)`
+                            : ""}
+                        </p>
+
+                        <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
+                          <div className="order-2 space-y-6 lg:order-1">
+                            {interesses.length > 0 && (
+                              <div>
+                                <p className="text-sm font-medium text-sand-50">
+                                  Interesses
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {interesses.map((interesse) => (
+                                    <span
+                                      key={interesse}
+                                      className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
+                                    >
+                                      {interesse}
+                                    </span>
+                                  ))}
                                 </div>
-                              )}
-                              {inclusos.length > 0 && (
-                                <div>
-                                  <p className="text-sm font-medium text-sand-50">
-                                    Gostaria que incluísse
-                                  </p>
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    {inclusos.map((item) => (
-                                      <span
-                                        key={item}
-                                        className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
-                                      >
-                                        {item}
-                                      </span>
-                                    ))}
-                                  </div>
+                              </div>
+                            )}
+                            {inclusos.length > 0 && (
+                              <div>
+                                <p className="text-sm font-medium text-sand-50">
+                                  Gostaria que incluísse
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {inclusos.map((item) => (
+                                    <span
+                                      key={item}
+                                      className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
+                                    >
+                                      {item}
+                                    </span>
+                                  ))}
                                 </div>
+                              </div>
+                            )}
+                            {interesses.length === 0 &&
+                              inclusos.length === 0 && (
+                                <p className="text-sm text-sand-50/70">
+                                  Nenhum interesse ou inclusão específica
+                                  informada para esse destino.
+                                </p>
                               )}
-                              {interesses.length === 0 &&
-                                inclusos.length === 0 && (
-                                  <p className="text-sm text-sand-50/70">
-                                    Nenhum interesse ou inclusão específica
-                                    informada para esse destino.
-                                  </p>
-                                )}
-                            </div>
-                            <div className="order-1 flex justify-center lg:order-2">
-                              <Calendar
-                                rangeStart={selecaoAberta.dataInicio}
-                                rangeEnd={selecaoAberta.dataFim}
-                                onSelect={() => {}}
-                              />
-                            </div>
+                          </div>
+                          <div className="order-1 flex justify-center lg:order-2">
+                            <Calendar
+                              rangeStart={selecaoAberta.dataInicio}
+                              rangeEnd={selecaoAberta.dataFim}
+                              onSelect={() => {}}
+                            />
                           </div>
                         </div>
                       </div>
-
-                      {exps.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Experiências
-                          </p>
-                          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                            {exps.map((exp) => {
-                              const Icon = exp.icon;
-                              return (
-                                <div
-                                  key={exp.slug}
-                                  className="relative aspect-square overflow-hidden rounded-xl"
-                                >
-                                  {exp.imagem ? (
-                                    <img
-                                      src={exp.imagem}
-                                      alt={exp.alt}
-                                      className="h-full w-full object-cover"
-                                      loading="lazy"
-                                    />
-                                  ) : (
-                                    <div className="flex h-full w-full items-center justify-center bg-forest-800">
-                                      {Icon && (
-                                        <Icon className="h-10 w-10 text-forest-500" />
-                                      )}
-                                    </div>
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-forest-900/70 to-transparent" />
-                                  <p className="absolute bottom-3 left-3 right-3 font-display text-sm text-sand-50">
-                                    {exp.titulo}
-                                  </p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  );
-                })()}
 
-              {plano.contexto && (
-                <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
-                  <span className="font-medium">Contexto:</span>{" "}
-                  {plano.contexto}
-                </div>
-              )}
-            </div>
+                    {exps.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Experiências
+                        </p>
+                        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                          {exps.map((exp) => {
+                            const Icon = exp.icon;
+                            return (
+                              <div
+                                key={exp.slug}
+                                className="relative aspect-[4/3] overflow-hidden rounded-xl"
+                              >
+                                {exp.imagem ? (
+                                  <img
+                                    src={exp.imagem}
+                                    alt={exp.alt}
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-forest-800">
+                                    {Icon && (
+                                      <Icon className="h-10 w-10 text-forest-500" />
+                                    )}
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-forest-900/70 to-transparent" />
+                                <p className="absolute bottom-3 left-3 right-3 font-display text-sm text-sand-50">
+                                  {exp.titulo}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
+            )}
           </div>
         </div>
       </section>
 
       <section className="section-padding bg-sand-100">
         <div className="container-tight">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="font-display text-2xl md:text-3xl">
               Atualizações da nossa equipe
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Nosso time responde em até 24 horas com os próximos passos do seu
+              plano.
             </p>
-            <div className="mt-4 space-y-4 border-l-2 border-border pl-4">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  Plano enviado
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(plano.criadoEm).toLocaleDateString("pt-BR")} às{" "}
-                  {new Date(plano.criadoEm).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  · você
+
+            <div className="mt-6 rounded-2xl border border-border bg-card p-5">
+              <div className="space-y-4 border-l-2 border-border pl-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Plano enviado
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(plano.criadoEm).toLocaleDateString("pt-BR")} às{" "}
+                    {new Date(plano.criadoEm).toLocaleTimeString("pt-BR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    · você
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Assim que o analista da Aventura Organizada revisar o plano,
+                  os comentários, ajustes e o status atualizado vão aparecer
+                  aqui — com data, hora e quem fez cada mudança.
                 </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Assim que o analista da Aventura Organizada revisar o plano, os
-                comentários, ajustes e o status atualizado vão aparecer aqui —
-                com data, hora e quem fez cada mudança.
-              </p>
             </div>
           </div>
         </div>
