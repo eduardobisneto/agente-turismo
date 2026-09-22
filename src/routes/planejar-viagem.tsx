@@ -1325,6 +1325,17 @@ function DetalhePlanoView({
   plano: PlanoViagem;
   onVoltar: () => void;
 }) {
+  const [destinoAberto, setDestinoAberto] = useState<string | null>(
+    plano.selecoes[0]?.destinoSlug ?? null,
+  );
+
+  const selecaoAberta = plano.selecoes.find(
+    (s) => s.destinoSlug === destinoAberto,
+  );
+  const destinoAbertoInfo = selecaoAberta
+    ? destinos.find((d) => d.slug === selecaoAberta.destinoSlug)
+    : undefined;
+
   return (
     <section className="section-padding">
       <div className="container-tight">
@@ -1353,59 +1364,81 @@ function DetalhePlanoView({
           </p>
 
           <div className="mt-8">
-            {plano.selecoes.map((selecao, index) => {
-              const destino = destinos.find(
-                (d) => d.slug === selecao.destinoSlug,
-              );
-              const exps = (selecao.experienciaSlugs ?? [])
-                .map((s) => experiencias.find((e) => e.slug === s))
-                .filter((e): e is (typeof experiencias)[number] => !!e);
-              const noites = noitesEntre(selecao.dataInicio, selecao.dataFim);
-              const interesses = selecao.interesses ?? [];
-              const inclusos = selecao.inclusos ?? [];
-              const ehUltimo = index === plano.selecoes.length - 1;
-
-              return (
-                <div key={selecao.destinoSlug} className="relative flex gap-5">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                      {index + 1}
-                    </div>
-                    {!ehUltimo && (
-                      <div className="my-1 w-0.5 flex-1 bg-border" />
-                    )}
-                  </div>
-
-                  <div
-                    className={`flex-1 overflow-hidden rounded-2xl border border-border bg-card ${ehUltimo ? "" : "mb-8"}`}
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Destinos da viagem
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {plano.selecoes.map((selecao) => {
+                const destino = destinos.find(
+                  (d) => d.slug === selecao.destinoSlug,
+                );
+                const aberto = destinoAberto === selecao.destinoSlug;
+                return (
+                  <button
+                    key={selecao.destinoSlug}
+                    type="button"
+                    onClick={() => setDestinoAberto(selecao.destinoSlug)}
+                    className={`relative aspect-square overflow-hidden rounded-2xl border-2 text-left transition-all ${
+                      aberto
+                        ? "border-primary"
+                        : "border-transparent hover:border-border"
+                    }`}
                   >
-                    <div className="relative h-40 overflow-hidden sm:h-48">
-                      {destino?.imagem ? (
-                        <img
-                          src={destino.imagem}
-                          alt={destino.alt}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full bg-forest-800" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-forest-900/85 via-forest-900/20 to-transparent" />
-                      <div className="absolute bottom-4 left-5 right-5 text-sand-50">
-                        <p className="font-display text-xl">{destino?.nome}</p>
-                        <p className="mt-1 text-sm text-sand-50/90">
-                          {selecao.dataInicio && selecao.dataFim
-                            ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                    {destino?.imagem ? (
+                      <img
+                        src={destino.imagem}
+                        alt={destino.alt}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-forest-800" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/10 to-transparent" />
+                    {aberto && (
+                      <div className="absolute right-3 top-3 rounded-full bg-primary p-1.5 text-primary-foreground">
+                        <Check className="h-4 w-4" />
+                      </div>
+                    )}
+                    <p className="absolute bottom-3 left-4 right-4 font-display text-lg text-sand-50">
+                      {destino?.nome}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {selecaoAberta && (
+              <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card p-5">
+                {(() => {
+                  const exps = (selecaoAberta.experienciaSlugs ?? [])
+                    .map((s) => experiencias.find((e) => e.slug === s))
+                    .filter((e): e is (typeof experiencias)[number] => !!e);
+                  const noites = noitesEntre(
+                    selecaoAberta.dataInicio,
+                    selecaoAberta.dataFim,
+                  );
+                  const interesses = selecaoAberta.interesses ?? [];
+                  const inclusos = selecaoAberta.inclusos ?? [];
+
+                  return (
+                    <div className="space-y-5">
+                      <div>
+                        <p className="font-display text-lg">
+                          {destinoAbertoInfo?.nome}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {selecaoAberta.dataInicio && selecaoAberta.dataFim
+                            ? `${new Date(`${selecaoAberta.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecaoAberta.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
                             : "Datas a combinar"}
-                          {" · "}
-                          {selecao.adultos ?? 2} adulto(s)
-                          {(selecao.criancas ?? 0) > 0
-                            ? `, ${selecao.criancas} criança(s)`
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {selecaoAberta.adultos ?? 2} adulto(s)
+                          {(selecaoAberta.criancas ?? 0) > 0
+                            ? `, ${selecaoAberta.criancas} criança(s)`
                             : ""}
                         </p>
                       </div>
-                    </div>
 
-                    <div className="space-y-5 p-5">
                       {exps.length > 0 && (
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1478,13 +1511,13 @@ function DetalhePlanoView({
                         </div>
                       )}
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })()}
+              </div>
+            )}
 
             {plano.contexto && (
-              <div className="mt-2 rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+              <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
                 <span className="font-medium">Contexto:</span> {plano.contexto}
               </div>
             )}
