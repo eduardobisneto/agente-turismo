@@ -1337,79 +1337,84 @@ function DetalhePlanoView({
     : undefined;
 
   return (
-    <section className="section-padding">
-      <div className="container-tight">
-        <div className="mx-auto max-w-2xl">
-          <button
-            type="button"
-            onClick={onVoltar}
-            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar para minhas viagens
-          </button>
+    <>
+      <section className="section-padding">
+        <div className="container-tight">
+          <div className="mx-auto max-w-3xl">
+            <button
+              type="button"
+              onClick={onVoltar}
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para minhas viagens
+            </button>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-balance text-2xl md:text-3xl">
-              Detalhes do plano
-            </h1>
-            <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
-              Em análise
-            </span>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enviado em {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}.
-            Nossa equipe está analisando e vai entrar em contato com uma
-            proposta detalhada.
-          </p>
-
-          <div className="mt-8">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Destinos da viagem
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {plano.selecoes.map((selecao) => {
-                const destino = destinos.find(
-                  (d) => d.slug === selecao.destinoSlug,
-                );
-                const aberto = destinoAberto === selecao.destinoSlug;
-                return (
-                  <button
-                    key={selecao.destinoSlug}
-                    type="button"
-                    onClick={() => setDestinoAberto(selecao.destinoSlug)}
-                    className={`relative aspect-square overflow-hidden rounded-2xl border-2 text-left transition-all ${
-                      aberto
-                        ? "border-primary"
-                        : "border-transparent hover:border-border"
-                    }`}
-                  >
-                    {destino?.imagem ? (
-                      <img
-                        src={destino.imagem}
-                        alt={destino.alt}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-forest-800" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/10 to-transparent" />
-                    {aberto && (
-                      <div className="absolute right-3 top-3 rounded-full bg-primary p-1.5 text-primary-foreground">
-                        <Check className="h-4 w-4" />
-                      </div>
-                    )}
-                    <p className="absolute bottom-3 left-4 right-4 font-display text-lg text-sand-50">
-                      {destino?.nome}
-                    </p>
-                  </button>
-                );
-              })}
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+                  Planejar viagem
+                </span>
+                <h1 className="mt-1 text-balance text-2xl md:text-3xl">
+                  Detalhes do plano
+                </h1>
+              </div>
+              <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+                Em análise
+              </span>
             </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Enviado em {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}.
+              Nossa equipe está analisando e vai entrar em contato com uma
+              proposta detalhada.
+            </p>
 
-            {selecaoAberta && (
-              <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card p-5">
-                {(() => {
+            <div className="mt-8">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Destinos da viagem
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {plano.selecoes.map((selecao) => {
+                  const destino = destinos.find(
+                    (d) => d.slug === selecao.destinoSlug,
+                  );
+                  const aberto = destinoAberto === selecao.destinoSlug;
+                  return (
+                    <button
+                      key={selecao.destinoSlug}
+                      type="button"
+                      onClick={() => setDestinoAberto(selecao.destinoSlug)}
+                      className={`relative aspect-square overflow-hidden rounded-2xl border-2 text-left transition-all ${
+                        aberto
+                          ? "border-primary"
+                          : "border-transparent hover:border-border"
+                      }`}
+                    >
+                      {destino?.imagem ? (
+                        <img
+                          src={destino.imagem}
+                          alt={destino.alt}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-forest-800" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/10 to-transparent" />
+                      {aberto && (
+                        <div className="absolute right-3 top-3 rounded-full bg-primary p-1.5 text-primary-foreground">
+                          <Check className="h-4 w-4" />
+                        </div>
+                      )}
+                      <p className="absolute bottom-3 left-4 right-4 font-display text-lg text-sand-50">
+                        {destino?.nome}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selecaoAberta &&
+                (() => {
                   const exps = (selecaoAberta.experienciaSlugs ?? [])
                     .map((s) => experiencias.find((e) => e.slug === s))
                     .filter((e): e is (typeof experiencias)[number] => !!e);
@@ -1421,22 +1426,86 @@ function DetalhePlanoView({
                   const inclusos = selecaoAberta.inclusos ?? [];
 
                   return (
-                    <div className="space-y-5">
-                      <div>
-                        <p className="font-display text-lg">
-                          {destinoAbertoInfo?.nome}
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {selecaoAberta.dataInicio && selecaoAberta.dataFim
-                            ? `${new Date(`${selecaoAberta.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecaoAberta.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                            : "Datas a combinar"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {selecaoAberta.adultos ?? 2} adulto(s)
-                          {(selecaoAberta.criancas ?? 0) > 0
-                            ? `, ${selecaoAberta.criancas} criança(s)`
-                            : ""}
-                        </p>
+                    <div className="mt-6 space-y-6">
+                      <div className="relative overflow-hidden rounded-2xl">
+                        {destinoAbertoInfo?.imagem ? (
+                          <img
+                            src={destinoAbertoInfo.imagem}
+                            alt={destinoAbertoInfo.alt}
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-forest-800" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
+                        <div className="relative p-6">
+                          <p className="text-sm font-semibold uppercase tracking-wider text-sand-50">
+                            {destinoAbertoInfo?.nome}
+                          </p>
+                          <p className="mt-1 text-sm text-sand-50/80">
+                            {selecaoAberta.dataInicio && selecaoAberta.dataFim
+                              ? `${new Date(`${selecaoAberta.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecaoAberta.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                              : "Datas a combinar"}
+                            {" · "}
+                            {selecaoAberta.adultos ?? 2} adulto(s)
+                            {(selecaoAberta.criancas ?? 0) > 0
+                              ? `, ${selecaoAberta.criancas} criança(s)`
+                              : ""}
+                          </p>
+
+                          <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
+                            <div className="order-2 space-y-6 lg:order-1">
+                              {interesses.length > 0 && (
+                                <div>
+                                  <p className="text-sm font-medium text-sand-50">
+                                    Interesses
+                                  </p>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {interesses.map((interesse) => (
+                                      <span
+                                        key={interesse}
+                                        className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
+                                      >
+                                        {interesse}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {inclusos.length > 0 && (
+                                <div>
+                                  <p className="text-sm font-medium text-sand-50">
+                                    Gostaria que incluísse
+                                  </p>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {inclusos.map((item) => (
+                                      <span
+                                        key={item}
+                                        className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
+                                      >
+                                        {item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {interesses.length === 0 &&
+                                inclusos.length === 0 && (
+                                  <p className="text-sm text-sand-50/70">
+                                    Nenhum interesse ou inclusão específica
+                                    informada para esse destino.
+                                  </p>
+                                )}
+                            </div>
+                            <div className="order-1 flex justify-center lg:order-2">
+                              <Calendar
+                                rangeStart={selecaoAberta.dataInicio}
+                                rangeEnd={selecaoAberta.dataFim}
+                                onSelect={() => {}}
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       {exps.length > 0 && (
@@ -1444,13 +1513,13 @@ function DetalhePlanoView({
                           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             Experiências
                           </p>
-                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <div className="mt-3 grid gap-3 sm:grid-cols-3">
                             {exps.map((exp) => {
                               const Icon = exp.icon;
                               return (
                                 <div
                                   key={exp.slug}
-                                  className="relative aspect-[4/3] overflow-hidden rounded-xl"
+                                  className="relative aspect-square overflow-hidden rounded-xl"
                                 >
                                   {exp.imagem ? (
                                     <img
@@ -1476,80 +1545,50 @@ function DetalhePlanoView({
                           </div>
                         </div>
                       )}
-                      {interesses.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Interesses
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {interesses.map((interesse) => (
-                              <span
-                                key={interesse}
-                                className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
-                              >
-                                {interesse}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {inclusos.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Gostaria que incluísse
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {inclusos.map((item) => (
-                              <span
-                                key={item}
-                                className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
-                              >
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })()}
-              </div>
-            )}
 
-            {plano.contexto && (
-              <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
-                <span className="font-medium">Contexto:</span> {plano.contexto}
-              </div>
-            )}
-
-            <div className="mt-8 rounded-2xl border border-border bg-card p-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Atualizações da nossa equipe
-              </p>
-              <div className="mt-4 space-y-4 border-l-2 border-border pl-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Plano enviado
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(plano.criadoEm).toLocaleDateString("pt-BR")} às{" "}
-                    {new Date(plano.criadoEm).toLocaleTimeString("pt-BR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    · você
-                  </p>
+              {plano.contexto && (
+                <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+                  <span className="font-medium">Contexto:</span>{" "}
+                  {plano.contexto}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Assim que o analista da Aventura Organizada revisar o plano,
-                  os comentários, ajustes e o status atualizado vão aparecer
-                  aqui — com data, hora e quem fez cada mudança.
-                </p>
-              </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section className="section-padding bg-sand-100">
+        <div className="container-tight">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Atualizações da nossa equipe
+            </p>
+            <div className="mt-4 space-y-4 border-l-2 border-border pl-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Plano enviado
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(plano.criadoEm).toLocaleDateString("pt-BR")} às{" "}
+                  {new Date(plano.criadoEm).toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}{" "}
+                  · você
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Assim que o analista da Aventura Organizada revisar o plano, os
+                comentários, ajustes e o status atualizado vão aparecer aqui —
+                com data, hora e quem fez cada mudança.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
