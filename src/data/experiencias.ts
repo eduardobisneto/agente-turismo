@@ -468,15 +468,15 @@ export const experiencias: Experiencia[] = [
   },
   {
     slug: "parques",
-    titulo: "Parques",
+    titulo: "Parques Naturais",
     descricao:
-      "Visitas a parques temáticos e naturais, com estrutura pronta para toda a família.",
+      "Visitas a parques naturais com trilhas, fauna e flora preservadas, e estrutura pronta para toda a família.",
     icon: Trees,
     contexto: {
       opcoesTitulo: "Tipos",
       opcoes: [
-        "Parques temáticos de aventura — várias atividades em um só lugar",
-        "Parques naturais e de observação — foco em fauna e flora",
+        "Parques com foco em fauna e flora — observação de animais e vegetação nativa",
+        "Parques com trilhas e estrutura de visitação — passeio guiado ou autoguiado",
       ],
       beneficios: [
         "Estrutura pronta, com banheiros, lanchonete e áreas de descanso",
