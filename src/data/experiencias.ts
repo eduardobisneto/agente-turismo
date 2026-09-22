@@ -1,5 +1,15 @@
 import type { ComponentType, SVGProps } from "react";
-import { Cable, MountainSnow, Sailboat, TreePine } from "lucide-react";
+import {
+  ArrowDownToLine,
+  Cable,
+  Flashlight,
+  Gauge,
+  MountainSnow,
+  PawPrint,
+  Sailboat,
+  Target,
+  TreePine,
+} from "lucide-react";
 
 import flutuacaoImg from "@/assets/flutuacao.jpeg";
 import trilhasImg from "@/assets/trilhas.jpeg";
@@ -23,6 +33,8 @@ export interface ContextoExperiencia {
   nivel: string;
   faixaEtaria: string;
   epocaResumo: string;
+  /** Considerações sobre segurança, leis e normas, quando a atividade for regulamentada. */
+  seguranca?: string;
 }
 
 export interface Experiencia {
@@ -310,6 +322,146 @@ export const experiencias: Experiencia[] = [
       nivel: "Iniciante a avançado",
       faixaEtaria: "A partir de 6 anos",
       epocaResumo: "Abril a setembro",
+    },
+  },
+  {
+    slug: "grutas",
+    titulo: "Grutas e Cavernas",
+    descricao:
+      "Explore grutas e cavernas com guias especializados, iluminação própria e equipamento de segurança.",
+    icon: Flashlight,
+    contexto: {
+      opcoesTitulo: "Níveis",
+      opcoes: [
+        "Visitação turística — trajeto com passarelas e iluminação",
+        "Espeleologia leve — trechos sem estrutura, com guia e equipamento",
+      ],
+      beneficios: [
+        "Contato com formações geológicas únicas, criadas ao longo de milhares de anos",
+        "Atividade de baixo esforço físico na visitação turística guiada",
+        "Desperta curiosidade sobre geologia, história natural e conservação",
+      ],
+      melhorEpoca:
+        "Abril a setembro, no período mais seco, quando o nível dos rios subterrâneos costuma ser menor e o acesso fica mais confortável.",
+      publico:
+        "Grutas com trajeto turístico e passarelas costumam ser adequadas para crianças a partir de 6-7 anos, sempre acompanhadas. Trechos de espeleologia sem estrutura, com escadas ou passagens mais estreitas, costumam ser recomendados a partir da adolescência, dependendo da caverna e da avaliação do guia.",
+      nivel: "Fácil a moderado",
+      faixaEtaria: "A partir de 6 anos",
+      epocaResumo: "Abril a setembro",
+      seguranca:
+        "No Brasil, cavernas naturais são patrimônio protegido por lei federal: o acesso costuma depender de autorização do órgão gestor da unidade de conservação (como o ICMBio, em áreas federais) e de acompanhamento de guias credenciados. É proibido remover formações ou tocar em paredes com sedimentos frágeis, e o uso de capacete com iluminação própria costuma ser obrigatório durante toda a visitação.",
+    },
+  },
+  {
+    slug: "rapel",
+    titulo: "Rapel",
+    descricao:
+      "Desça paredões e cachoeiras com corda, sob supervisão de monitores certificados.",
+    icon: ArrowDownToLine,
+    contexto: {
+      opcoesTitulo: "Alturas",
+      opcoes: [
+        "Rapel seco — paredão rochoso, sem água",
+        "Rapel em cachoeira — descida ao lado ou dentro da queda d'água",
+      ],
+      beneficios: [
+        "Trabalha controle emocional e confiança em si mesmo",
+        "Adrenalina forte, com sistema de segurança duplo o tempo todo",
+        "Sensação única de vencer o medo de altura, degrau por degrau",
+      ],
+      melhorEpoca:
+        "Abril a setembro, no período mais seco, quando as rochas ficam menos escorregadias e o volume de água das cachoeiras é menor.",
+      publico:
+        "Costuma ser liberado a partir dos 10-12 anos, dependendo do peso mínimo exigido pelo equipamento e da altura do paredão. Crianças menores só costumam participar em paredões baixos e com adaptações específicas definidas pelo operador.",
+      nivel: "Iniciante a avançado",
+      faixaEtaria: "A partir de 10 anos",
+      epocaResumo: "Abril a setembro",
+      seguranca:
+        "No Brasil, empresas de turismo de aventura costumam seguir normas técnicas da ABNT voltadas para atividades como o rapel, com exigências de equipamentos certificados (corda, mosquetões, capacete), sistema de segurança duplo e monitores treinados. Vale sempre confirmar se o operador segue essas normas e mantém os certificados de segurança em dia antes de contratar o passeio.",
+    },
+  },
+  {
+    slug: "cavalgada",
+    titulo: "Cavalgada",
+    descricao:
+      "Passeios a cavalo por trilhas e paisagens naturais, com cavalos preparados e guias experientes.",
+    icon: PawPrint,
+    contexto: {
+      opcoesTitulo: "Duração",
+      opcoes: [
+        "Passeio curto — cerca de 1 hora, ideal para iniciantes",
+        "Cavalgada longa — meio período ou dia inteiro, para quem já tem prática",
+      ],
+      beneficios: [
+        "Contato com os animais e com a paisagem em ritmo tranquilo",
+        "Não exige preparo físico especial para passeios curtos",
+        "Boa opção para quem busca uma atividade mais serena ao ar livre",
+      ],
+      melhorEpoca:
+        "Abril a setembro, no período mais seco, quando as trilhas ficam menos lamacentas.",
+      publico:
+        "Passeios curtos e guiados costumam ser liberados para crianças a partir de 6-7 anos, sempre em cavalos calmos e com um guia por perto. Cavalgadas mais longas exigem mais equilíbrio e resistência, sendo recomendadas a partir da pré-adolescência.",
+      nivel: "Iniciante a intermediário",
+      faixaEtaria: "A partir de 6 anos",
+      epocaResumo: "Abril a setembro",
+      seguranca:
+        "É importante usar capacete de equitação (costuma ser fornecido pelo operador) e calçado fechado, além de seguir sempre as instruções do guia sobre como montar e conduzir o animal. Cavalos usados em passeios turísticos costumam ser selecionados pelo temperamento calmo, mas o contato com animais sempre exige atenção redobrada com crianças.",
+    },
+  },
+  {
+    slug: "quadriciclo",
+    titulo: "Quadriciclo",
+    descricao:
+      "Trilhas motorizadas de quadriciclo por estradas de terra e cenários naturais, com instrução antes de sair.",
+    icon: Gauge,
+    contexto: {
+      opcoesTitulo: "Modalidade",
+      opcoes: [
+        "Quadriciclo individual — cada participante dirige o seu",
+        "Quadriciclo em dupla — um adulto dirige, o outro anda como carona",
+      ],
+      beneficios: [
+        "Adrenalina de dirigir em trilha, sem precisar de habilitação de carro",
+        "Passeio dinâmico, bom para quem gosta de motor e velocidade moderada",
+        "Costuma incluir paradas em pontos com vista ao longo do trajeto",
+      ],
+      melhorEpoca:
+        "Abril a setembro, no período mais seco, quando as estradas de terra ficam menos escorregadias.",
+      publico:
+        "Dirigir o próprio quadriciclo costuma exigir idade mínima de 16 a 18 anos, dependendo do operador e do modelo do veículo. Crianças menores costumam poder participar apenas como carona, sentadas atrás de um adulto responsável.",
+      nivel: "Iniciante a intermediário",
+      faixaEtaria: "A partir de 16 anos para dirigir",
+      epocaResumo: "Abril a setembro",
+      seguranca:
+        "O uso de capacete é obrigatório durante todo o passeio, e a maioria dos operadores faz um briefing de segurança antes da saída, com instruções sobre o veículo e o percurso. Vale confirmar se o operador exige habilitação ou permissão específica para dirigir, já que as regras variam de local para local.",
+    },
+  },
+  {
+    slug: "paintball",
+    titulo: "Paintball",
+    descricao:
+      "Partidas em equipe com marcadores de tinta, em arena ao ar livre com obstáculos.",
+    icon: Target,
+    contexto: {
+      opcoesTitulo: "Formatos",
+      opcoes: [
+        "Partidas rápidas — boas para grupos grandes se revezarem",
+        "Torneio em equipe — para grupos que querem competir entre si",
+      ],
+      beneficios: [
+        "Trabalha estratégia, trabalho em equipe e comunicação",
+        "Libera adrenalina em um ambiente controlado e seguro",
+        "Ótimo programa para grupos de amigos ou eventos corporativos",
+      ],
+      melhorEpoca:
+        "O ano todo, já que costuma ser praticado em arenas com pouca dependência do clima.",
+      publico:
+        "Costuma ser liberado a partir dos 10-12 anos, com marcadores de menor impacto para os participantes mais jovens em alguns operadores. Vale confirmar a idade mínima e se há opção de equipamento de menor potência para crianças e pré-adolescentes.",
+      nivel: "Iniciante a avançado",
+      faixaEtaria: "A partir de 10 anos",
+      epocaResumo: "O ano todo",
+      seguranca:
+        "O uso de máscara de proteção facial é obrigatório durante toda a partida, sem exceção, e os marcadores costumam ter a velocidade limitada por normas de segurança do operador. É importante seguir sempre as instruções do monitor sobre as áreas seguras e nunca remover a máscara dentro da arena.",
     },
   },
 ];

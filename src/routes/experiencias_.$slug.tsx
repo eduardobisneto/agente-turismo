@@ -5,6 +5,7 @@ import {
   Calendar,
   ListChecks,
   MapPin,
+  Shield,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -111,6 +112,18 @@ function ExperienciaPage() {
                 {experiencia.contexto.melhorEpoca}
               </p>
             </div>
+
+            {experiencia.contexto.seguranca && (
+              <div className="mt-6">
+                <h3 className="flex items-center gap-2 font-display text-lg">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Segurança e normas
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {experiencia.contexto.seguranca}
+                </p>
+              </div>
+            )}
           </div>
 
           <aside className="h-fit rounded-2xl border border-border bg-card p-6">

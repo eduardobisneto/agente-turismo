@@ -8,6 +8,7 @@ import standUpPaddleImg from "@/assets/stand-up-paddle.jpeg";
 import trilhaSetePraiasImg from "@/assets/trilha-sete-praias.jpeg";
 import projetoTamarImg from "@/assets/projeto-tamar.jpeg";
 import surfItamambucaImg from "@/assets/surf-itamambuca.jpeg";
+import trilhasImg from "@/assets/trilhas.jpeg";
 
 export interface Atracao {
   nome: string;
@@ -134,19 +135,28 @@ export const destinos: Destino[] = [
       {
         nome: "Parque dos Sonhos",
         descricao:
-          "Um dos maiores parques de aventura do Brasil, com tirolesa, rafting e escalada, além de trilhas com vista para o vale.",
+          "Um dos maiores parques de aventura do Brasil, com tirolesa, rafting, escalada, cavalgada, quadriciclo e paintball, além de trilhas com vista para o vale.",
         imagem: destinoSocorroImg,
         alt: "Foto ilustrativa do Parque dos Sonhos, em Socorro",
-        experiencias: ["tirolesa", "rafting", "escalada", "trilhas"],
+        experiencias: [
+          "tirolesa",
+          "rafting",
+          "escalada",
+          "trilhas",
+          "cavalgada",
+          "quadriciclo",
+          "paintball",
+        ],
       },
       {
         nome: "Monjolinho",
         descricao:
-          "Point com estrutura completa de esportes de aventura: escalada, rafting, arvorismo, caiaque e cachoeira, tudo em um só lugar.",
+          "Point com estrutura completa de esportes de aventura: escalada, rapel, rafting, arvorismo, caiaque e cachoeira, tudo em um só lugar.",
         imagem: destinoSocorroImg,
         alt: "Foto ilustrativa do Monjolinho, em Socorro",
         experiencias: [
           "escalada",
+          "rapel",
           "rafting",
           "arvorismo",
           "caiaque",
@@ -298,6 +308,117 @@ export const destinos: Destino[] = [
       { valor: "100+", label: "praias" },
       { valor: "~93 mil", label: "habitantes" },
       { valor: "80%+", label: "do território em área de preservação" },
+    ],
+  },
+  {
+    slug: "petar",
+    nome: "PETAR, SP",
+    tagline: "Cavernas e trilhas na Mata Atlântica",
+    descricao:
+      "Roteiro de espeleologia por algumas das maiores cavernas do Brasil, entre trilhas e cachoeiras no coração da Mata Atlântica do Vale do Ribeira.",
+    imagem: trilhasImg,
+    alt: "Foto ilustrativa de trilha na Mata Atlântica",
+    duracao: "3 dias / 2 noites",
+    grupo: "Grupos de até 12 pessoas",
+    incluso: [
+      "Mobilidade ida e volta",
+      "Estadia com café da manhã",
+      "Passeios e experiências culturais do roteiro",
+      "Acompanhamento durante toda a viagem",
+    ],
+    mapsQuery:
+      "PETAR - Parque Estadual Turístico do Alto Ribeira, Iporanga, SP, Brasil",
+    mapsZoom: 11,
+    atracoes: [
+      {
+        nome: "Caverna de Santana",
+        descricao:
+          "Uma das maiores e mais visitadas cavernas do Brasil, no Núcleo Santana, com visitação monitorada por guias credenciados.",
+        imagem: trilhasImg,
+        alt: "Foto ilustrativa de trilha na Mata Atlântica, na região do PETAR",
+        experiencias: ["grutas", "trilhas"],
+      },
+      {
+        nome: "Casa de Pedra",
+        descricao:
+          "Um dos maiores paredões e entradas de caverna da América do Sul, no Núcleo Casa de Pedra, alcançado por trilha na floresta.",
+        imagem: trilhasImg,
+        alt: "Foto ilustrativa de trilha na Mata Atlântica, na região do PETAR",
+        experiencias: ["grutas", "trilhas"],
+      },
+      {
+        nome: "Cachoeira do Betari",
+        descricao:
+          "Queda d'água de águas claras dentro do parque, ótima para refrescar depois de um dia de cavernas e trilhas.",
+        imagem: cachoeiraImg,
+        alt: "Foto ilustrativa de cachoeira com piscina natural",
+        experiencias: ["cachoeiras"],
+      },
+    ],
+    historia: [
+      "No extremo sul do estado de São Paulo, entre as cidades de Iporanga e Apiaí, o relevo cárstico do Vale do Ribeira escondeu, por milênios, uma das maiores redes de cavernas do Brasil sob uma das áreas de Mata Atlântica mais preservadas da região.",
+      "Em 1958, essa riqueza subterrânea foi reconhecida com a criação do Parque Estadual Turístico do Alto Ribeira, uma das primeiras unidades de conservação do Brasil dedicadas à proteção de um patrimônio espeleológico — com visitação sempre acompanhada por guias credenciados, para preservar as formações e garantir a segurança de quem entra.",
+      "Dividido em núcleos como Santana, Casa de Pedra, Ouro Grosso e Caboclos, o PETAR reúne cavernas com salões imensos, rios subterrâneos e formações que levaram milhares de anos para se formar, além de trilhas e cachoeiras na floresta que leva até elas.",
+      "É um roteiro para quem busca um tipo diferente de aventura — mais silenciosa e intrigante, no escuro das cavernas e no verde denso da Mata Atlântica, um contraste e tanto com o dia a dia da cidade.",
+    ],
+    numeros: [
+      { valor: "1958", label: "ano de criação do parque" },
+      { valor: "4", label: "núcleos de visitação" },
+      { valor: "só com guia", label: "visitação sempre monitorada" },
+    ],
+  },
+  {
+    slug: "cataratas-do-iguacu",
+    nome: "Foz do Iguaçu, PR",
+    tagline: "Um dos maiores espetáculos naturais do mundo",
+    descricao:
+      "Roteiro pelas Cataratas do Iguaçu, um dos maiores espetáculos naturais do mundo, com trilhas, mirantes e passeio de barco até perto das quedas.",
+    imagem: cachoeiraImg,
+    alt: "Foto ilustrativa de queda d'água em meio à natureza",
+    duracao: "4 dias / 3 noites",
+    grupo: "Grupos de até 15 pessoas",
+    incluso: [
+      "Mobilidade ida e volta",
+      "Estadia com café da manhã",
+      "Passeios e experiências culturais do roteiro",
+      "Acompanhamento durante toda a viagem",
+    ],
+    mapsQuery: "Parque Nacional do Iguaçu, Foz do Iguaçu, PR, Brasil",
+    mapsZoom: 12,
+    atracoes: [
+      {
+        nome: "Trilha das Cataratas",
+        descricao:
+          "Passarela de cerca de 1,2 km à beira do cânion, com vista panorâmica para a maior parte das quedas do lado brasileiro.",
+        imagem: trilhasImg,
+        alt: "Foto ilustrativa de trilha com vista para a natureza",
+        experiencias: ["trilhas"],
+      },
+      {
+        nome: "Garganta do Diabo",
+        descricao:
+          "A queda mais impressionante do conjunto, com passarela que leva bem de frente para a força da água — o ponto alto da visita.",
+        imagem: cachoeiraImg,
+        alt: "Foto ilustrativa de queda d'água em meio à natureza",
+      },
+      {
+        nome: "Macuco Safari",
+        descricao:
+          "Passeio de barco que se aproxima da base das quedas, para sentir de perto a força e a espuma da água — vale levar roupa de troca.",
+        imagem: cachoeiraImg,
+        alt: "Foto ilustrativa de queda d'água em meio à natureza",
+      },
+    ],
+    historia: [
+      "Na fronteira entre o Brasil e a Argentina, o Rio Iguaçu encontra um paredão de basalto e se despedaça em cerca de 275 quedas d'água espalhadas por quase 3 km — um dos espetáculos naturais mais impressionantes do planeta.",
+      "Do lado brasileiro, o Parque Nacional do Iguaçu protege a floresta ao redor das quedas desde 1939, e foi reconhecido pela UNESCO como Patrimônio Natural da Humanidade em 1986, por abrigar uma das maiores extensões preservadas de Mata Atlântica do país.",
+      "A Trilha das Cataratas leva os visitantes bem de frente para as quedas, com vista final para a imponente Garganta do Diabo — e para quem quer sentir a força da água ainda mais de perto, passeios como o Macuco Safari aproximam o barco quase até debaixo das quedas.",
+      "Não importa quantas fotos você já viu: estar ali na frente, sentindo o barulho e a espuma da água, é uma daquelas experiências que realmente precisam ser vividas para serem entendidas.",
+    ],
+    numeros: [
+      { valor: "275", label: "quedas d'água" },
+      { valor: "2,7 km", label: "de extensão" },
+      { valor: "desde 1986", label: "Patrimônio Mundial da UNESCO" },
     ],
   },
 ];
