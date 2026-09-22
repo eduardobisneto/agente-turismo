@@ -1,8 +1,10 @@
 import type { ComponentType, SVGProps } from "react";
 import {
+  Anchor,
   ArrowDownToLine,
   Binoculars,
   Cable,
+  Car,
   Flashlight,
   Gauge,
   MountainSnow,
@@ -184,9 +186,9 @@ export const experiencias: Experiencia[] = [
   },
   {
     slug: "aulas-de-surf",
-    titulo: "Aulas de Surf",
+    titulo: "Surf",
     descricao:
-      "Aprenda a surfar com instrutores em praias com ondas para todos os níveis.",
+      "Praias com ondas para todos os níveis — dá pra aprender a surfar com instrutores ou já mandar suas manobras, se já for surfista.",
     imagem: surfItamambucaImg,
     alt: "Foto ilustrativa de praia com ondas para o surfe",
     contexto: {
@@ -547,6 +549,62 @@ export const experiencias: Experiencia[] = [
       epocaResumo: "O ano todo",
       seguranca:
         "A maioria dos parques aquáticos tem salva-vidas em todas as piscinas e sinalização de profundidade em cada área. Ainda assim, crianças pequenas devem ser sempre supervisionadas por um adulto, mesmo nas piscinas rasas, e é importante respeitar a altura mínima exigida em toboáguas mais radicais.",
+    },
+  },
+  {
+    slug: "passeio-de-barco",
+    titulo: "Passeio de Barco",
+    descricao:
+      "Passeios de lancha ou barco até praias, ilhas e piscinas naturais que só existem pelo mar.",
+    icon: Anchor,
+    contexto: {
+      opcoesTitulo: "Modalidade",
+      opcoes: [
+        "Lancha rápida — passeio panorâmico com paradas para banho",
+        "Barco ou escuna — passeio mais tranquilo, bom para grupos maiores",
+      ],
+      beneficios: [
+        "Acesso a praias e ilhas que só existem pelo mar",
+        "Passeio tranquilo, bom para todas as idades",
+        "Costuma incluir paradas para banho em piscinas naturais",
+      ],
+      melhorEpoca:
+        "O ano todo, com o mar geralmente mais calmo de setembro a março.",
+      publico:
+        "Costuma ser liberado para crianças de qualquer idade, sempre com colete salva-vidas a bordo. Gestantes e pessoas com problemas de coluna podem ter recomendação de evitar lanchas mais rápidas em dias de mar agitado — vale confirmar com o operador antes de embarcar.",
+      nivel: "Fácil",
+      faixaEtaria: "Todas as idades",
+      epocaResumo: "O ano todo",
+      seguranca:
+        "O uso de colete salva-vidas é obrigatório durante toda a navegação, e o número de passageiros costuma ser limitado à capacidade da embarcação, conforme normas da Marinha do Brasil. Vale sempre confirmar se o operador tem outorga para transporte de passageiros antes de contratar o passeio.",
+    },
+  },
+  {
+    slug: "buggy",
+    titulo: "Buggy",
+    descricao:
+      "Passeios de buggy por dunas e estradas de areia, com direito a descidas mais radicais.",
+    icon: Car,
+    contexto: {
+      opcoesTitulo: "Modalidade",
+      opcoes: [
+        "Passeio panorâmico — trajeto mais tranquilo pelas dunas",
+        "Descida radical — trechos com dunas mais íngremes, para quem topa mais adrenalina",
+      ],
+      beneficios: [
+        "Adrenalina de andar pelas dunas, sem precisar de preparo físico",
+        "Passeio rápido, ótimo para complementar um dia de praia",
+        "Costuma incluir paradas em mirantes e lagoas ao longo do trajeto",
+      ],
+      melhorEpoca:
+        "O ano todo, mas em dias de chuva forte alguns trechos de duna podem ficar fechados.",
+      publico:
+        "Como passageiro, costuma ser liberado para crianças de qualquer idade, sempre usando o cinto de segurança do veículo. Dirigir o próprio buggy costuma exigir habilitação e idade mínima de 18 anos, conforme o operador.",
+      nivel: "Fácil a moderado",
+      faixaEtaria: "Todas as idades como passageiro",
+      epocaResumo: "O ano todo",
+      seguranca:
+        "O uso do cinto de segurança é obrigatório durante todo o passeio, e os veículos costumam ser conduzidos por motoristas credenciados nos passeios contratados como passageiro. Vale confirmar se o operador exige CNH para quem quiser dirigir o próprio buggy.",
     },
   },
 ];

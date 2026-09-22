@@ -1,6 +1,14 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, Menu, User, X, Mountain } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ChevronDown,
+  LogOut,
+  Menu,
+  User,
+  UserCircle,
+  X,
+  Mountain,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -19,6 +27,8 @@ const navLinks = [
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [perfilOpen, setPerfilOpen] = useState(false);
+  const perfilRef = useRef<HTMLDivElement>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, ready, signOut } = useAuth();
   const navigate = useNavigate();
@@ -33,9 +43,20 @@ export function Header() {
     return onPlanosAtualizados(recalcular);
   }, [user]);
 
+  useEffect(() => {
+    function handleClickFora(e: MouseEvent) {
+      if (perfilRef.current && !perfilRef.current.contains(e.target as Node)) {
+        setPerfilOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickFora);
+    return () => document.removeEventListener("mousedown", handleClickFora);
+  }, []);
+
   const rotuloBotaoViagem = temViagens ? "Minhas viagens" : "Planejar viagem";
 
   async function handleSignOut() {
+    setPerfilOpen(false);
     await signOut();
     navigate({ to: "/" });
   }
@@ -80,19 +101,45 @@ export function Header() {
           {ready && (
             <>
               {user ? (
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
-                    <User className="h-4 w-4 text-primary" />
-                    {user.nome.split(" ")[0]}
-                  </span>
+                <div ref={perfilRef} className="relative">
                   <button
                     type="button"
-                    onClick={handleSignOut}
-                    aria-label="Sair"
-                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    onClick={() => setPerfilOpen((atual) => !atual)}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground"
                   >
-                    <LogOut className="h-4 w-4" />
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.nome}
+                        className="h-6 w-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-4 w-4 text-primary" />
+                    )}
+                    {user.nome.split(" ")[0]}
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
+
+                  {perfilOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-background py-1.5 shadow-lg">
+                      <Link
+                        to="/perfil"
+                        onClick={() => setPerfilOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                      >
+                        <UserCircle className="h-4 w-4 text-primary" />
+                        Editar perfil
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                      >
+                        <LogOut className="h-4 w-4 text-primary" />
+                        Sair
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Link
@@ -148,17 +195,27 @@ export function Header() {
             {ready && (
               <>
                 {user ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      handleSignOut();
-                    }}
-                    className="inline-flex items-center gap-2 text-base font-medium uppercase tracking-wide text-foreground"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sair ({user.nome.split(" ")[0]})
-                  </button>
+                  <>
+                    <Link
+                      to="/perfil"
+                      onClick={() => setMobileOpen(false)}
+                      className="inline-flex items-center gap-2 text-base font-medium uppercase tracking-wide text-foreground"
+                    >
+                      <UserCircle className="h-4 w-4" />
+                      Editar perfil
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileOpen(false);
+                        handleSignOut();
+                      }}
+                      className="inline-flex items-center gap-2 text-base font-medium uppercase tracking-wide text-foreground"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sair ({user.nome.split(" ")[0]})
+                    </button>
+                  </>
                 ) : (
                   <Link
                     to="/login"

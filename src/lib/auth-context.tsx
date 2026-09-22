@@ -12,7 +12,9 @@ import {
   signIn as signInClient,
   signOut as signOutClient,
   signUp as signUpClient,
+  updateProfile as updateProfileClient,
   type AuthUser,
+  type EnderecoInput,
 } from "@/lib/auth";
 
 interface AuthContextValue {
@@ -26,6 +28,9 @@ interface AuthContextValue {
     senha: string;
   }) => Promise<AuthUser>;
   signOut: () => Promise<void>;
+  updateProfile: (
+    input: { nome?: string; avatarUrl?: string | undefined } & EnderecoInput,
+  ) => Promise<AuthUser>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -62,8 +67,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateProfile = useCallback(
+    async (
+      input: { nome?: string; avatarUrl?: string | undefined } &
+        EnderecoInput,
+    ) => {
+      if (!user) throw new Error("Nenhum usuário autenticado.");
+      const atualizado = await updateProfileClient(user.id, input);
+      setUser(atualizado);
+      return atualizado;
+    },
+    [user],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, ready, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{ user, ready, signIn, signUp, signOut, updateProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

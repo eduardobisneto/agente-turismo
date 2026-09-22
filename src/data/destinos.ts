@@ -677,6 +677,149 @@ export const destinos: Destino[] = [
       { valor: "Capital Nacional", label: "do Turismo" },
     ],
   },
+  {
+    slug: "cabo-frio",
+    nome: "Cabo Frio, RJ",
+    tagline: "Dunas, ilhas e o mar mais azul do Rio",
+    descricao:
+      "Praias de areia branca e água cristalina, dunas para andar de buggy e ilhas só acessíveis de barco na Região dos Lagos fluminense.",
+    imagem: surfItamambucaImg,
+    alt: "Foto ilustrativa de praia de areia branca com costão rochoso e mar azul-turquesa",
+    duracao: "4 dias / 3 noites",
+    grupo: "Grupos de até 15 pessoas",
+    incluso: [
+      "Mobilidade ida e volta",
+      "Estadia com café da manhã",
+      "Passeios e experiências culturais do roteiro",
+      "Acompanhamento durante toda a viagem",
+    ],
+    interessesDisponiveis: ["Praia", "Aventura", "Natureza"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Lazer",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
+    ],
+    mapsQuery: "Cabo Frio, RJ, Brasil",
+    mapsZoom: 7,
+    atracoes: [
+      {
+        nome: "Praia do Forte",
+        descricao:
+          "Uma das praias mais conhecidas da cidade, com areia branca e mar de águas claras, e estrutura completa de quiosques para passar o dia.",
+        imagem: trilhaSetePraiasImg,
+        alt: "Foto ilustrativa de praia de areia clara cercada por costão rochoso",
+        experiencias: ["praias"],
+      },
+      {
+        nome: "Ilha do Japonês",
+        descricao:
+          "Ilha só acessível de barco ou lancha, com piscinas naturais de água cristalina — um dos passeios mais concorridos de Cabo Frio.",
+        imagem: projetoTamarImg,
+        alt: "Foto ilustrativa de costão rochoso com vista para o mar e as ilhas, ponto de partida de passeios de barco",
+        experiencias: ["passeio-de-barco"],
+      },
+      {
+        nome: "Dunas do Peró",
+        descricao:
+          "Extenso cordão de dunas de areia branca ao lado da Praia do Peró, ponto certo para um passeio de buggy com direito a descida nas dunas.",
+        imagem: destinoUbatubaImg,
+        alt: "Foto ilustrativa de vegetação de restinga com vista para o mar",
+        experiencias: ["buggy"],
+      },
+      {
+        nome: "Praia do Forno",
+        descricao:
+          "Pequena enseada de águas calmas e transparentes, ótima para mergulho livre e observação da vida marinha bem de perto.",
+        imagem: flutuacaoImg,
+        alt: "Foto ilustrativa de água cristalina, ideal para mergulho e flutuação",
+        experiencias: ["flutuacao"],
+      },
+    ],
+    historia: [
+      "Fundada em 1615 à beira do Canal do Itajuru, Cabo Frio é uma das cidades mais antigas do Brasil — point estratégico na costa fluminense desde os tempos coloniais, quando a extração de sal movia a economia da região.",
+      "A partir da segunda metade do século 20, as águas claríssimas e as dezenas de praias da Região dos Lagos transformaram Cabo Frio em um dos destinos de praia mais procurados do Rio de Janeiro, com uma visibilidade da água digna de mar caribenho.",
+      "Hoje a cidade reúne praias urbanas, dunas de areia branca como as do Peró e ilhas só acessíveis de barco, como a Ilha do Japonês — um roteiro que mistura sol, mar e um tanto de aventura, dos passeios de lancha aos passeios de buggy pelas dunas.",
+      "É o tipo de destino perfeito para quem quer alternar dias de praia tranquila com um pouco de adrenalina na areia e na água — sem economizar no visual de cartão-postal.",
+    ],
+    numeros: [
+      { valor: "1615", label: "ano de fundação" },
+      { valor: "Costa do Sol", label: "apelido da região, por suas águas claras" },
+      { valor: "dezenas de", label: "praias e enseadas" },
+    ],
+  },
+  {
+    slug: "paraty",
+    nome: "Paraty, RJ",
+    tagline: "Centro histórico, ilhas e cachoeiras",
+    descricao:
+      "Centro histórico colonial tombado pela UNESCO, ilhas e piscinas naturais só acessíveis de barco e cachoeiras na Mata Atlântica preservada.",
+    imagem: projetoTamarImg,
+    alt: "Foto ilustrativa de baía com mar calmo cercado por montanhas e Mata Atlântica",
+    duracao: "3 dias / 2 noites",
+    grupo: "Grupos de até 15 pessoas",
+    incluso: [
+      "Mobilidade ida e volta",
+      "Estadia com café da manhã",
+      "Passeios e experiências culturais do roteiro",
+      "Acompanhamento durante toda a viagem",
+    ],
+    interessesDisponiveis: ["Cultura", "Natureza", "Aventura"],
+    inclusosDisponiveis: [
+      "Experiências de Estadia",
+      "Mobilidade",
+      "Experiências Culturais e de Entretenimento",
+      "Passeios Turísticos",
+      "Transfer Exclusivo",
+    ],
+    mapsQuery: "Paraty, RJ, Brasil",
+    mapsZoom: 7,
+    atracoes: [
+      {
+        nome: "Centro Histórico",
+        descricao:
+          "Ruas de pedra irregular e casarios coloniais preservados desde o século 18, tombados como Patrimônio Mundial pela UNESCO.",
+        imagem: destinoUbatubaImg,
+        alt: "Foto ilustrativa da orla de Paraty, com o mar cercado por vegetação nativa",
+      },
+      {
+        nome: "Ilhas da Baía de Paraty",
+        descricao:
+          "Mais de 65 ilhas e praias só acessíveis de barco ou lancha, com destaque para as piscinas naturais da Lagoa Azul.",
+        imagem: trilhaSetePraiasImg,
+        alt: "Foto ilustrativa de praia rochosa com ilhas ao fundo, parada de passeios de barco",
+        experiencias: ["passeio-de-barco"],
+      },
+      {
+        nome: "Cachoeira do Tobogã",
+        descricao:
+          "Queda d'água que forma um escorregador natural na rocha, um dos passeios mais divertidos nos arredores de Paraty.",
+        imagem: cachoeiraImg,
+        alt: "Foto ilustrativa de cachoeira com piscina natural",
+        experiencias: ["cachoeiras"],
+      },
+      {
+        nome: "Trilha do Ouro",
+        descricao:
+          "Trecho preservado do antigo caminho colonial que ligava as minas de Minas Gerais ao litoral, hoje percorrido por quem busca trilha com história.",
+        imagem: trilhasImg,
+        alt: "Foto ilustrativa de trilha na Mata Atlântica",
+        experiencias: ["trilhas"],
+      },
+    ],
+    historia: [
+      "Fundada em 1667 no litoral sul do Rio de Janeiro, Paraty foi um dos principais portos do Brasil colonial, por onde escoava o ouro de Minas Gerais rumo a Portugal pela histórica Estrada Real.",
+      "Com o declínio do ciclo do ouro, a cidade praticamente parou no tempo — o que, décadas depois, preservou seu centro histórico de ruas de pedra e casarões coloniais, hoje reconhecido como Patrimônio Mundial pela UNESCO.",
+      "Cercada por Mata Atlântica preservada e por uma baía com mais de 65 ilhas, Paraty também virou point de passeios de barco e lancha, cachoeiras escondidas na mata e trilhas históricas, como a lendária Estrada do Ouro que liga a cidade a Cunha.",
+      "É um roteiro raro, que combina história viva, natureza preservada e mar calmo — o tipo de lugar que rende tanto uma volta tranquila pelo centro histórico quanto um dia inteiro de barco entre as ilhas.",
+    ],
+    numeros: [
+      { valor: "1667", label: "ano de fundação" },
+      { valor: "Patrimônio Mundial", label: "UNESCO, pelo centro histórico" },
+      { valor: "65+", label: "ilhas na baía" },
+    ],
+  },
 ];
 
 export function getDestino(slug: string): Destino | undefined {

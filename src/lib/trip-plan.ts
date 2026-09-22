@@ -16,6 +16,8 @@ export interface SelecaoDestino {
   interesses: string[];
   adultos: number;
   criancas: number;
+  /** Idade de cada criança, na mesma ordem — usada depois pra coletar nome/documento por criança. */
+  idadesCriancas?: number[] | undefined;
   inclusos: string[];
   contextoDestino?: string | undefined;
 }

@@ -7,6 +7,7 @@ import {
   Plus,
   Send,
   Sparkles,
+  User,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/planejar-viagem")({
   ),
 });
 
-type Step = "tipo" | "selecao" | "calendario" | "detalhes" | "resumo";
+type Step = "tipo" | "selecao" | "calendario" | "resumo";
 type TipoInicial = "destinos" | "experiencias";
 type SelecoesMap = Record<string, Set<string>>;
 type Modo = "lista" | "detalhe" | "wizard";
@@ -50,17 +51,10 @@ const STEP_LABELS: Record<Step, string> = {
   tipo: "1. Por onde começar",
   selecao: "2. Destinos e experiências",
   calendario: "3. Datas e detalhes por destino",
-  detalhes: "4. Sobre a viagem",
-  resumo: "5. Resumo",
+  resumo: "4. Resumo",
 };
 
-const STEP_ORDER: Step[] = [
-  "tipo",
-  "selecao",
-  "calendario",
-  "detalhes",
-  "resumo",
-];
+const STEP_ORDER: Step[] = ["tipo", "selecao", "calendario", "resumo"];
 
 const ADULTOS_PADRAO = 2;
 const CRIANCAS_PADRAO = 0;
@@ -87,6 +81,9 @@ function PlanejarViagemPage() {
   );
   const [adultosMap, setAdultosMap] = useState<Record<string, number>>({});
   const [criancasMap, setCriancasMap] = useState<Record<string, number>>({});
+  const [idadesCriancasMap, setIdadesCriancasMap] = useState<
+    Record<string, number[]>
+  >({});
   const [inclusosMap, setInclusosMap] = useState<Record<string, string[]>>({});
   const [contextoDestinoMap, setContextoDestinoMap] = useState<
     Record<string, string>
@@ -125,6 +122,7 @@ function PlanejarViagemPage() {
     setInteressesMap({});
     setAdultosMap({});
     setCriancasMap({});
+    setIdadesCriancasMap({});
     setInclusosMap({});
     setContextoDestinoMap({});
     setContexto("");
@@ -176,6 +174,13 @@ function PlanejarViagemPage() {
         return resto;
       }
       return { ...atual, [slug]: CRIANCAS_PADRAO };
+    });
+    setIdadesCriancasMap((atual) => {
+      if (slug in atual) {
+        const { [slug]: _removido, ...resto } = atual;
+        return resto;
+      }
+      return { ...atual, [slug]: [] };
     });
     setInteressesMap((atual) => {
       if (slug in atual) {
@@ -267,6 +272,7 @@ function PlanejarViagemPage() {
       dataFim: datasFim[slug],
       adultos: adultosMap[slug] ?? ADULTOS_PADRAO,
       criancas: criancasMap[slug] ?? CRIANCAS_PADRAO,
+      idadesCriancas: idadesCriancasMap[slug],
       interesses: interessesMap[slug] ?? [],
       inclusos: inclusosMap[slug] ?? [],
       contextoDestino: contextoDestinoMap[slug] || undefined,
@@ -309,7 +315,12 @@ function PlanejarViagemPage() {
 
   if (modo === "detalhe" && planoSelecionado) {
     return (
-      <DetalhePlanoView plano={planoSelecionado} onVoltar={verMeusPlanos} />
+      <DetalhePlanoView
+        plano={planoSelecionado}
+        nomeUsuario={user?.nome.split(" ")[0] ?? ""}
+        avatarUrlUsuario={user?.avatarUrl}
+        onVoltar={verMeusPlanos}
+      />
     );
   }
 
@@ -400,8 +411,24 @@ function PlanejarViagemPage() {
                 setAdultosMap((atual) => ({ ...atual, [slug]: valor }))
               }
               criancasMap={criancasMap}
-              onCriancasChange={(slug, valor) =>
-                setCriancasMap((atual) => ({ ...atual, [slug]: valor }))
+              onCriancasChange={(slug, valor) => {
+                setCriancasMap((atual) => ({ ...atual, [slug]: valor }));
+                setIdadesCriancasMap((atual) => {
+                  const atuais = atual[slug] ?? [];
+                  const proximas = Array.from(
+                    { length: Math.max(valor, 0) },
+                    (_, i) => atuais[i] ?? 0,
+                  );
+                  return { ...atual, [slug]: proximas };
+                });
+              }}
+              idadesCriancasMap={idadesCriancasMap}
+              onIdadeCriancaChange={(slug, indice, idade) =>
+                setIdadesCriancasMap((atual) => {
+                  const atuais = [...(atual[slug] ?? [])];
+                  atuais[indice] = idade;
+                  return { ...atual, [slug]: atuais };
+                })
               }
               interessesMap={interessesMap}
               onToggleInteresse={toggleInteresseDoDestino}
@@ -412,15 +439,6 @@ function PlanejarViagemPage() {
                 setContextoDestinoMap((atual) => ({ ...atual, [slug]: valor }))
               }
               onVoltar={() => irPara("selecao")}
-              onAvancar={() => irPara("detalhes")}
-            />
-          )}
-
-          {step === "detalhes" && (
-            <DetalhesStep
-              contexto={contexto}
-              onContextoChange={setContexto}
-              onVoltar={() => irPara("calendario")}
               onAvancar={() => irPara("resumo")}
             />
           )}
@@ -438,7 +456,7 @@ function PlanejarViagemPage() {
               contextoDestinoMap={contextoDestinoMap}
               contexto={contexto}
               enviado={enviado}
-              onVoltar={() => irPara("detalhes")}
+              onVoltar={() => irPara("calendario")}
               onEnviar={handleEnviar}
               onVerMeusPlanos={verMeusPlanos}
             />
@@ -726,6 +744,8 @@ function CalendarioStep({
   onAdultosChange,
   criancasMap,
   onCriancasChange,
+  idadesCriancasMap,
+  onIdadeCriancaChange,
   interessesMap,
   onToggleInteresse,
   inclusosMap,
@@ -745,6 +765,8 @@ function CalendarioStep({
   onAdultosChange: (slug: string, valor: number) => void;
   criancasMap: Record<string, number>;
   onCriancasChange: (slug: string, valor: number) => void;
+  idadesCriancasMap: Record<string, number[]>;
+  onIdadeCriancaChange: (slug: string, indice: number, idade: number) => void;
   interessesMap: Record<string, string[]>;
   onToggleInteresse: (slug: string, valor: string) => void;
   inclusosMap: Record<string, string[]>;
@@ -805,30 +827,55 @@ function CalendarioStep({
   function camposPessoas() {
     const input =
       "mt-1.5 w-full rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary";
+    const numCriancas = criancasMap[slug!] ?? 0;
+    const idades = idadesCriancasMap[slug!] ?? [];
     return (
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="text-sm font-medium text-sand-50">Adultos</label>
-          <input
-            type="number"
-            min={1}
-            max={30}
-            value={adultosMap[slug!] ?? 2}
-            onChange={(e) => onAdultosChange(slug!, Number(e.target.value))}
-            className={input}
-          />
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-sand-50">Adultos</label>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={adultosMap[slug!] ?? 2}
+              onChange={(e) => onAdultosChange(slug!, Number(e.target.value))}
+              className={input}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-sand-50">Crianças</label>
+            <input
+              type="number"
+              min={0}
+              max={30}
+              value={numCriancas}
+              onChange={(e) => onCriancasChange(slug!, Number(e.target.value))}
+              className={input}
+            />
+          </div>
         </div>
-        <div>
-          <label className="text-sm font-medium text-sand-50">Crianças</label>
-          <input
-            type="number"
-            min={0}
-            max={30}
-            value={criancasMap[slug!] ?? 0}
-            onChange={(e) => onCriancasChange(slug!, Number(e.target.value))}
-            className={input}
-          />
-        </div>
+        {numCriancas > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: numCriancas }, (_, i) => (
+              <div key={i}>
+                <label className="text-sm font-medium text-sand-50">
+                  Idade da criança {i + 1}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={17}
+                  value={idades[i] ?? 0}
+                  onChange={(e) =>
+                    onIdadeCriancaChange(slug!, i, Number(e.target.value))
+                  }
+                  className={input}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -895,16 +942,16 @@ function CalendarioStep({
 
   function camposContexto() {
     return (
-      <div>
+      <div className="flex h-full flex-col">
         <label className="text-sm font-medium text-sand-50">
-          Contexto sobre {destino!.nome.split(",")[0]} (opcional)
+          O que vai fazer da sua passagem por {destino!.nome.split(",")[0]}{" "}
+          inesquecível? (opcional)
         </label>
         <textarea
-          rows={2}
           value={contextoDestinoMap[slug!] ?? ""}
           onChange={(e) => onContextoDestinoChange(slug!, e.target.value)}
-          placeholder="Algo específico desse destino? Ex: preferimos hospedagem mais rústica aqui."
-          className="mt-1.5 w-full resize-none rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+          placeholder="Conta pra gente suas expectativas — quanto mais detalhes, mais completa fica a proposta que preparamos especialmente pra você."
+          className="mt-1.5 w-full flex-1 resize-none rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
         />
       </div>
     );
@@ -957,6 +1004,11 @@ function CalendarioStep({
           })}
         </div>
       )}
+      {destinosSelecionados.length > 1 && (
+        <p className="text-center text-sm font-medium text-muted-foreground">
+          {destino.nome}
+        </p>
+      )}
 
       <div className="relative overflow-hidden rounded-2xl">
         <img
@@ -999,12 +1051,12 @@ function CalendarioStep({
             </p>
           )}
 
-          <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
-            <div className="order-2 space-y-6 lg:order-1">
+          <div className="mt-6 grid items-start gap-8 lg:grid-cols-[1fr_auto]">
+            <div className="order-2 flex flex-col gap-6 lg:order-1">
               {camposPessoas()}
               {camposInteresses()}
               {camposInclusos()}
-              {camposContexto()}
+              <div className="flex-1">{camposContexto()}</div>
             </div>
             <div className="order-1 flex justify-center lg:order-2">
               <Calendar
@@ -1033,69 +1085,6 @@ function CalendarioStep({
           className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
         >
           {ehUltimo ? "Continuar" : "Próximo destino"}
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function DetalhesStep({
-  contexto,
-  onContextoChange,
-  onVoltar,
-  onAvancar,
-}: {
-  contexto: string;
-  onContextoChange: (valor: string) => void;
-  onVoltar: () => void;
-  onAvancar: () => void;
-}) {
-  return (
-    <div className="mx-auto max-w-2xl space-y-10">
-      <div>
-        <h2 className="text-balance text-2xl md:text-3xl">
-          Mais algum contexto sobre a viagem?
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Isso ajuda nossa equipe a montar uma proposta sob medida — pessoas,
-          interesses e o que incluir já foram definidos por destino no passo
-          anterior.
-        </p>
-      </div>
-
-      <div>
-        <label
-          htmlFor="contexto"
-          className="text-sm font-medium text-foreground"
-        >
-          Contexto adicional (opcional)
-        </label>
-        <textarea
-          id="contexto"
-          rows={5}
-          value={contexto}
-          onChange={(e) => onContextoChange(e.target.value)}
-          placeholder="Ex: é uma viagem de aniversário de casamento, alguém do grupo tem dificuldade de locomoção, preferimos hospedagem mais rústica, etc."
-          className="mt-1.5 w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-        />
-      </div>
-
-      <div className="flex items-center justify-between border-t border-border pt-6">
-        <button
-          type="button"
-          onClick={onVoltar}
-          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </button>
-        <button
-          type="button"
-          onClick={onAvancar}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Ver resumo
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
@@ -1218,7 +1207,7 @@ function ResumoStep({
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Destinos
           </p>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-3 grid gap-6 sm:grid-cols-2">
             {destinosSelecionados.map((slug) => {
               const destino = destinos.find((d) => d.slug === slug);
               const inicio = datasInicio[slug];
@@ -1231,26 +1220,32 @@ function ResumoStep({
               return (
                 <div
                   key={slug}
-                  className="relative aspect-[4/3] overflow-hidden rounded-2xl"
+                  className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
                 >
-                  {destino?.imagem ? (
-                    <img
-                      src={destino.imagem}
-                      alt={destino.alt}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-forest-800" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-forest-900/85 via-forest-900/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5 text-sand-50">
-                    <h3 className="font-display text-xl">{destino?.nome}</h3>
-                    <p className="mt-1 text-xs text-sand-50/80">
-                      {inicio && fim
-                        ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites · ${adultos} adulto(s)${criancas > 0 ? `, ${criancas} criança(s)` : ""}`
-                        : "Datas a combinar"}
-                    </p>
-                    <p className="mt-1 text-sm text-forest-100">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    {destino?.imagem ? (
+                      <img
+                        src={destino.imagem}
+                        alt={destino.alt}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-forest-800" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-forest-900/60 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h3 className="font-display text-2xl text-sand-50">
+                        {destino?.nome}
+                      </h3>
+                      <p className="text-sm text-forest-100">
+                        {inicio && fim
+                          ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites · ${adultos} adulto(s)${criancas > 0 ? `, ${criancas} criança(s)` : ""}`
+                          : "Datas a combinar"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-1 p-6">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
                       {contextoDestino ||
                         "Sem comentários adicionais para esse destino."}
                     </p>
@@ -1399,7 +1394,7 @@ function ListaPlanosView({
                       {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+                  <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-900">
                     Em análise
                   </span>
                 </button>
@@ -1436,9 +1431,13 @@ const CONSULTA_STEP_LABELS: Record<ConsultaStep, string> = {
 
 function DetalhePlanoView({
   plano,
+  nomeUsuario,
+  avatarUrlUsuario,
   onVoltar,
 }: {
   plano: PlanoViagem;
+  nomeUsuario: string;
+  avatarUrlUsuario?: string | undefined;
   onVoltar: () => void;
 }) {
   const [stepConsulta, setStepConsulta] = useState<ConsultaStep>("analise");
@@ -1529,6 +1528,11 @@ function DetalhePlanoView({
             })}
           </div>
         )}
+        {plano.selecoes.length > 1 && (
+          <p className="text-center text-sm font-medium text-muted-foreground">
+            {destinoAtualInfo.nome}
+          </p>
+        )}
 
         <div className="relative overflow-hidden rounded-2xl">
           {destinoAtualInfo.imagem ? (
@@ -1551,7 +1555,7 @@ function DetalhePlanoView({
                 : "Datas a combinar"}
             </p>
 
-            <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
+            <div className="mt-6 grid items-start gap-8 lg:grid-cols-[1fr_auto]">
               <div className="order-2 space-y-6 lg:order-1">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
@@ -1577,6 +1581,23 @@ function DetalhePlanoView({
                     />
                   </div>
                 </div>
+                {(selecaoAtual.idadesCriancas ?? []).length > 0 && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {(selecaoAtual.idadesCriancas ?? []).map((idade, i) => (
+                      <div key={i}>
+                        <label className="text-sm font-medium text-sand-50">
+                          Idade da criança {i + 1}
+                        </label>
+                        <input
+                          type="number"
+                          value={idade}
+                          disabled
+                          className="mt-1.5 w-full rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none disabled:opacity-90"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {exps.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-sand-50">
@@ -1633,7 +1654,8 @@ function DetalhePlanoView({
                 {selecaoAtual.contextoDestino && (
                   <div>
                     <label className="text-sm font-medium text-sand-50">
-                      Contexto sobre {destinoAtualInfo.nome.split(",")[0]}
+                      O que vai fazer da passagem por{" "}
+                      {destinoAtualInfo.nome.split(",")[0]} inesquecível
                     </label>
                     <textarea
                       rows={2}
@@ -1676,19 +1698,34 @@ function DetalhePlanoView({
               <span className="text-sm font-semibold uppercase tracking-wider text-primary">
                 Planejar viagem
               </span>
-              <h1 className="mt-3 text-balance text-3xl md:text-4xl">
-                Detalhes do plano
-              </h1>
-              <div className="mt-4 flex items-center justify-center gap-3">
-                <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+                <h1 className="text-balance text-3xl md:text-4xl">
+                  Viagem de {nomeUsuario} para {juntarNomes(nomesDestinos)}
+                </h1>
+                <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-900">
                   Em análise
                 </span>
               </div>
-              <p className="mt-4 text-sm text-muted-foreground">
+              <p className="mt-4 text-muted-foreground">
+                {inicioGeral && fimGeral
+                  ? `${new Date(`${inicioGeral}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}`
+                  : "Datas a combinar"}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
                 Enviado em{" "}
-                {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}. Nossa
-                equipe está analisando e vai entrar em contato com uma proposta
-                detalhada.
+                {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}. Previsão
+                de retorno até{" "}
+                {new Date(
+                  new Date(plano.criadoEm).getTime() + 24 * 60 * 60 * 1000,
+                ).toLocaleDateString("pt-BR")}{" "}
+                às{" "}
+                {new Date(
+                  new Date(plano.criadoEm).getTime() + 24 * 60 * 60 * 1000,
+                ).toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+                .
               </p>
             </div>
           </div>
@@ -1768,41 +1805,27 @@ function DetalhePlanoView({
                       (d) => d.slug === selecao.destinoSlug,
                     );
                     if (!destino) return null;
-                    const disponiveis = getExperienciasPorDestino(
-                      selecao.destinoSlug,
-                    );
-                    const escolhidos = new Set(selecao.experienciaSlugs ?? []);
+                    const escolhidas = (selecao.experienciaSlugs ?? [])
+                      .map((s) => experiencias.find((e) => e.slug === s))
+                      .filter((e): e is (typeof experiencias)[number] => !!e);
+                    if (escolhidas.length === 0) return null;
 
                     return (
                       <div key={selecao.destinoSlug}>
                         <h3 className="font-display text-xl">
                           O que você quer viver em {destino.nome.split(",")[0]}?
                         </h3>
-                        {disponiveis.length > 0 ? (
-                          <div className="mt-4 flex flex-wrap gap-3">
-                            {disponiveis.map((exp) => {
-                              const marcado = escolhidos.has(exp.slug);
-                              return (
-                                <span
-                                  key={exp.slug}
-                                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${
-                                    marcado
-                                      ? "border-primary bg-primary text-primary-foreground"
-                                      : "border-border text-foreground"
-                                  }`}
-                                >
-                                  {marcado && <Check className="h-3.5 w-3.5" />}
-                                  {exp.titulo}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <p className="mt-3 text-sm text-muted-foreground">
-                            Ainda não temos experiências específicas cadastradas
-                            para esse destino.
-                          </p>
-                        )}
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          {escolhidas.map((exp) => (
+                            <span
+                              key={exp.slug}
+                              className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                              {exp.titulo}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     );
                   })}
@@ -1811,105 +1834,103 @@ function DetalhePlanoView({
 
               {stepConsulta === "calendario" && renderPainelDestino()}
 
-              {stepConsulta === "detalhes" && (
-                <div className="mx-auto max-w-2xl space-y-6">
-                  <div className="rounded-2xl border border-border bg-card p-6 text-center">
-                    <p className="font-display text-xl">
-                      {juntarNomes(nomesDestinos)}
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {inicioGeral && fimGeral
-                        ? `${new Date(`${inicioGeral}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}`
-                        : "Datas a combinar"}
-                    </p>
-                  </div>
+              {stepConsulta === "detalhes" &&
+                (() => {
+                  const experienciaSlugsUnicos = Array.from(
+                    new Set(
+                      plano.selecoes.flatMap((s) => s.experienciaSlugs ?? []),
+                    ),
+                  );
+                  const experienciasUnicas = experienciaSlugsUnicos
+                    .map((s) => experiencias.find((e) => e.slug === s))
+                    .filter((e): e is (typeof experiencias)[number] => !!e);
 
-                  <div className="space-y-4">
-                    {plano.selecoes.map((selecao) => {
-                      const destino = destinos.find(
-                        (d) => d.slug === selecao.destinoSlug,
-                      );
-                      const exps = (selecao.experienciaSlugs ?? [])
-                        .map(
-                          (s) => experiencias.find((e) => e.slug === s)?.titulo,
-                        )
-                        .filter((t): t is string => !!t);
-                      const expectativas = [
-                        ...(selecao.interesses ?? []),
-                        ...(selecao.inclusos ?? []),
-                      ];
-                      const noites = noitesEntre(
-                        selecao.dataInicio,
-                        selecao.dataFim,
-                      );
+                  return (
+                    <div className="mx-auto max-w-3xl space-y-8">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Destinos
+                        </p>
+                        <div className="mt-3 grid gap-6 sm:grid-cols-2">
+                          {plano.selecoes.map((selecao) => {
+                            const destino = destinos.find(
+                              (d) => d.slug === selecao.destinoSlug,
+                            );
+                            const noites = noitesEntre(
+                              selecao.dataInicio,
+                              selecao.dataFim,
+                            );
 
-                      return (
-                        <div
-                          key={selecao.destinoSlug}
-                          className="rounded-2xl border border-border bg-card p-5"
-                        >
-                          <p className="font-display text-lg">
-                            {destino?.nome}
-                          </p>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {selecao.dataInicio && selecao.dataFim
-                              ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                              : "Datas a combinar"}
-                          </p>
-                          {exps.length > 0 && (
-                            <div className="mt-3">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                Experiências
-                              </p>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {exps.map((titulo) => (
-                                  <span
-                                    key={titulo}
-                                    className="rounded-full border border-border bg-secondary px-3 py-1 text-sm text-secondary-foreground"
-                                  >
-                                    {titulo}
-                                  </span>
-                                ))}
+                            return (
+                              <div
+                                key={selecao.destinoSlug}
+                                className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                              >
+                                <div className="relative aspect-[4/3] overflow-hidden">
+                                  {destino?.imagem ? (
+                                    <img
+                                      src={destino.imagem}
+                                      alt={destino.alt}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="h-full w-full bg-forest-800" />
+                                  )}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-forest-900/60 to-transparent" />
+                                  <div className="absolute bottom-4 left-4 right-4">
+                                    <h3 className="font-display text-2xl text-sand-50">
+                                      {destino?.nome}
+                                    </h3>
+                                    <p className="text-sm text-forest-100">
+                                      {selecao.dataInicio && selecao.dataFim
+                                        ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites · ${selecao.adultos ?? 2} adulto(s)${(selecao.criancas ?? 0) > 0 ? `, ${selecao.criancas} criança(s)` : ""}`
+                                        : "Datas a combinar"}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex-1 p-6">
+                                  <p className="text-sm leading-relaxed text-muted-foreground">
+                                    {selecao.contextoDestino ||
+                                      "Sem comentários adicionais para esse destino."}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          )}
-                          {expectativas.length > 0 && (
-                            <div className="mt-3">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                Expectativas
-                              </p>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {expectativas.map((item) => (
-                                  <span
-                                    key={item}
-                                    className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
-                                  >
-                                    {item}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
 
-                  <div className="rounded-2xl border border-border bg-card p-6">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Contexto geral da viagem
-                    </p>
-                    <p className="mt-3 text-sm text-foreground">
-                      {plano.contexto ||
-                        "Nenhum contexto adicional foi informado."}
-                    </p>
-                  </div>
-                </div>
-              )}
+                      {experienciasUnicas.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Experiências
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {experienciasUnicas.map((exp) => (
+                              <span
+                                key={exp.slug}
+                                className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                {exp.titulo}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+                        <span className="font-medium">Contexto:</span>{" "}
+                        {plano.contexto ||
+                          "Nenhum contexto adicional foi informado."}
+                      </div>
+                    </div>
+                  );
+                })()}
 
               {stepConsulta === "analise" && (
                 <div className="mx-auto max-w-2xl space-y-6">
-                  <div>
+                  <div className="text-center">
                     <h2 className="font-display text-2xl md:text-3xl">
                       Análise da nossa equipe
                     </h2>
@@ -1920,80 +1941,97 @@ function DetalhePlanoView({
                     </p>
                   </div>
 
-                  <div className="space-y-6 border-l-2 border-border pl-6">
-                    {interacoes.map((interacao) => (
-                      <div key={interacao.id} className="relative">
-                        <div
-                          className={`absolute -left-[1.9rem] top-1 h-3 w-3 rounded-full ${
-                            interacao.autor === "usuario"
-                              ? "bg-primary"
-                              : "bg-secondary-foreground"
-                          }`}
-                        />
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {interacao.autor === "usuario"
-                            ? "Você"
-                            : "Analista da Aventura Organizada"}{" "}
-                          ·{" "}
-                          {new Date(interacao.criadoEm).toLocaleDateString(
-                            "pt-BR",
-                          )}{" "}
-                          às{" "}
-                          {new Date(interacao.criadoEm).toLocaleTimeString(
-                            "pt-BR",
-                            { hour: "2-digit", minute: "2-digit" },
-                          )}
-                        </p>
-                        <p className="mt-1.5 text-sm text-foreground">
-                          {interacao.texto}
-                        </p>
+                  <div>
+                    {interacoes.map((interacao, index) => {
+                      const isUsuario = interacao.autor === "usuario";
+                      const isUltima = index === interacoes.length - 1;
+                      return (
+                        <div key={interacao.id} className="flex gap-4">
+                          <div className="flex flex-col items-center">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary">
+                              {isUsuario && avatarUrlUsuario ? (
+                                <img
+                                  src={avatarUrlUsuario}
+                                  alt={nomeUsuario}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <User
+                                  className={`h-4 w-4 ${isUsuario ? "text-primary" : "text-muted-foreground"}`}
+                                />
+                              )}
+                            </div>
+                            {!isUltima && (
+                              <div className="mt-1 w-0.5 flex-1 bg-border" />
+                            )}
+                          </div>
+                          <div className={isUltima ? "flex-1" : "flex-1 pb-6"}>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {interacao.autor === "usuario"
+                                ? "Você"
+                                : "Analista da Aventura Organizada"}{" "}
+                              ·{" "}
+                              {new Date(interacao.criadoEm).toLocaleDateString(
+                                "pt-BR",
+                              )}{" "}
+                              às{" "}
+                              {new Date(interacao.criadoEm).toLocaleTimeString(
+                                "pt-BR",
+                                { hour: "2-digit", minute: "2-digit" },
+                              )}
+                            </p>
+                            <p className="mt-1.5 text-sm text-foreground">
+                              {interacao.texto}
+                            </p>
 
-                        {interacao.tipo === "sugestao" && (
-                          <div className="mt-3">
-                            {interacao.sugestaoStatus === "aceita" ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-                                <Check className="h-3.5 w-3.5" />
-                                Sugestão aceita
-                              </span>
-                            ) : interacao.sugestaoStatus === "recusada" ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
-                                <X className="h-3.5 w-3.5" />
-                                Sugestão recusada
-                              </span>
-                            ) : (
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleResponderSugestao(
-                                      interacao.id,
-                                      "aceita",
-                                    )
-                                  }
-                                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
-                                >
-                                  <Check className="h-3.5 w-3.5" />
-                                  Aceitar
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleResponderSugestao(
-                                      interacao.id,
-                                      "recusada",
-                                    )
-                                  }
-                                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-secondary"
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                  Recusar
-                                </button>
+                            {interacao.tipo === "sugestao" && (
+                              <div className="mt-3">
+                                {interacao.sugestaoStatus === "aceita" ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                                    <Check className="h-3.5 w-3.5" />
+                                    Sugestão aceita
+                                  </span>
+                                ) : interacao.sugestaoStatus === "recusada" ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+                                    <X className="h-3.5 w-3.5" />
+                                    Sugestão recusada
+                                  </span>
+                                ) : (
+                                  <div className="flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleResponderSugestao(
+                                          interacao.id,
+                                          "aceita",
+                                        )
+                                      }
+                                      className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+                                    >
+                                      <Check className="h-3.5 w-3.5" />
+                                      Aceitar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleResponderSugestao(
+                                          interacao.id,
+                                          "recusada",
+                                        )
+                                      }
+                                      className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-secondary"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                      Recusar
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-4">

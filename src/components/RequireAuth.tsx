@@ -9,7 +9,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    if (ready && !user) {
+    if (ready && !user && pathname !== "/login") {
       navigate({ to: "/login", search: { redirect: pathname } });
     }
   }, [ready, user, pathname, navigate]);

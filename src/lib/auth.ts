@@ -13,6 +13,26 @@ export interface AuthUser {
   id: string;
   nome: string;
   email: string;
+  avatarUrl?: string | undefined;
+  telefone?: string | undefined;
+  cep?: string | undefined;
+  endereco?: string | undefined;
+  numero?: string | undefined;
+  complemento?: string | undefined;
+  bairro?: string | undefined;
+  cidade?: string | undefined;
+  estado?: string | undefined;
+}
+
+export interface EnderecoInput {
+  telefone?: string | undefined;
+  cep?: string | undefined;
+  endereco?: string | undefined;
+  numero?: string | undefined;
+  complemento?: string | undefined;
+  bairro?: string | undefined;
+  cidade?: string | undefined;
+  estado?: string | undefined;
 }
 
 interface StoredAccount extends AuthUser {
@@ -97,6 +117,52 @@ export async function signIn(input: {
 export async function signOut(): Promise<void> {
   window.localStorage.removeItem(SESSION_KEY);
   return delay(undefined, 100);
+}
+
+export async function updateProfile(
+  userId: string,
+  input: { nome?: string; avatarUrl?: string | undefined } & EnderecoInput,
+): Promise<AuthUser> {
+  const users = readUsers();
+  const index = users.findIndex((u) => u.id === userId);
+  if (index === -1) {
+    throw new Error("Usuário não encontrado.");
+  }
+
+  const atual = users[index]!;
+  const atualizado: StoredAccount = {
+    ...atual,
+    nome: input.nome?.trim() || atual.nome,
+    avatarUrl: input.avatarUrl ?? atual.avatarUrl,
+    telefone: input.telefone ?? atual.telefone,
+    cep: input.cep ?? atual.cep,
+    endereco: input.endereco ?? atual.endereco,
+    numero: input.numero ?? atual.numero,
+    complemento: input.complemento ?? atual.complemento,
+    bairro: input.bairro ?? atual.bairro,
+    cidade: input.cidade ?? atual.cidade,
+    estado: input.estado ?? atual.estado,
+  };
+  users[index] = atualizado;
+  writeUsers(users);
+
+  const user: AuthUser = {
+    id: atualizado.id,
+    nome: atualizado.nome,
+    email: atualizado.email,
+    avatarUrl: atualizado.avatarUrl,
+    telefone: atualizado.telefone,
+    cep: atualizado.cep,
+    endereco: atualizado.endereco,
+    numero: atualizado.numero,
+    complemento: atualizado.complemento,
+    bairro: atualizado.bairro,
+    cidade: atualizado.cidade,
+    estado: atualizado.estado,
+  };
+  window.localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+
+  return delay(user, 200);
 }
 
 export function getCurrentUser(): AuthUser | null {
