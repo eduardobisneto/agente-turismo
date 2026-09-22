@@ -3,7 +3,11 @@ import { LogOut, Menu, User, X, Mountain } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/lib/auth-context";
-import { getPlanosDoUsuario, onPlanosAtualizados } from "@/lib/trip-plan";
+import {
+  getPlanosDoUsuario,
+  onPlanosAtualizados,
+  pedirListaDeViagens,
+} from "@/lib/trip-plan";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -65,6 +69,9 @@ export function Header() {
           })}
           <Link
             to="/planejar-viagem"
+            onClick={() => {
+              if (temViagens) pedirListaDeViagens();
+            }}
             className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {rotuloBotaoViagem}
@@ -129,7 +136,10 @@ export function Header() {
             ))}
             <Link
               to="/planejar-viagem"
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setMobileOpen(false);
+                if (temViagens) pedirListaDeViagens();
+              }}
               className="mt-2 inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground"
             >
               {rotuloBotaoViagem}

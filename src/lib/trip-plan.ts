@@ -17,6 +17,16 @@ export interface SelecaoDestino {
   adultos: number;
   criancas: number;
   inclusos: string[];
+  contextoDestino?: string | undefined;
+}
+
+export interface Interacao {
+  id: string;
+  autor: "usuario" | "analista";
+  texto: string;
+  criadoEm: string;
+  tipo?: "mensagem" | "sugestao";
+  sugestaoStatus?: "pendente" | "aceita" | "recusada";
 }
 
 export interface PlanoViagem {
@@ -26,6 +36,7 @@ export interface PlanoViagem {
   tipoInicial: "destinos" | "experiencias";
   selecoes: SelecaoDestino[];
   contexto: string;
+  interacoes: Interacao[];
 }
 
 // v2: campos de data/pessoas/interesses/inclusos migraram de nível global
@@ -62,13 +73,39 @@ export function onPlanosAtualizados(callback: () => void): () => void {
   return () => window.removeEventListener(PLANOS_ATUALIZADOS_EVENT, callback);
 }
 
+// O Header tem um link "Minhas viagens" pra /planejar-viagem, mas a página
+// guarda internamente se está mostrando a lista, o wizard ou o detalhe de
+// um plano. Clicar no link quando já se está nessa rota não dispara
+// navegação (mesma URL), então a página não teria como saber que precisa
+// voltar pra lista. Esse evento avisa quem estiver escutando pra fazer isso.
+const IR_PARA_LISTA_EVENT = "ao:ir-para-lista-de-viagens";
+
+export function pedirListaDeViagens(): void {
+  window.dispatchEvent(new Event(IR_PARA_LISTA_EVENT));
+}
+
+export function onPedirListaDeViagens(callback: () => void): () => void {
+  window.addEventListener(IR_PARA_LISTA_EVENT, callback);
+  return () => window.removeEventListener(IR_PARA_LISTA_EVENT, callback);
+}
+
 export function salvarPlanoViagem(
-  plano: Omit<PlanoViagem, "id" | "criadoEm">,
+  plano: Omit<PlanoViagem, "id" | "criadoEm" | "interacoes">,
 ): PlanoViagem {
+  const agora = new Date().toISOString();
   const registro: PlanoViagem = {
     ...plano,
     id: crypto.randomUUID(),
-    criadoEm: new Date().toISOString(),
+    criadoEm: agora,
+    interacoes: [
+      {
+        id: crypto.randomUUID(),
+        autor: "usuario",
+        texto: "Plano enviado para análise.",
+        criadoEm: agora,
+        tipo: "mensagem",
+      },
+    ],
   };
 
   const planos = readPlanos();
@@ -79,6 +116,57 @@ export function salvarPlanoViagem(
   window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
 
   return registro;
+}
+
+export function adicionarInteracao(
+  planoId: string,
+  interacao: Omit<Interacao, "id" | "criadoEm">,
+): PlanoViagem | null {
+  const planos = readPlanos();
+  const index = planos.findIndex((p) => p.id === planoId);
+  if (index === -1) return null;
+
+  const atual = planos[index]!;
+  const novaInteracao: Interacao = {
+    ...interacao,
+    id: crypto.randomUUID(),
+    criadoEm: new Date().toISOString(),
+  };
+
+  const atualizado: PlanoViagem = {
+    ...atual,
+    interacoes: [...(atual.interacoes ?? []), novaInteracao],
+  };
+
+  planos[index] = atualizado;
+  window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
+  window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
+
+  return atualizado;
+}
+
+export function responderSugestao(
+  planoId: string,
+  interacaoId: string,
+  status: "aceita" | "recusada",
+): PlanoViagem | null {
+  const planos = readPlanos();
+  const index = planos.findIndex((p) => p.id === planoId);
+  if (index === -1) return null;
+
+  const atual = planos[index]!;
+  const atualizado: PlanoViagem = {
+    ...atual,
+    interacoes: (atual.interacoes ?? []).map((i) =>
+      i.id === interacaoId ? { ...i, sugestaoStatus: status } : i,
+    ),
+  };
+
+  planos[index] = atualizado;
+  window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
+  window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
+
+  return atualizado;
 }
 
 export function noitesEntre(

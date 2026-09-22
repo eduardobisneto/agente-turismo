@@ -5,7 +5,9 @@ import {
   Check,
   MapPin,
   Plus,
+  Send,
   Sparkles,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -20,9 +22,13 @@ import {
 } from "@/data/experiencias";
 import { useAuth } from "@/lib/auth-context";
 import {
+  adicionarInteracao,
   getPlanosDoUsuario,
   noitesEntre,
+  onPedirListaDeViagens,
+  responderSugestao,
   salvarPlanoViagem,
+  type Interacao,
   type PlanoViagem,
   type SelecaoDestino,
 } from "@/lib/trip-plan";
@@ -82,6 +88,9 @@ function PlanejarViagemPage() {
   const [adultosMap, setAdultosMap] = useState<Record<string, number>>({});
   const [criancasMap, setCriancasMap] = useState<Record<string, number>>({});
   const [inclusosMap, setInclusosMap] = useState<Record<string, string[]>>({});
+  const [contextoDestinoMap, setContextoDestinoMap] = useState<
+    Record<string, string>
+  >({});
 
   const [contexto, setContexto] = useState("");
   const [enviado, setEnviado] = useState(false);
@@ -96,6 +105,15 @@ function PlanejarViagemPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user) return;
+    return onPedirListaDeViagens(() => {
+      setPlanos(getPlanosDoUsuario(user.id));
+      setPlanoSelecionado(null);
+      setModo("lista");
+    });
+  }, [user]);
+
   function iniciarNovoPlanejamento() {
     setStep("tipo");
     setMaxStepIndexVisitado(0);
@@ -108,6 +126,7 @@ function PlanejarViagemPage() {
     setAdultosMap({});
     setCriancasMap({});
     setInclusosMap({});
+    setContextoDestinoMap({});
     setContexto("");
     setEnviado(false);
     setModo("wizard");
@@ -171,6 +190,13 @@ function PlanejarViagemPage() {
         return resto;
       }
       return { ...atual, [slug]: [] };
+    });
+    setContextoDestinoMap((atual) => {
+      if (slug in atual) {
+        const { [slug]: _removido, ...resto } = atual;
+        return resto;
+      }
+      return { ...atual, [slug]: "" };
     });
   }
 
@@ -243,6 +269,7 @@ function PlanejarViagemPage() {
       criancas: criancasMap[slug] ?? CRIANCAS_PADRAO,
       interesses: interessesMap[slug] ?? [],
       inclusos: inclusosMap[slug] ?? [],
+      contextoDestino: contextoDestinoMap[slug] || undefined,
     }));
 
     salvarPlanoViagem({
@@ -380,6 +407,10 @@ function PlanejarViagemPage() {
               onToggleInteresse={toggleInteresseDoDestino}
               inclusosMap={inclusosMap}
               onToggleIncluso={toggleInclusoDoDestino}
+              contextoDestinoMap={contextoDestinoMap}
+              onContextoDestinoChange={(slug, valor) =>
+                setContextoDestinoMap((atual) => ({ ...atual, [slug]: valor }))
+              }
               onVoltar={() => irPara("selecao")}
               onAvancar={() => irPara("detalhes")}
             />
@@ -404,6 +435,7 @@ function PlanejarViagemPage() {
               criancasMap={criancasMap}
               interessesMap={interessesMap}
               inclusosMap={inclusosMap}
+              contextoDestinoMap={contextoDestinoMap}
               contexto={contexto}
               enviado={enviado}
               onVoltar={() => irPara("detalhes")}
@@ -698,6 +730,8 @@ function CalendarioStep({
   onToggleInteresse,
   inclusosMap,
   onToggleIncluso,
+  contextoDestinoMap,
+  onContextoDestinoChange,
   onVoltar,
   onAvancar,
 }: {
@@ -715,6 +749,8 @@ function CalendarioStep({
   onToggleInteresse: (slug: string, valor: string) => void;
   inclusosMap: Record<string, string[]>;
   onToggleIncluso: (slug: string, valor: string) => void;
+  contextoDestinoMap: Record<string, string>;
+  onContextoDestinoChange: (slug: string, valor: string) => void;
   onVoltar: () => void;
   onAvancar: () => void;
 }) {
@@ -857,6 +893,23 @@ function CalendarioStep({
     );
   }
 
+  function camposContexto() {
+    return (
+      <div>
+        <label className="text-sm font-medium text-sand-50">
+          Contexto sobre {destino!.nome.split(",")[0]} (opcional)
+        </label>
+        <textarea
+          rows={2}
+          value={contextoDestinoMap[slug!] ?? ""}
+          onChange={(e) => onContextoDestinoChange(slug!, e.target.value)}
+          placeholder="Algo específico desse destino? Ex: preferimos hospedagem mais rústica aqui."
+          className="mt-1.5 w-full resize-none rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
@@ -951,6 +1004,7 @@ function CalendarioStep({
               {camposPessoas()}
               {camposInteresses()}
               {camposInclusos()}
+              {camposContexto()}
             </div>
             <div className="order-1 flex justify-center lg:order-2">
               <Calendar
@@ -1058,6 +1112,7 @@ function ResumoStep({
   criancasMap,
   interessesMap,
   inclusosMap,
+  contextoDestinoMap,
   contexto,
   enviado,
   onVoltar,
@@ -1072,6 +1127,7 @@ function ResumoStep({
   criancasMap: Record<string, number>;
   interessesMap: Record<string, string[]>;
   inclusosMap: Record<string, string[]>;
+  contextoDestinoMap: Record<string, string>;
   contexto: string;
   enviado: boolean;
   onVoltar: () => void;
@@ -1097,6 +1153,7 @@ function ResumoStep({
       const pessoas = `${adultos} adulto(s)${criancas > 0 ? ` e ${criancas} criança(s)` : ""}`;
       const interesses = interessesMap[slug] ?? [];
       const inclusos = inclusosMap[slug] ?? [];
+      const contextoDestino = contextoDestinoMap[slug];
 
       return [
         `- ${destino?.nome} (${periodo}) — ${pessoas}`,
@@ -1105,6 +1162,7 @@ function ResumoStep({
         inclusos.length > 0
           ? `  Gostaria que incluísse: ${inclusos.join(", ")}`
           : null,
+        contextoDestino ? `  Contexto: ${contextoDestino}` : null,
       ]
         .filter(Boolean)
         .join("\n");
@@ -1128,6 +1186,7 @@ function ResumoStep({
     criancasMap,
     interessesMap,
     inclusosMap,
+    contextoDestinoMap,
     contexto,
   ]);
 
@@ -1156,39 +1215,53 @@ function ResumoStep({
           const criancas = criancasMap[slug] ?? 0;
           const interesses = interessesMap[slug] ?? [];
           const inclusos = inclusosMap[slug] ?? [];
+          const contextoDestino = contextoDestinoMap[slug];
 
           return (
-            <div
-              key={slug}
-              className="rounded-2xl border border-border bg-card p-5"
-            >
-              <p className="font-display text-lg">{destino?.nome}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {inicio && fim
-                  ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                  : "Datas a combinar"}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {adultos} adulto(s)
-                {criancas > 0 ? `, ${criancas} criança(s)` : ""}
-              </p>
-              {exps.length > 0 && (
-                <p className="mt-2 text-sm text-foreground">
-                  {exps.join(", ")}
-                </p>
+            <div key={slug} className="relative overflow-hidden rounded-2xl">
+              {destino?.imagem ? (
+                <img
+                  src={destino.imagem}
+                  alt={destino.alt}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-forest-800" />
               )}
-              {interesses.length > 0 && (
-                <p className="mt-2 text-sm text-foreground">
-                  <span className="font-medium">Interesses:</span>{" "}
-                  {interesses.join(", ")}
+              <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/70 to-forest-900/50" />
+              <div className="relative p-5 text-sand-50">
+                <p className="font-display text-lg">{destino?.nome}</p>
+                <p className="mt-1 text-sm text-sand-50/80">
+                  {inicio && fim
+                    ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                    : "Datas a combinar"}
                 </p>
-              )}
-              {inclusos.length > 0 && (
-                <p className="mt-2 text-sm text-foreground">
-                  <span className="font-medium">Gostaria que incluísse:</span>{" "}
-                  {inclusos.join(", ")}
+                <p className="mt-1 text-sm text-sand-50/80">
+                  {adultos} adulto(s)
+                  {criancas > 0 ? `, ${criancas} criança(s)` : ""}
                 </p>
-              )}
+                {exps.length > 0 && (
+                  <p className="mt-2 text-sm">{exps.join(", ")}</p>
+                )}
+                {interesses.length > 0 && (
+                  <p className="mt-2 text-sm">
+                    <span className="font-medium">Interesses:</span>{" "}
+                    {interesses.join(", ")}
+                  </p>
+                )}
+                {inclusos.length > 0 && (
+                  <p className="mt-2 text-sm">
+                    <span className="font-medium">Gostaria que incluísse:</span>{" "}
+                    {inclusos.join(", ")}
+                  </p>
+                )}
+                {contextoDestino && (
+                  <p className="mt-2 text-sm">
+                    <span className="font-medium">Contexto:</span>{" "}
+                    {contextoDestino}
+                  </p>
+                )}
+              </div>
             </div>
           );
         })}
@@ -1331,6 +1404,27 @@ function juntarNomes(nomes: string[]): string {
   return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
 }
 
+type ConsultaStep =
+  "tipo" | "selecao" | "calendario" | "detalhes" | "resumo" | "analise";
+
+const CONSULTA_STEP_ORDER: ConsultaStep[] = [
+  "tipo",
+  "selecao",
+  "calendario",
+  "detalhes",
+  "resumo",
+  "analise",
+];
+
+const CONSULTA_STEP_LABELS: Record<ConsultaStep, string> = {
+  tipo: "1. Por onde começou",
+  selecao: "2. Destinos e experiências",
+  calendario: "3. Datas e detalhes por destino",
+  detalhes: "4. Sobre a viagem",
+  resumo: "5. Resumo",
+  analise: "6. Análise",
+};
+
 function DetalhePlanoView({
   plano,
   onVoltar,
@@ -1338,13 +1432,16 @@ function DetalhePlanoView({
   plano: PlanoViagem;
   onVoltar: () => void;
 }) {
-  const [destinoAberto, setDestinoAberto] = useState<string | null>(null);
-
-  const selecaoAberta = plano.selecoes.find(
-    (s) => s.destinoSlug === destinoAberto,
+  const [stepConsulta, setStepConsulta] = useState<ConsultaStep>("analise");
+  const [destinoAtualIndex, setDestinoAtualIndex] = useState(0);
+  const [interacoes, setInteracoes] = useState<Interacao[]>(
+    plano.interacoes ?? [],
   );
-  const destinoAbertoInfo = selecaoAberta
-    ? destinos.find((d) => d.slug === selecaoAberta.destinoSlug)
+  const [mensagem, setMensagem] = useState("");
+
+  const selecaoAtual = plano.selecoes[destinoAtualIndex];
+  const destinoAtualInfo = selecaoAtual
+    ? destinos.find((d) => d.slug === selecaoAtual.destinoSlug)
     : undefined;
 
   const nomesDestinos = plano.selecoes
@@ -1365,6 +1462,193 @@ function DetalhePlanoView({
     fimValidos.length > 0
       ? fimValidos.reduce((max, d) => (d > max ? d : max))
       : undefined;
+
+  function handleEnviarMensagem() {
+    if (!mensagem.trim()) return;
+    const atualizado = adicionarInteracao(plano.id, {
+      autor: "usuario",
+      texto: mensagem.trim(),
+      tipo: "mensagem",
+    });
+    if (atualizado) setInteracoes(atualizado.interacoes);
+    setMensagem("");
+  }
+
+  function handleResponderSugestao(
+    interacaoId: string,
+    status: "aceita" | "recusada",
+  ) {
+    const atualizado = responderSugestao(plano.id, interacaoId, status);
+    if (atualizado) setInteracoes(atualizado.interacoes);
+  }
+
+  function renderPainelDestino() {
+    if (!selecaoAtual || !destinoAtualInfo) return null;
+
+    const exps = (selecaoAtual.experienciaSlugs ?? [])
+      .map((s) => experiencias.find((e) => e.slug === s))
+      .filter((e): e is (typeof experiencias)[number] => !!e);
+    const noites = noitesEntre(selecaoAtual.dataInicio, selecaoAtual.dataFim);
+    const interesses = selecaoAtual.interesses ?? [];
+    const inclusos = selecaoAtual.inclusos ?? [];
+
+    return (
+      <div className="space-y-6">
+        {plano.selecoes.length > 1 && (
+          <div className="flex items-center justify-center gap-1">
+            {plano.selecoes.map((s, i) => {
+              const ativo = i === destinoAtualIndex;
+              return (
+                <div key={s.destinoSlug} className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setDestinoAtualIndex(i)}
+                    aria-label={`Ir para o destino ${i + 1}`}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                      ativo
+                        ? "bg-primary text-primary-foreground"
+                        : "border-2 border-primary bg-transparent text-primary hover:bg-primary/10"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                  {i < plano.selecoes.length - 1 && (
+                    <div className="h-0.5 w-8 bg-primary" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="relative overflow-hidden rounded-2xl">
+          {destinoAtualInfo.imagem ? (
+            <img
+              src={destinoAtualInfo.imagem}
+              alt={destinoAtualInfo.alt}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-forest-800" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
+          <div className="relative p-6">
+            <p className="font-display text-xl text-sand-50">
+              {destinoAtualInfo.nome}
+            </p>
+            <p className="mt-1 text-sm text-sand-50/80">
+              {selecaoAtual.dataInicio && selecaoAtual.dataFim
+                ? `${new Date(`${selecaoAtual.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecaoAtual.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                : "Datas a combinar"}
+              {" · "}
+              {selecaoAtual.adultos ?? 2} adulto(s)
+              {(selecaoAtual.criancas ?? 0) > 0
+                ? `, ${selecaoAtual.criancas} criança(s)`
+                : ""}
+            </p>
+
+            <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
+              <div className="order-2 space-y-6 lg:order-1">
+                {interesses.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-sand-50">
+                      Interesses
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {interesses.map((interesse) => (
+                        <span
+                          key={interesse}
+                          className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
+                        >
+                          {interesse}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {inclusos.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-sand-50">
+                      Gostaria que incluísse
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {inclusos.map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selecaoAtual.contextoDestino && (
+                  <div>
+                    <p className="text-sm font-medium text-sand-50">Contexto</p>
+                    <p className="mt-2 text-sm text-sand-50/80">
+                      {selecaoAtual.contextoDestino}
+                    </p>
+                  </div>
+                )}
+                {interesses.length === 0 &&
+                  inclusos.length === 0 &&
+                  !selecaoAtual.contextoDestino && (
+                    <p className="text-sm text-sand-50/70">
+                      Nenhum interesse ou inclusão específica informada para
+                      esse destino.
+                    </p>
+                  )}
+              </div>
+              <div className="order-1 flex justify-center lg:order-2">
+                <Calendar
+                  rangeStart={selecaoAtual.dataInicio}
+                  rangeEnd={selecaoAtual.dataFim}
+                  onSelect={() => {}}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {exps.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Experiências
+            </p>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {exps.map((exp) => {
+                const Icon = exp.icon;
+                return (
+                  <div
+                    key={exp.slug}
+                    className="relative aspect-[4/3] overflow-hidden rounded-xl"
+                  >
+                    {exp.imagem ? (
+                      <img
+                        src={exp.imagem}
+                        alt={exp.alt}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-forest-800">
+                        {Icon && <Icon className="h-10 w-10 text-forest-500" />}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-forest-900/70 to-transparent" />
+                    <p className="absolute bottom-3 left-3 right-3 font-display text-sm text-sand-50">
+                      {exp.titulo}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -1404,12 +1688,6 @@ function DetalhePlanoView({
                 detalhada.
               </p>
             </div>
-
-            {plano.contexto && (
-              <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-left text-sm text-foreground">
-                <span className="font-medium">Contexto:</span> {plano.contexto}
-              </div>
-            )}
           </div>
         </div>
       </section>
@@ -1417,222 +1695,220 @@ function DetalhePlanoView({
       <section className="section-padding bg-sand-100">
         <div className="container-tight">
           <div className="mx-auto max-w-3xl">
-            {!selecaoAberta ? (
-              <>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Destinos da viagem
-                </p>
-                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-1">
+              {CONSULTA_STEP_ORDER.map((s, index) => {
+                const ativo = s === stepConsulta;
+                return (
+                  <div key={s} className="flex flex-1 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setStepConsulta(s)}
+                      aria-label={`Ver ${CONSULTA_STEP_LABELS[s]}`}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                        ativo
+                          ? "bg-primary text-primary-foreground"
+                          : "border-2 border-primary bg-transparent text-primary hover:bg-primary/10"
+                      }`}
+                    >
+                      {index + 1}
+                    </button>
+                    {index < CONSULTA_STEP_ORDER.length - 1 && (
+                      <div className="h-0.5 flex-1 bg-primary/40" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-center text-sm font-medium text-muted-foreground">
+              {CONSULTA_STEP_LABELS[stepConsulta]}
+            </p>
+
+            <div className="mt-10">
+              {stepConsulta === "tipo" && (
+                <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Esse planejamento começou escolhendo
+                  </p>
+                  <p className="mt-1 font-display text-xl">
+                    {plano.tipoInicial === "destinos"
+                      ? "os destinos primeiro"
+                      : "as experiências primeiro"}
+                  </p>
+                </div>
+              )}
+
+              {stepConsulta === "selecao" && (
+                <div className="space-y-4">
                   {plano.selecoes.map((selecao) => {
                     const destino = destinos.find(
                       (d) => d.slug === selecao.destinoSlug,
                     );
+                    const exps = (selecao.experienciaSlugs ?? [])
+                      .map(
+                        (s) => experiencias.find((e) => e.slug === s)?.titulo,
+                      )
+                      .filter((t): t is string => !!t);
                     return (
-                      <button
+                      <div
                         key={selecao.destinoSlug}
-                        type="button"
-                        onClick={() => setDestinoAberto(selecao.destinoSlug)}
-                        className="group relative aspect-[4/3] overflow-hidden rounded-2xl text-left transition-opacity hover:opacity-90"
+                        className="rounded-2xl border border-border bg-card p-5"
                       >
-                        {destino?.imagem ? (
-                          <img
-                            src={destino.imagem}
-                            alt={destino.alt}
-                            className="h-full w-full object-cover"
-                          />
+                        <p className="font-display text-lg">{destino?.nome}</p>
+                        {exps.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {exps.map((titulo) => (
+                              <span
+                                key={titulo}
+                                className="rounded-full border border-border bg-secondary px-3 py-1 text-sm text-secondary-foreground"
+                              >
+                                {titulo}
+                              </span>
+                            ))}
+                          </div>
                         ) : (
-                          <div className="h-full w-full bg-forest-800" />
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Nenhuma experiência selecionada.
+                          </p>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/10 to-transparent" />
-                        <p className="absolute bottom-3 left-4 right-4 font-display text-lg text-sand-50">
-                          {destino?.nome}
-                        </p>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
-              </>
-            ) : (
-              (() => {
-                const exps = (selecaoAberta.experienciaSlugs ?? [])
-                  .map((s) => experiencias.find((e) => e.slug === s))
-                  .filter((e): e is (typeof experiencias)[number] => !!e);
-                const noites = noitesEntre(
-                  selecaoAberta.dataInicio,
-                  selecaoAberta.dataFim,
-                );
-                const interesses = selecaoAberta.interesses ?? [];
-                const inclusos = selecaoAberta.inclusos ?? [];
+              )}
 
-                return (
-                  <div className="space-y-6">
-                    <button
-                      type="button"
-                      onClick={() => setDestinoAberto(null)}
-                      className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Voltar para os destinos
-                    </button>
+              {(stepConsulta === "calendario" || stepConsulta === "resumo") &&
+                renderPainelDestino()}
 
-                    <div className="relative overflow-hidden rounded-2xl">
-                      {destinoAbertoInfo?.imagem ? (
-                        <img
-                          src={destinoAbertoInfo.imagem}
-                          alt={destinoAbertoInfo.alt}
-                          className="absolute inset-0 h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-forest-800" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
-                      <div className="relative p-6">
-                        <p className="font-display text-xl text-sand-50">
-                          {destinoAbertoInfo?.nome}
-                        </p>
-                        <p className="mt-1 text-sm text-sand-50/80">
-                          {selecaoAberta.dataInicio && selecaoAberta.dataFim
-                            ? `${new Date(`${selecaoAberta.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecaoAberta.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                            : "Datas a combinar"}
-                          {" · "}
-                          {selecaoAberta.adultos ?? 2} adulto(s)
-                          {(selecaoAberta.criancas ?? 0) > 0
-                            ? `, ${selecaoAberta.criancas} criança(s)`
-                            : ""}
-                        </p>
-
-                        <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
-                          <div className="order-2 space-y-6 lg:order-1">
-                            {interesses.length > 0 && (
-                              <div>
-                                <p className="text-sm font-medium text-sand-50">
-                                  Interesses
-                                </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {interesses.map((interesse) => (
-                                    <span
-                                      key={interesse}
-                                      className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
-                                    >
-                                      {interesse}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {inclusos.length > 0 && (
-                              <div>
-                                <p className="text-sm font-medium text-sand-50">
-                                  Gostaria que incluísse
-                                </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {inclusos.map((item) => (
-                                    <span
-                                      key={item}
-                                      className="rounded-full border border-sand-50/40 bg-sand-50/10 px-3 py-1.5 text-sm text-sand-50"
-                                    >
-                                      {item}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {interesses.length === 0 &&
-                              inclusos.length === 0 && (
-                                <p className="text-sm text-sand-50/70">
-                                  Nenhum interesse ou inclusão específica
-                                  informada para esse destino.
-                                </p>
-                              )}
-                          </div>
-                          <div className="order-1 flex justify-center lg:order-2">
-                            <Calendar
-                              rangeStart={selecaoAberta.dataInicio}
-                              rangeEnd={selecaoAberta.dataFim}
-                              onSelect={() => {}}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {exps.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Experiências
-                        </p>
-                        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                          {exps.map((exp) => {
-                            const Icon = exp.icon;
-                            return (
-                              <div
-                                key={exp.slug}
-                                className="relative aspect-[4/3] overflow-hidden rounded-xl"
-                              >
-                                {exp.imagem ? (
-                                  <img
-                                    src={exp.imagem}
-                                    alt={exp.alt}
-                                    className="h-full w-full object-cover"
-                                    loading="lazy"
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center bg-forest-800">
-                                    {Icon && (
-                                      <Icon className="h-10 w-10 text-forest-500" />
-                                    )}
-                                  </div>
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-forest-900/70 to-transparent" />
-                                <p className="absolute bottom-3 left-3 right-3 font-display text-sm text-sand-50">
-                                  {exp.titulo}
-                                </p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="section-padding">
-        <div className="container-tight">
-          <div className="mx-auto max-w-3xl">
-            <h2 className="font-display text-2xl md:text-3xl">
-              Atualizações da nossa equipe
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Nosso time responde em até 24 horas com os próximos passos do seu
-              plano.
-            </p>
-
-            <div className="mt-6 rounded-2xl border border-border bg-card p-5">
-              <div className="space-y-4 border-l-2 border-border pl-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Plano enviado
+              {stepConsulta === "detalhes" && (
+                <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Contexto geral da viagem
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(plano.criadoEm).toLocaleDateString("pt-BR")} às{" "}
-                    {new Date(plano.criadoEm).toLocaleTimeString("pt-BR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    · você
+                  <p className="mt-3 text-sm text-foreground">
+                    {plano.contexto ||
+                      "Nenhum contexto adicional foi informado."}
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Assim que o analista da Aventura Organizada revisar o plano,
-                  os comentários, ajustes e o status atualizado vão aparecer
-                  aqui — com data, hora e quem fez cada mudança.
-                </p>
-              </div>
+              )}
+
+              {stepConsulta === "analise" && (
+                <div className="mx-auto max-w-2xl space-y-6">
+                  <div>
+                    <h2 className="font-display text-2xl md:text-3xl">
+                      Análise da nossa equipe
+                    </h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Nosso time responde em até 24 horas com os próximos passos
+                      do seu plano. Você pode enviar dúvidas por aqui a qualquer
+                      momento.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {interacoes.map((interacao) => (
+                      <div
+                        key={interacao.id}
+                        className={`rounded-2xl border p-4 ${
+                          interacao.autor === "usuario"
+                            ? "ml-auto max-w-[85%] border-primary/30 bg-primary/10"
+                            : "mr-auto max-w-[85%] border-border bg-card"
+                        }`}
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {interacao.autor === "usuario"
+                            ? "Você"
+                            : "Analista da Aventura Organizada"}{" "}
+                          ·{" "}
+                          {new Date(interacao.criadoEm).toLocaleDateString(
+                            "pt-BR",
+                          )}{" "}
+                          às{" "}
+                          {new Date(interacao.criadoEm).toLocaleTimeString(
+                            "pt-BR",
+                            { hour: "2-digit", minute: "2-digit" },
+                          )}
+                        </p>
+                        <p className="mt-1.5 text-sm text-foreground">
+                          {interacao.texto}
+                        </p>
+
+                        {interacao.tipo === "sugestao" && (
+                          <div className="mt-3">
+                            {interacao.sugestaoStatus === "aceita" ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                                <Check className="h-3.5 w-3.5" />
+                                Sugestão aceita
+                              </span>
+                            ) : interacao.sugestaoStatus === "recusada" ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+                                <X className="h-3.5 w-3.5" />
+                                Sugestão recusada
+                              </span>
+                            ) : (
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleResponderSugestao(
+                                      interacao.id,
+                                      "aceita",
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                  Aceitar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleResponderSugestao(
+                                      interacao.id,
+                                      "recusada",
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-foreground transition-colors hover:bg-secondary"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  Recusar
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-card p-4">
+                    <label
+                      htmlFor="mensagem-analista"
+                      className="text-sm font-medium text-foreground"
+                    >
+                      Enviar mensagem para o analista
+                    </label>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                      <textarea
+                        id="mensagem-analista"
+                        rows={2}
+                        value={mensagem}
+                        onChange={(e) => setMensagem(e.target.value)}
+                        placeholder="Escreva sua dúvida ou comentário..."
+                        className="w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleEnviarMensagem}
+                        disabled={!mensagem.trim()}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 self-end rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40 sm:self-stretch"
+                      >
+                        <Send className="h-4 w-4" />
+                        Enviar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
