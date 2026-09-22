@@ -55,36 +55,36 @@ export function Calendar({ rangeStart, rangeEnd, onSelect }: CalendarProps) {
   }
 
   return (
-    <div className="rounded-2xl bg-background/95 p-6 shadow-xl backdrop-blur-sm">
+    <div className="w-64 rounded-2xl bg-background/95 p-4 shadow-xl backdrop-blur-sm">
       <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={() => setCursor(new Date(year, month - 1, 1))}
           aria-label="Mês anterior"
-          className="inline-flex items-center justify-center rounded-full p-1.5 text-foreground transition-colors hover:bg-secondary"
+          className="inline-flex items-center justify-center rounded-full p-1 text-foreground transition-colors hover:bg-secondary"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-4 w-4" />
         </button>
-        <p className="font-display text-lg">
+        <p className="font-display text-sm">
           {MESES[month]} {year}
         </p>
         <button
           type="button"
           onClick={() => setCursor(new Date(year, month + 1, 1))}
           aria-label="Próximo mês"
-          className="inline-flex items-center justify-center rounded-full p-1.5 text-foreground transition-colors hover:bg-secondary"
+          className="inline-flex items-center justify-center rounded-full p-1 text-foreground transition-colors hover:bg-secondary"
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
+      <div className="mt-3 grid grid-cols-7 gap-0.5 text-center text-[0.65rem] font-medium text-muted-foreground">
         {DIAS_SEMANA.map((dia) => (
           <div key={dia}>{dia}</div>
         ))}
       </div>
 
-      <div className="mt-1 grid grid-cols-7 gap-1">
+      <div className="mt-1 grid grid-cols-7 gap-0.5">
         {cells.map((cell, index) => {
           if (!cell) return <div key={`empty-${index}`} />;
 
@@ -101,7 +101,7 @@ export function Calendar({ rangeStart, rangeEnd, onSelect }: CalendarProps) {
               type="button"
               disabled={isPast}
               onClick={() => onSelect(iso)}
-              className={`aspect-square text-sm transition-colors ${
+              className={`aspect-square text-xs transition-colors ${
                 isStart || isEnd
                   ? "rounded-lg bg-primary font-semibold text-primary-foreground"
                   : isInRange

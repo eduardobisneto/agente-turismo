@@ -1549,15 +1549,34 @@ function DetalhePlanoView({
               {selecaoAtual.dataInicio && selecaoAtual.dataFim
                 ? `${new Date(`${selecaoAtual.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecaoAtual.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
                 : "Datas a combinar"}
-              {" · "}
-              {selecaoAtual.adultos ?? 2} adulto(s)
-              {(selecaoAtual.criancas ?? 0) > 0
-                ? `, ${selecaoAtual.criancas} criança(s)`
-                : ""}
             </p>
 
             <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
               <div className="order-2 space-y-6 lg:order-1">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-sand-50">
+                      Adultos
+                    </label>
+                    <input
+                      type="number"
+                      value={selecaoAtual.adultos ?? 2}
+                      disabled
+                      className="mt-1.5 w-full rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none disabled:opacity-90"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-sand-50">
+                      Crianças
+                    </label>
+                    <input
+                      type="number"
+                      value={selecaoAtual.criancas ?? 0}
+                      disabled
+                      className="mt-1.5 w-full rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none disabled:opacity-90"
+                    />
+                  </div>
+                </div>
                 {exps.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-sand-50">
@@ -1579,7 +1598,7 @@ function DetalhePlanoView({
                 {interesses.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-sand-50">
-                      Interesses
+                      Interesses em {destinoAtualInfo.nome.split(",")[0]}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {interesses.map((interesse) => (
@@ -1596,7 +1615,8 @@ function DetalhePlanoView({
                 {inclusos.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-sand-50">
-                      Gostaria que incluísse
+                      O que gostaria que estivesse incluso em{" "}
+                      {destinoAtualInfo.nome.split(",")[0]}?
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {inclusos.map((item) => (
@@ -1612,21 +1632,17 @@ function DetalhePlanoView({
                 )}
                 {selecaoAtual.contextoDestino && (
                   <div>
-                    <p className="text-sm font-medium text-sand-50">Contexto</p>
-                    <p className="mt-2 text-sm text-sand-50/80">
-                      {selecaoAtual.contextoDestino}
-                    </p>
+                    <label className="text-sm font-medium text-sand-50">
+                      Contexto sobre {destinoAtualInfo.nome.split(",")[0]}
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={selecaoAtual.contextoDestino}
+                      disabled
+                      className="mt-1.5 w-full resize-none rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm text-foreground outline-none disabled:opacity-90"
+                    />
                   </div>
                 )}
-                {exps.length === 0 &&
-                  interesses.length === 0 &&
-                  inclusos.length === 0 &&
-                  !selecaoAtual.contextoDestino && (
-                    <p className="text-sm text-sand-50/70">
-                      Nenhuma experiência, interesse ou inclusão específica
-                      informada para esse destino.
-                    </p>
-                  )}
               </div>
               <div className="order-1 flex justify-center lg:order-2">
                 <Calendar
@@ -1712,36 +1728,79 @@ function DetalhePlanoView({
 
             <div className="mt-10">
               {stepConsulta === "selecao" && (
-                <div className="space-y-4">
+                <div className="mx-auto max-w-4xl space-y-12">
+                  <div>
+                    <h2 className="text-balance text-2xl md:text-3xl">
+                      Destinos escolhidos
+                    </h2>
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {plano.selecoes.map((selecao) => {
+                        const destino = destinos.find(
+                          (d) => d.slug === selecao.destinoSlug,
+                        );
+                        if (!destino) return null;
+                        return (
+                          <div
+                            key={selecao.destinoSlug}
+                            className="relative overflow-hidden rounded-2xl border-2 border-primary"
+                          >
+                            <img
+                              src={destino.imagem}
+                              alt={destino.alt}
+                              className="aspect-[4/3] w-full object-cover"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/10 to-transparent" />
+                            <div className="absolute right-3 top-3 rounded-full bg-primary p-1.5 text-primary-foreground">
+                              <Check className="h-4 w-4" />
+                            </div>
+                            <p className="absolute bottom-3 left-4 right-4 font-display text-lg text-sand-50">
+                              {destino.nome}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {plano.selecoes.map((selecao) => {
                     const destino = destinos.find(
                       (d) => d.slug === selecao.destinoSlug,
                     );
-                    const exps = (selecao.experienciaSlugs ?? [])
-                      .map(
-                        (s) => experiencias.find((e) => e.slug === s)?.titulo,
-                      )
-                      .filter((t): t is string => !!t);
+                    if (!destino) return null;
+                    const disponiveis = getExperienciasPorDestino(
+                      selecao.destinoSlug,
+                    );
+                    const escolhidos = new Set(selecao.experienciaSlugs ?? []);
+
                     return (
-                      <div
-                        key={selecao.destinoSlug}
-                        className="rounded-2xl border border-border bg-card p-5"
-                      >
-                        <p className="font-display text-lg">{destino?.nome}</p>
-                        {exps.length > 0 ? (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {exps.map((titulo) => (
-                              <span
-                                key={titulo}
-                                className="rounded-full border border-border bg-secondary px-3 py-1 text-sm text-secondary-foreground"
-                              >
-                                {titulo}
-                              </span>
-                            ))}
+                      <div key={selecao.destinoSlug}>
+                        <h3 className="font-display text-xl">
+                          O que você quer viver em {destino.nome.split(",")[0]}?
+                        </h3>
+                        {disponiveis.length > 0 ? (
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            {disponiveis.map((exp) => {
+                              const marcado = escolhidos.has(exp.slug);
+                              return (
+                                <span
+                                  key={exp.slug}
+                                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${
+                                    marcado
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border text-foreground"
+                                  }`}
+                                >
+                                  {marcado && <Check className="h-3.5 w-3.5" />}
+                                  {exp.titulo}
+                                </span>
+                              );
+                            })}
                           </div>
                         ) : (
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            Nenhuma experiência selecionada.
+                          <p className="mt-3 text-sm text-muted-foreground">
+                            Ainda não temos experiências específicas cadastradas
+                            para esse destino.
                           </p>
                         )}
                       </div>
@@ -1753,7 +1812,7 @@ function DetalhePlanoView({
               {stepConsulta === "calendario" && renderPainelDestino()}
 
               {stepConsulta === "detalhes" && (
-                <div className="mx-auto max-w-xl space-y-6">
+                <div className="mx-auto max-w-2xl space-y-6">
                   <div className="rounded-2xl border border-border bg-card p-6 text-center">
                     <p className="font-display text-xl">
                       {juntarNomes(nomesDestinos)}
@@ -1764,6 +1823,78 @@ function DetalhePlanoView({
                         : "Datas a combinar"}
                     </p>
                   </div>
+
+                  <div className="space-y-4">
+                    {plano.selecoes.map((selecao) => {
+                      const destino = destinos.find(
+                        (d) => d.slug === selecao.destinoSlug,
+                      );
+                      const exps = (selecao.experienciaSlugs ?? [])
+                        .map(
+                          (s) => experiencias.find((e) => e.slug === s)?.titulo,
+                        )
+                        .filter((t): t is string => !!t);
+                      const expectativas = [
+                        ...(selecao.interesses ?? []),
+                        ...(selecao.inclusos ?? []),
+                      ];
+                      const noites = noitesEntre(
+                        selecao.dataInicio,
+                        selecao.dataFim,
+                      );
+
+                      return (
+                        <div
+                          key={selecao.destinoSlug}
+                          className="rounded-2xl border border-border bg-card p-5"
+                        >
+                          <p className="font-display text-lg">
+                            {destino?.nome}
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {selecao.dataInicio && selecao.dataFim
+                              ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                              : "Datas a combinar"}
+                          </p>
+                          {exps.length > 0 && (
+                            <div className="mt-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                Experiências
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {exps.map((titulo) => (
+                                  <span
+                                    key={titulo}
+                                    className="rounded-full border border-border bg-secondary px-3 py-1 text-sm text-secondary-foreground"
+                                  >
+                                    {titulo}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {expectativas.length > 0 && (
+                            <div className="mt-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                Expectativas
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {expectativas.map((item) => (
+                                  <span
+                                    key={item}
+                                    className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
+                                  >
+                                    {item}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
                   <div className="rounded-2xl border border-border bg-card p-6">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Contexto geral da viagem
@@ -1789,16 +1920,16 @@ function DetalhePlanoView({
                     </p>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6 border-l-2 border-border pl-6">
                     {interacoes.map((interacao) => (
-                      <div
-                        key={interacao.id}
-                        className={`rounded-2xl border p-4 ${
-                          interacao.autor === "usuario"
-                            ? "ml-auto max-w-[85%] border-primary/30 bg-primary/10"
-                            : "mr-auto max-w-[85%] border-border bg-card"
-                        }`}
-                      >
+                      <div key={interacao.id} className="relative">
+                        <div
+                          className={`absolute -left-[1.9rem] top-1 h-3 w-3 rounded-full ${
+                            interacao.autor === "usuario"
+                              ? "bg-primary"
+                              : "bg-secondary-foreground"
+                          }`}
+                        />
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                           {interacao.autor === "usuario"
                             ? "Você"
