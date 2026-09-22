@@ -863,9 +863,6 @@ function CalendarioStep({
         <span className="text-sm font-semibold uppercase tracking-wider text-primary">
           Destino {destinoAtualIndex + 1} de {destinosSelecionados.length}
         </span>
-        <h2 className="mt-2 text-balance text-2xl md:text-3xl">
-          {destino.nome}
-        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Escolha início e fim, quem vai, interesses e o que gostaria que
           estivesse incluso nesse destino.
@@ -873,27 +870,36 @@ function CalendarioStep({
       </div>
 
       {destinosSelecionados.length > 1 && (
-        <div className="flex flex-wrap gap-2 rounded-2xl bg-secondary/60 p-2">
+        <div className="flex items-center justify-center gap-1">
           {destinosSelecionados.map((s, i) => {
-            const d = destinos.find((dd) => dd.slug === s);
             const completo = !!datasInicio[s] && !!datasFim[s];
             const ativo = i === destinoAtualIndex;
             return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => onIrParaDestino(i)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${
-                  ativo
-                    ? "bg-primary text-primary-foreground"
-                    : completo
-                      ? "bg-card text-foreground hover:bg-card/70"
-                      : "text-muted-foreground hover:bg-card/50"
-                }`}
-              >
-                {completo && !ativo && <Check className="h-3.5 w-3.5" />}
-                {i + 1}. {d?.nome.split(",")[0] ?? s}
-              </button>
+              <div key={s} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onIrParaDestino(i)}
+                  aria-label={`Ir para o destino ${i + 1}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                    ativo
+                      ? "bg-primary text-primary-foreground"
+                      : completo
+                        ? "border-2 border-primary bg-transparent text-primary hover:bg-primary/10"
+                        : "bg-secondary text-muted-foreground hover:bg-secondary/70"
+                  }`}
+                >
+                  {completo && !ativo ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    i + 1
+                  )}
+                </button>
+                {i < destinosSelecionados.length - 1 && (
+                  <div
+                    className={`h-0.5 w-8 ${i < destinoAtualIndex ? "bg-primary" : "bg-secondary"}`}
+                  />
+                )}
+              </div>
             );
           })}
         </div>
@@ -907,7 +913,8 @@ function CalendarioStep({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
         <div className="relative p-6">
-          <p className="text-sm font-semibold uppercase tracking-wider text-sand-50">
+          <p className="font-display text-xl text-sand-50">{destino.nome}</p>
+          <p className="mt-3 text-sm font-semibold uppercase tracking-wider text-sand-50">
             Escolher datas
           </p>
           <p className="mt-1 text-sm text-sand-50/80">
