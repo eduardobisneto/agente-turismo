@@ -1418,10 +1418,9 @@ function juntarNomes(nomes: string[]): string {
   return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
 }
 
-type ConsultaStep = "tipo" | "selecao" | "calendario" | "detalhes" | "analise";
+type ConsultaStep = "selecao" | "calendario" | "detalhes" | "analise";
 
 const CONSULTA_STEP_ORDER: ConsultaStep[] = [
-  "tipo",
   "selecao",
   "calendario",
   "detalhes",
@@ -1429,11 +1428,10 @@ const CONSULTA_STEP_ORDER: ConsultaStep[] = [
 ];
 
 const CONSULTA_STEP_LABELS: Record<ConsultaStep, string> = {
-  tipo: "1. Por onde começou",
-  selecao: "2. Destinos e experiências",
-  calendario: "3. Datas e detalhes por destino",
-  detalhes: "4. Sobre a viagem",
-  analise: "5. Análise",
+  selecao: "1. Destinos e experiências",
+  calendario: "2. Datas e detalhes por destino",
+  detalhes: "3. Sobre a viagem",
+  analise: "4. Análise da nossa equipe",
 };
 
 function DetalhePlanoView({
@@ -1663,13 +1661,8 @@ function DetalhePlanoView({
                 Planejar viagem
               </span>
               <h1 className="mt-3 text-balance text-3xl md:text-4xl">
-                {juntarNomes(nomesDestinos)}
+                Detalhes do plano
               </h1>
-              <p className="mt-4 text-muted-foreground">
-                {inicioGeral && fimGeral
-                  ? `${new Date(`${inicioGeral}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}`
-                  : "Datas a combinar"}
-              </p>
               <div className="mt-4 flex items-center justify-center gap-3">
                 <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
                   Em análise
@@ -1718,19 +1711,6 @@ function DetalhePlanoView({
             </p>
 
             <div className="mt-10">
-              {stepConsulta === "tipo" && (
-                <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Esse planejamento começou escolhendo
-                  </p>
-                  <p className="mt-1 font-display text-xl">
-                    {plano.tipoInicial === "destinos"
-                      ? "os destinos primeiro"
-                      : "as experiências primeiro"}
-                  </p>
-                </div>
-              )}
-
               {stepConsulta === "selecao" && (
                 <div className="space-y-4">
                   {plano.selecoes.map((selecao) => {
@@ -1773,14 +1753,26 @@ function DetalhePlanoView({
               {stepConsulta === "calendario" && renderPainelDestino()}
 
               {stepConsulta === "detalhes" && (
-                <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Contexto geral da viagem
-                  </p>
-                  <p className="mt-3 text-sm text-foreground">
-                    {plano.contexto ||
-                      "Nenhum contexto adicional foi informado."}
-                  </p>
+                <div className="mx-auto max-w-xl space-y-6">
+                  <div className="rounded-2xl border border-border bg-card p-6 text-center">
+                    <p className="font-display text-xl">
+                      {juntarNomes(nomesDestinos)}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {inicioGeral && fimGeral
+                        ? `${new Date(`${inicioGeral}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}`
+                        : "Datas a combinar"}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-6">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Contexto geral da viagem
+                    </p>
+                    <p className="mt-3 text-sm text-foreground">
+                      {plano.contexto ||
+                        "Nenhum contexto adicional foi informado."}
+                    </p>
+                  </div>
                 </div>
               )}
 
