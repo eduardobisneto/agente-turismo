@@ -91,6 +91,10 @@ export function onPedirListaDeViagens(callback: () => void): () => void {
   return () => window.removeEventListener(IR_PARA_LISTA_EVENT, callback);
 }
 
+function horasDepois(base: string, horas: number): string {
+  return new Date(new Date(base).getTime() + horas * 60 * 60 * 1000).toISOString();
+}
+
 export function salvarPlanoViagem(
   plano: Omit<PlanoViagem, "id" | "criadoEm" | "interacoes">,
 ): PlanoViagem {
@@ -106,6 +110,23 @@ export function salvarPlanoViagem(
         texto: "Plano enviado para análise.",
         criadoEm: agora,
         tipo: "mensagem",
+      },
+      {
+        id: crypto.randomUUID(),
+        autor: "analista",
+        texto:
+          "Recebemos seu plano! Já começamos a montar a proposta com base nos destinos e experiências que você escolheu — em breve trazemos os detalhes por aqui.",
+        criadoEm: horasDepois(agora, 3),
+        tipo: "mensagem",
+      },
+      {
+        id: crypto.randomUUID(),
+        autor: "analista",
+        texto:
+          "Uma sugestão: que tal incluir um passeio de barco a mais no roteiro? Costuma ser um dos programas queridinhos de quem viaja com a gente.",
+        criadoEm: horasDepois(agora, 4),
+        tipo: "sugestao",
+        sugestaoStatus: "pendente",
       },
     ],
   };

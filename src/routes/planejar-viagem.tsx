@@ -1190,6 +1190,12 @@ function ResumoStep({
     .map((s) => experiencias.find((e) => e.slug === s))
     .filter((e): e is (typeof experiencias)[number] => !!e);
 
+  const interessesUnicos = Array.from(
+    new Set(
+      destinosSelecionados.flatMap((slug) => interessesMap[slug] ?? []),
+    ),
+  );
+
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
@@ -1275,9 +1281,22 @@ function ResumoStep({
           </div>
         )}
 
-        {contexto && (
-          <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
-            <span className="font-medium">Contexto:</span> {contexto}
+        {interessesUnicos.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Interesses
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {interessesUnicos.map((interesse) => (
+                <span
+                  key={interesse}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary text-primary-foreground px-4 py-2 text-sm font-medium"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  {interesse}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -1413,9 +1432,15 @@ function juntarNomes(nomes: string[]): string {
   return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
 }
 
-type ConsultaStep = "selecao" | "calendario" | "detalhes" | "analise";
+type ConsultaStep =
+  | "tipo"
+  | "selecao"
+  | "calendario"
+  | "detalhes"
+  | "analise";
 
 const CONSULTA_STEP_ORDER: ConsultaStep[] = [
+  "tipo",
   "selecao",
   "calendario",
   "detalhes",
@@ -1423,10 +1448,11 @@ const CONSULTA_STEP_ORDER: ConsultaStep[] = [
 ];
 
 const CONSULTA_STEP_LABELS: Record<ConsultaStep, string> = {
-  selecao: "1. Destinos e experiências",
-  calendario: "2. Datas e detalhes por destino",
-  detalhes: "3. Sobre a viagem",
-  analise: "4. Análise da nossa equipe",
+  tipo: "1. Por onde começou",
+  selecao: "2. Destinos e experiências",
+  calendario: "3. Datas e detalhes por destino",
+  detalhes: "4. Resumo",
+  analise: "5. Análise da nossa equipe",
 };
 
 function DetalhePlanoView({
@@ -1764,6 +1790,60 @@ function DetalhePlanoView({
             </p>
 
             <div className="mt-10">
+              {stepConsulta === "tipo" && (
+                <div className="mx-auto grid max-w-2xl gap-6 sm:grid-cols-2">
+                  <div
+                    className={`flex flex-col items-center gap-4 rounded-2xl border p-8 text-center ${
+                      plano.tipoInicial === "destinos"
+                        ? "border-primary bg-card"
+                        : "border-border bg-card opacity-50"
+                    }`}
+                  >
+                    <MapPin className="h-10 w-10 text-primary" />
+                    <div>
+                      <h3 className="font-display text-xl">
+                        Já sei o destino
+                      </h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Começou escolhendo para onde ir, e depois viu as
+                        experiências disponíveis em cada lugar.
+                      </p>
+                    </div>
+                    {plano.tipoInicial === "destinos" && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground">
+                        <Check className="h-3.5 w-3.5" />
+                        Escolhido
+                      </span>
+                    )}
+                  </div>
+
+                  <div
+                    className={`flex flex-col items-center gap-4 rounded-2xl border p-8 text-center ${
+                      plano.tipoInicial === "experiencias"
+                        ? "border-primary bg-card"
+                        : "border-border bg-card opacity-50"
+                    }`}
+                  >
+                    <Sparkles className="h-10 w-10 text-primary" />
+                    <div>
+                      <h3 className="font-display text-xl">
+                        Já sei o que quero viver
+                      </h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Começou escolhendo experiências, e depois viu em quais
+                        destinos elas acontecem.
+                      </p>
+                    </div>
+                    {plano.tipoInicial === "experiencias" && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground">
+                        <Check className="h-3.5 w-3.5" />
+                        Escolhido
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {stepConsulta === "selecao" && (
                 <div className="mx-auto max-w-4xl space-y-12">
                   <div>
@@ -1845,6 +1925,12 @@ function DetalhePlanoView({
                     .map((s) => experiencias.find((e) => e.slug === s))
                     .filter((e): e is (typeof experiencias)[number] => !!e);
 
+                  const interessesUnicos = Array.from(
+                    new Set(
+                      plano.selecoes.flatMap((s) => s.interesses ?? []),
+                    ),
+                  );
+
                   return (
                     <div className="mx-auto max-w-3xl space-y-8">
                       <div>
@@ -1919,11 +2005,24 @@ function DetalhePlanoView({
                         </div>
                       )}
 
-                      <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
-                        <span className="font-medium">Contexto:</span>{" "}
-                        {plano.contexto ||
-                          "Nenhum contexto adicional foi informado."}
-                      </div>
+                      {interessesUnicos.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Interesses
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {interessesUnicos.map((interesse) => (
+                              <span
+                                key={interesse}
+                                className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                {interesse}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}

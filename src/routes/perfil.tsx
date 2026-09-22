@@ -1,5 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Camera, Check, User } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Camera,
+  Check,
+  Loader2,
+  User,
+} from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 
 import { RequireAuth } from "@/components/RequireAuth";
@@ -42,11 +49,41 @@ function PerfilPage() {
 
   const [telefone, setTelefone] = useState(user?.telefone ?? "");
 
+  const [buscandoCep, setBuscandoCep] = useState(false);
+  const [erroCep, setErroCep] = useState<string | null>(null);
+
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   const etapaIndex = ETAPA_ORDER.indexOf(etapa);
+
+  async function buscarCep(valor: string) {
+    const digitos = valor.replace(/\D/g, "");
+    if (digitos.length !== 8) return;
+
+    setErroCep(null);
+    setBuscandoCep(true);
+    try {
+      const resposta = await fetch(
+        `https://viacep.com.br/ws/${digitos}/json/`,
+      );
+      const dados = await resposta.json();
+      if (dados.erro) {
+        setErroCep("CEP não encontrado.");
+        return;
+      }
+      setEndereco(dados.logradouro || "");
+      setBairro(dados.bairro || "");
+      setCidade(dados.localidade || "");
+      setEstado(dados.uf || "");
+      setSalvo(false);
+    } catch {
+      setErroCep("Não foi possível consultar o CEP agora.");
+    } finally {
+      setBuscandoCep(false);
+    }
+  }
 
   function handleImagemSelecionada(event: React.ChangeEvent<HTMLInputElement>) {
     const arquivo = event.target.files?.[0];
@@ -226,18 +263,31 @@ function PerfilPage() {
                     >
                       CEP
                     </label>
-                    <input
-                      id="cep"
-                      type="text"
-                      inputMode="numeric"
-                      value={cep}
-                      onChange={(e) => {
-                        setCep(e.target.value);
-                        setSalvo(false);
-                      }}
-                      placeholder="00000-000"
-                      className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-                    />
+                    <div className="relative mt-1.5">
+                      <input
+                        id="cep"
+                        type="text"
+                        inputMode="numeric"
+                        value={cep}
+                        onChange={(e) => {
+                          setCep(e.target.value);
+                          setSalvo(false);
+                          setErroCep(null);
+                          void buscarCep(e.target.value);
+                        }}
+                        onBlur={(e) => void buscarCep(e.target.value)}
+                        placeholder="00000-000"
+                        className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+                      />
+                      {buscandoCep && (
+                        <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                    {erroCep && (
+                      <p className="mt-1 text-xs text-destructive">
+                        {erroCep}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
