@@ -10,9 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as DestinosRouteImport } from './routes/destinos'
 import { Route as ExperienciasRouteImport } from './routes/experiencias'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PlanejarViagemRouteImport } from './routes/planejar-viagem'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosRouteImport } from './routes/termos'
@@ -22,6 +25,11 @@ import { Route as ExperienciasSlugRouteImport } from './routes/experiencias_.$sl
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContatoRoute = ContatoRouteImport.update({
@@ -37,6 +45,16 @@ const DestinosRoute = DestinosRouteImport.update({
 const ExperienciasRoute = ExperienciasRouteImport.update({
   id: '/experiencias',
   path: '/experiencias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanejarViagemRoute = PlanejarViagemRouteImport.update({
+  id: '/planejar-viagem',
+  path: '/planejar-viagem',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
@@ -67,9 +85,12 @@ const ExperienciasSlugRoute = ExperienciasSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cadastro': typeof CadastroRoute
   '/contato': typeof ContatoRoute
   '/destinos': typeof DestinosRoute
   '/experiencias': typeof ExperienciasRoute
+  '/login': typeof LoginRoute
+  '/planejar-viagem': typeof PlanejarViagemRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
@@ -78,9 +99,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cadastro': typeof CadastroRoute
   '/contato': typeof ContatoRoute
   '/destinos': typeof DestinosRoute
   '/experiencias': typeof ExperienciasRoute
+  '/login': typeof LoginRoute
+  '/planejar-viagem': typeof PlanejarViagemRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
@@ -90,9 +114,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cadastro': typeof CadastroRoute
   '/contato': typeof ContatoRoute
   '/destinos': typeof DestinosRoute
   '/experiencias': typeof ExperienciasRoute
+  '/login': typeof LoginRoute
+  '/planejar-viagem': typeof PlanejarViagemRoute
   '/privacidade': typeof PrivacidadeRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
@@ -103,9 +130,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cadastro'
     | '/contato'
     | '/destinos'
     | '/experiencias'
+    | '/login'
+    | '/planejar-viagem'
     | '/privacidade'
     | '/sobre'
     | '/termos'
@@ -114,9 +144,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cadastro'
     | '/contato'
     | '/destinos'
     | '/experiencias'
+    | '/login'
+    | '/planejar-viagem'
     | '/privacidade'
     | '/sobre'
     | '/termos'
@@ -125,9 +158,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/cadastro'
     | '/contato'
     | '/destinos'
     | '/experiencias'
+    | '/login'
+    | '/planejar-viagem'
     | '/privacidade'
     | '/sobre'
     | '/termos'
@@ -137,9 +173,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CadastroRoute: typeof CadastroRoute
   ContatoRoute: typeof ContatoRoute
   DestinosRoute: typeof DestinosRoute
   ExperienciasRoute: typeof ExperienciasRoute
+  LoginRoute: typeof LoginRoute
+  PlanejarViagemRoute: typeof PlanejarViagemRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
@@ -154,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contato': {
@@ -175,6 +221,20 @@ declare module '@tanstack/react-router' {
       path: '/experiencias'
       fullPath: '/experiencias'
       preLoaderRoute: typeof ExperienciasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planejar-viagem': {
+      id: '/planejar-viagem'
+      path: '/planejar-viagem'
+      fullPath: '/planejar-viagem'
+      preLoaderRoute: typeof PlanejarViagemRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacidade': {
@@ -217,9 +277,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CadastroRoute: CadastroRoute,
   ContatoRoute: ContatoRoute,
   DestinosRoute: DestinosRoute,
   ExperienciasRoute: ExperienciasRoute,
+  LoginRoute: LoginRoute,
+  PlanejarViagemRoute: PlanejarViagemRoute,
   PrivacidadeRoute: PrivacidadeRoute,
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,

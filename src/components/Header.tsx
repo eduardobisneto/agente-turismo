@@ -1,6 +1,8 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, X, Mountain } from "lucide-react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { LogOut, Menu, User, X, Mountain } from "lucide-react";
 import { useState } from "react";
+
+import { useAuth } from "@/lib/auth-context";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -13,6 +15,13 @@ const navLinks = [
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, ready, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate({ to: "/" });
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur">
@@ -42,11 +51,40 @@ export function Header() {
             );
           })}
           <Link
-            to="/contato"
+            to="/planejar-viagem"
             className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Planejar viagem
           </Link>
+
+          {ready && (
+            <>
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <User className="h-4 w-4 text-primary" />
+                    {user.nome.split(" ")[0]}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    aria-label="Sair"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  search={{ redirect: undefined }}
+                  className="text-sm font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Entrar
+                </Link>
+              )}
+            </>
+          )}
         </nav>
 
         <button
@@ -77,12 +115,39 @@ export function Header() {
               </Link>
             ))}
             <Link
-              to="/contato"
+              to="/planejar-viagem"
               onClick={() => setMobileOpen(false)}
               className="mt-2 inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground"
             >
               Planejar viagem
             </Link>
+
+            {ready && (
+              <>
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      handleSignOut();
+                    }}
+                    className="inline-flex items-center gap-2 text-base font-medium uppercase tracking-wide text-foreground"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sair ({user.nome.split(" ")[0]})
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    search={{ redirect: undefined }}
+                    onClick={() => setMobileOpen(false)}
+                    className="text-base font-medium uppercase tracking-wide text-foreground"
+                  >
+                    Entrar
+                  </Link>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

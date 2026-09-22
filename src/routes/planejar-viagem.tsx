@@ -1,0 +1,988 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { ArrowLeft, ArrowRight, Check, MapPin, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+
+import { Calendar } from "@/components/Calendar";
+import { RequireAuth } from "@/components/RequireAuth";
+import { WhatsappButton } from "@/components/WhatsappButton";
+import { destinos } from "@/data/destinos";
+import {
+  experiencias,
+  getDestinosPorExperiencia,
+  getExperienciasPorDestino,
+} from "@/data/experiencias";
+import { useAuth } from "@/lib/auth-context";
+import {
+  INCLUSOS_DISPONIVEIS,
+  INTERESSES_DISPONIVEIS,
+  salvarPlanoViagem,
+  type SelecaoDestino,
+} from "@/lib/trip-plan";
+import heroImg from "@/assets/hero.jpeg";
+
+export const Route = createFileRoute("/planejar-viagem")({
+  component: () => (
+    <RequireAuth>
+      <PlanejarViagemPage />
+    </RequireAuth>
+  ),
+});
+
+type Step = "tipo" | "selecao" | "calendario" | "detalhes" | "resumo";
+type TipoInicial = "destinos" | "experiencias";
+type SelecoesMap = Record<string, Set<string>>;
+
+const STEP_LABELS: Record<Step, string> = {
+  tipo: "1. Por onde começar",
+  selecao: "2. Destinos e experiências",
+  calendario: "3. Datas",
+  detalhes: "4. Detalhes da viagem",
+  resumo: "5. Resumo",
+};
+
+const STEP_ORDER: Step[] = [
+  "tipo",
+  "selecao",
+  "calendario",
+  "detalhes",
+  "resumo",
+];
+
+function PlanejarViagemPage() {
+  const { user } = useAuth();
+
+  const [step, setStep] = useState<Step>("tipo");
+  const [tipoInicial, setTipoInicial] = useState<TipoInicial | null>(null);
+  const [selecoesMap, setSelecoesMap] = useState<SelecoesMap>({});
+  const [datas, setDatas] = useState<Record<string, string>>({});
+  const [calendarioAtivo, setCalendarioAtivo] = useState<string | null>(null);
+
+  const [duracaoNoites, setDuracaoNoites] = useState(3);
+  const [interesses, setInteresses] = useState<string[]>([]);
+  const [contexto, setContexto] = useState("");
+  const [adultos, setAdultos] = useState(2);
+  const [criancas, setCriancas] = useState(0);
+  const [inclusos, setInclusos] = useState<string[]>([]);
+  const [enviado, setEnviado] = useState(false);
+
+  const destinosSelecionados = Object.keys(selecoesMap);
+
+  function irPara(novoStep: Step) {
+    setStep(novoStep);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function toggleDestino(slug: string) {
+    setSelecoesMap((atual) => {
+      const proximo = { ...atual };
+      if (proximo[slug]) {
+        delete proximo[slug];
+      } else {
+        proximo[slug] = new Set();
+      }
+      return proximo;
+    });
+  }
+
+  function toggleExperienciaDoDestino(destinoSlug: string, expSlug: string) {
+    setSelecoesMap((atual) => {
+      const atualSet = atual[destinoSlug] ?? new Set<string>();
+      const novoSet = new Set(atualSet);
+      if (novoSet.has(expSlug)) {
+        novoSet.delete(expSlug);
+      } else {
+        novoSet.add(expSlug);
+      }
+      return { ...atual, [destinoSlug]: novoSet };
+    });
+  }
+
+  function toggleInteresse(valor: string) {
+    setInteresses((atual) =>
+      atual.includes(valor)
+        ? atual.filter((v) => v !== valor)
+        : [...atual, valor],
+    );
+  }
+
+  function toggleIncluso(valor: string) {
+    setInclusos((atual) =>
+      atual.includes(valor)
+        ? atual.filter((v) => v !== valor)
+        : [...atual, valor],
+    );
+  }
+
+  function handleEnviar() {
+    if (!user) return;
+
+    const selecoes: SelecaoDestino[] = destinosSelecionados.map((slug) => ({
+      destinoSlug: slug,
+      experienciaSlugs: Array.from(selecoesMap[slug] ?? []),
+      data: datas[slug],
+    }));
+
+    salvarPlanoViagem({
+      usuarioId: user.id,
+      tipoInicial: tipoInicial ?? "destinos",
+      selecoes,
+      duracaoNoites,
+      interesses,
+      contexto,
+      adultos,
+      criancas,
+      inclusos,
+    });
+
+    setEnviado(true);
+  }
+
+  const stepIndex = STEP_ORDER.indexOf(step);
+
+  return (
+    <section className="section-padding">
+      <div className="container-tight">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+            Planejar viagem
+          </span>
+          <h1 className="mt-3 text-balance text-3xl md:text-4xl">
+            Vamos montar a sua aventura, {user?.nome.split(" ")[0]}
+          </h1>
+        </div>
+
+        <div className="mx-auto mt-8 flex max-w-2xl items-center justify-between gap-1">
+          {STEP_ORDER.map((s, index) => (
+            <div key={s} className="flex flex-1 items-center gap-1">
+              <div
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                  index <= stepIndex
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground"
+                }`}
+              >
+                {index + 1}
+              </div>
+              {index < STEP_ORDER.length - 1 && (
+                <div
+                  className={`h-0.5 flex-1 ${index < stepIndex ? "bg-primary" : "bg-secondary"}`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-center text-sm font-medium text-muted-foreground">
+          {STEP_LABELS[step]}
+        </p>
+
+        <div className="mt-12">
+          {step === "tipo" && (
+            <TipoStep
+              onEscolher={(tipo) => {
+                setTipoInicial(tipo);
+                irPara("selecao");
+              }}
+            />
+          )}
+
+          {step === "selecao" && tipoInicial && (
+            <SelecaoStep
+              tipoInicial={tipoInicial}
+              selecoesMap={selecoesMap}
+              onToggleDestino={toggleDestino}
+              onToggleExperiencia={toggleExperienciaDoDestino}
+              onVoltar={() => irPara("tipo")}
+              onAvancar={() => irPara("calendario")}
+            />
+          )}
+
+          {step === "calendario" && (
+            <CalendarioStep
+              destinosSelecionados={destinosSelecionados}
+              datas={datas}
+              calendarioAtivo={calendarioAtivo}
+              onAbrirCalendario={setCalendarioAtivo}
+              onSelecionarData={(slug, data) => {
+                setDatas((atual) => ({ ...atual, [slug]: data }));
+                setCalendarioAtivo(null);
+              }}
+              onVoltar={() => irPara("selecao")}
+              onAvancar={() => irPara("detalhes")}
+            />
+          )}
+
+          {step === "detalhes" && (
+            <DetalhesStep
+              duracaoNoites={duracaoNoites}
+              onDuracaoChange={setDuracaoNoites}
+              interesses={interesses}
+              onToggleInteresse={toggleInteresse}
+              contexto={contexto}
+              onContextoChange={setContexto}
+              adultos={adultos}
+              onAdultosChange={setAdultos}
+              criancas={criancas}
+              onCriancasChange={setCriancas}
+              inclusos={inclusos}
+              onToggleIncluso={toggleIncluso}
+              onVoltar={() => irPara("calendario")}
+              onAvancar={() => irPara("resumo")}
+            />
+          )}
+
+          {step === "resumo" && (
+            <ResumoStep
+              destinosSelecionados={destinosSelecionados}
+              selecoesMap={selecoesMap}
+              datas={datas}
+              duracaoNoites={duracaoNoites}
+              interesses={interesses}
+              contexto={contexto}
+              adultos={adultos}
+              criancas={criancas}
+              inclusos={inclusos}
+              enviado={enviado}
+              onVoltar={() => irPara("detalhes")}
+              onEnviar={handleEnviar}
+            />
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TipoStep({ onEscolher }: { onEscolher: (tipo: TipoInicial) => void }) {
+  return (
+    <div className="mx-auto grid max-w-2xl gap-6 sm:grid-cols-2">
+      <button
+        type="button"
+        onClick={() => onEscolher("destinos")}
+        className="group flex flex-col items-center gap-4 rounded-2xl border border-border bg-card p-8 text-center transition-all hover:shadow-md"
+      >
+        <MapPin className="h-10 w-10 text-primary" />
+        <div>
+          <h3 className="font-display text-xl">Já sei o destino</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Quero começar escolhendo para onde ir, e depois ver as experiências
+            disponíveis em cada lugar.
+          </p>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onEscolher("experiencias")}
+        className="group flex flex-col items-center gap-4 rounded-2xl border border-border bg-card p-8 text-center transition-all hover:shadow-md"
+      >
+        <Sparkles className="h-10 w-10 text-primary" />
+        <div>
+          <h3 className="font-display text-xl">Já sei o que quero viver</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Quero começar escolhendo experiências, e depois ver em quais
+            destinos elas acontecem.
+          </p>
+        </div>
+      </button>
+    </div>
+  );
+}
+
+function SelecaoStep({
+  tipoInicial,
+  selecoesMap,
+  onToggleDestino,
+  onToggleExperiencia,
+  onVoltar,
+  onAvancar,
+}: {
+  tipoInicial: TipoInicial;
+  selecoesMap: SelecoesMap;
+  onToggleDestino: (slug: string) => void;
+  onToggleExperiencia: (destinoSlug: string, expSlug: string) => void;
+  onVoltar: () => void;
+  onAvancar: () => void;
+}) {
+  const [experienciasEscolhidas, setExperienciasEscolhidas] = useState<
+    Set<string>
+  >(new Set());
+
+  const destinosEscolhidos = Object.keys(selecoesMap);
+  const totalExperiencias = Object.values(selecoesMap).reduce(
+    (total, set) => total + set.size,
+    0,
+  );
+
+  const podeAvancar = destinosEscolhidos.length > 0 && totalExperiencias > 0;
+
+  function toggleExperienciaEscolhida(slug: string) {
+    setExperienciasEscolhidas((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(slug)) {
+        novo.delete(slug);
+      } else {
+        novo.add(slug);
+      }
+      return novo;
+    });
+  }
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-12">
+      {tipoInicial === "destinos" ? (
+        <>
+          <div>
+            <h2 className="text-balance text-2xl md:text-3xl">
+              Quais destinos você quer visitar?
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Pode escolher mais de um — mesmo que sejam em datas diferentes, a
+              gente ajusta isso no próximo passo.
+            </p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {destinos.map((destino) => {
+                const selecionado = destino.slug in selecoesMap;
+                return (
+                  <button
+                    key={destino.slug}
+                    type="button"
+                    onClick={() => onToggleDestino(destino.slug)}
+                    className={`relative overflow-hidden rounded-2xl border-2 text-left transition-all ${
+                      selecionado
+                        ? "border-primary"
+                        : "border-transparent hover:border-border"
+                    }`}
+                  >
+                    <img
+                      src={destino.imagem}
+                      alt={destino.alt}
+                      className="aspect-[4/3] w-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/10 to-transparent" />
+                    {selecionado && (
+                      <div className="absolute right-3 top-3 rounded-full bg-primary p-1.5 text-primary-foreground">
+                        <Check className="h-4 w-4" />
+                      </div>
+                    )}
+                    <p className="absolute bottom-3 left-4 right-4 font-display text-lg text-sand-50">
+                      {destino.nome}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {destinosEscolhidos.map((slug) => {
+            const destino = destinos.find((d) => d.slug === slug);
+            const disponiveis = getExperienciasPorDestino(slug);
+            if (!destino) return null;
+
+            return (
+              <div key={slug}>
+                <h3 className="font-display text-xl">
+                  O que você quer viver em {destino.nome.split(",")[0]}?
+                </h3>
+                {disponiveis.length > 0 ? (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {disponiveis.map((exp) => {
+                      const marcado = selecoesMap[slug]?.has(exp.slug);
+                      return (
+                        <button
+                          key={exp.slug}
+                          type="button"
+                          onClick={() => onToggleExperiencia(slug, exp.slug)}
+                          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                            marcado
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border text-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          {marcado && <Check className="h-3.5 w-3.5" />}
+                          {exp.titulo}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Ainda não temos experiências específicas cadastradas para
+                    esse destino.
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </>
+      ) : (
+        <>
+          <div>
+            <h2 className="text-balance text-2xl md:text-3xl">
+              O que você quer viver?
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Pode escolher mais de uma experiência.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {experiencias.map((exp) => {
+                const marcado = experienciasEscolhidas.has(exp.slug);
+                return (
+                  <button
+                    key={exp.slug}
+                    type="button"
+                    onClick={() => toggleExperienciaEscolhida(exp.slug)}
+                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                      marcado
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border text-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {marcado && <Check className="h-3.5 w-3.5" />}
+                    {exp.titulo}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {Array.from(experienciasEscolhidas).map((expSlug) => {
+            const exp = experiencias.find((e) => e.slug === expSlug);
+            const destinosComExp = getDestinosPorExperiencia(expSlug);
+            const destinosUnicos = Array.from(
+              new Map(destinosComExp.map((d) => [d.destinoSlug, d])).values(),
+            );
+            if (!exp) return null;
+
+            return (
+              <div key={expSlug}>
+                <h3 className="font-display text-xl">
+                  Onde você quer viver {exp.titulo.toLowerCase()}?
+                </h3>
+                {destinosUnicos.length > 0 ? (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {destinosUnicos.map((item) => {
+                      const marcado =
+                        selecoesMap[item.destinoSlug]?.has(expSlug);
+                      return (
+                        <button
+                          key={item.destinoSlug}
+                          type="button"
+                          onClick={() =>
+                            onToggleExperiencia(item.destinoSlug, expSlug)
+                          }
+                          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                            marcado
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border text-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          {marcado && <Check className="h-3.5 w-3.5" />}
+                          {item.destinoNome}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Ainda não temos um roteiro publicado com essa experiência em
+                    destaque.
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      <div className="flex items-center justify-between border-t border-border pt-6">
+        <button
+          type="button"
+          onClick={onVoltar}
+          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </button>
+        <button
+          type="button"
+          disabled={!podeAvancar}
+          onClick={onAvancar}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+        >
+          Continuar
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CalendarioStep({
+  destinosSelecionados,
+  datas,
+  calendarioAtivo,
+  onAbrirCalendario,
+  onSelecionarData,
+  onVoltar,
+  onAvancar,
+}: {
+  destinosSelecionados: string[];
+  datas: Record<string, string>;
+  calendarioAtivo: string | null;
+  onAbrirCalendario: (slug: string | null) => void;
+  onSelecionarData: (slug: string, data: string) => void;
+  onVoltar: () => void;
+  onAvancar: () => void;
+}) {
+  const podeAvancar = destinosSelecionados.every((slug) => datas[slug]);
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-8">
+      <div>
+        <h2 className="text-balance text-2xl md:text-3xl">
+          Quando você quer viajar?
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Escolha uma data de início para cada destino selecionado — se forem em
+          épocas diferentes, sem problema.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {destinosSelecionados.map((slug) => {
+          const destino = destinos.find((d) => d.slug === slug);
+          if (!destino) return null;
+          const dataEscolhida = datas[slug];
+
+          return (
+            <div
+              key={slug}
+              className="rounded-2xl border border-border bg-card p-5"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="font-display text-lg">{destino.nome}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {dataEscolhida
+                      ? `Data escolhida: ${new Date(`${dataEscolhida}T00:00:00`).toLocaleDateString("pt-BR")}`
+                      : "Nenhuma data escolhida ainda"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onAbrirCalendario(calendarioAtivo === slug ? null : slug)
+                  }
+                  className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  {dataEscolhida ? "Trocar data" : "Escolher data"}
+                </button>
+              </div>
+
+              {calendarioAtivo === slug && (
+                <div className="relative mt-5 overflow-hidden rounded-2xl">
+                  <img
+                    src={heroImg}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/50 to-forest-900/30" />
+                  <div className="relative flex justify-center p-6">
+                    <Calendar
+                      value={dataEscolhida}
+                      onSelect={(iso) => onSelecionarData(slug, iso)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-between border-t border-border pt-6">
+        <button
+          type="button"
+          onClick={onVoltar}
+          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </button>
+        <button
+          type="button"
+          disabled={!podeAvancar}
+          onClick={onAvancar}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+        >
+          Continuar
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DetalhesStep({
+  duracaoNoites,
+  onDuracaoChange,
+  interesses,
+  onToggleInteresse,
+  contexto,
+  onContextoChange,
+  adultos,
+  onAdultosChange,
+  criancas,
+  onCriancasChange,
+  inclusos,
+  onToggleIncluso,
+  onVoltar,
+  onAvancar,
+}: {
+  duracaoNoites: number;
+  onDuracaoChange: (valor: number) => void;
+  interesses: string[];
+  onToggleInteresse: (valor: string) => void;
+  contexto: string;
+  onContextoChange: (valor: string) => void;
+  adultos: number;
+  onAdultosChange: (valor: number) => void;
+  criancas: number;
+  onCriancasChange: (valor: number) => void;
+  inclusos: string[];
+  onToggleIncluso: (valor: string) => void;
+  onVoltar: () => void;
+  onAvancar: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-2xl space-y-10">
+      <div>
+        <h2 className="text-balance text-2xl md:text-3xl">
+          Conte mais sobre a viagem
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Isso ajuda nossa equipe a montar uma proposta sob medida.
+        </p>
+      </div>
+
+      <div>
+        <label
+          htmlFor="duracao"
+          className="text-sm font-medium text-foreground"
+        >
+          Quantas noites, em cada destino?
+        </label>
+        <input
+          id="duracao"
+          type="number"
+          min={1}
+          max={30}
+          value={duracaoNoites}
+          onChange={(e) => onDuracaoChange(Number(e.target.value))}
+          className="mt-1.5 w-32 rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+        />
+      </div>
+
+      <div>
+        <p className="text-sm font-medium text-foreground">
+          Quais desses interesses combinam com a viagem?
+        </p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {INTERESSES_DISPONIVEIS.map((interesse) => {
+            const marcado = interesses.includes(interesse);
+            return (
+              <button
+                key={interesse}
+                type="button"
+                onClick={() => onToggleInteresse(interesse)}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                  marcado
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-foreground hover:bg-secondary"
+                }`}
+              >
+                {marcado && <Check className="h-3.5 w-3.5" />}
+                {interesse}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="adultos"
+            className="text-sm font-medium text-foreground"
+          >
+            Adultos
+          </label>
+          <input
+            id="adultos"
+            type="number"
+            min={1}
+            max={30}
+            value={adultos}
+            onChange={(e) => onAdultosChange(Number(e.target.value))}
+            className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="criancas"
+            className="text-sm font-medium text-foreground"
+          >
+            Crianças
+          </label>
+          <input
+            id="criancas"
+            type="number"
+            min={0}
+            max={30}
+            value={criancas}
+            onChange={(e) => onCriancasChange(Number(e.target.value))}
+            className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-medium text-foreground">
+          O que você espera que esteja incluso?
+        </p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {INCLUSOS_DISPONIVEIS.map((item) => {
+            const marcado = inclusos.includes(item);
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => onToggleIncluso(item)}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                  marcado
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-foreground hover:bg-secondary"
+                }`}
+              >
+                {marcado && <Check className="h-3.5 w-3.5" />}
+                {item}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <label
+          htmlFor="contexto"
+          className="text-sm font-medium text-foreground"
+        >
+          Mais algum contexto? (opcional)
+        </label>
+        <textarea
+          id="contexto"
+          rows={4}
+          value={contexto}
+          onChange={(e) => onContextoChange(e.target.value)}
+          placeholder="Ex: é uma viagem de aniversário de casamento, alguém do grupo tem dificuldade de locomoção, preferimos hospedagem mais rústica, etc."
+          className="mt-1.5 w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+        />
+      </div>
+
+      <div className="flex items-center justify-between border-t border-border pt-6">
+        <button
+          type="button"
+          onClick={onVoltar}
+          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </button>
+        <button
+          type="button"
+          onClick={onAvancar}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Ver resumo
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ResumoStep({
+  destinosSelecionados,
+  selecoesMap,
+  datas,
+  duracaoNoites,
+  interesses,
+  contexto,
+  adultos,
+  criancas,
+  inclusos,
+  enviado,
+  onVoltar,
+  onEnviar,
+}: {
+  destinosSelecionados: string[];
+  selecoesMap: SelecoesMap;
+  datas: Record<string, string>;
+  duracaoNoites: number;
+  interesses: string[];
+  contexto: string;
+  adultos: number;
+  criancas: number;
+  inclusos: string[];
+  enviado: boolean;
+  onVoltar: () => void;
+  onEnviar: () => void;
+}) {
+  const mensagemWhatsapp = useMemo(() => {
+    const linhasDestinos = destinosSelecionados.map((slug) => {
+      const destino = destinos.find((d) => d.slug === slug);
+      const exps = Array.from(selecoesMap[slug] ?? [])
+        .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
+        .filter(Boolean)
+        .join(", ");
+      const data = datas[slug]
+        ? new Date(`${datas[slug]}T00:00:00`).toLocaleDateString("pt-BR")
+        : "data a combinar";
+      return `- ${destino?.nome} (${data}): ${exps || "experiências a combinar"}`;
+    });
+
+    return encodeURIComponent(
+      [
+        "Olá! Montei um plano de viagem no site e queria fechar com vocês:",
+        ...linhasDestinos,
+        `Duração: ${duracaoNoites} noites por destino`,
+        `Pessoas: ${adultos} adulto(s)${criancas > 0 ? ` e ${criancas} criança(s)` : ""}`,
+        interesses.length > 0 ? `Interesses: ${interesses.join(", ")}` : null,
+        inclusos.length > 0
+          ? `Gostaria que incluísse: ${inclusos.join(", ")}`
+          : null,
+        contexto ? `Mais detalhes: ${contexto}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  }, [
+    destinosSelecionados,
+    selecoesMap,
+    datas,
+    duracaoNoites,
+    adultos,
+    criancas,
+    interesses,
+    inclusos,
+    contexto,
+  ]);
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-8">
+      <div>
+        <h2 className="text-balance text-2xl md:text-3xl">
+          Confira o resumo da sua viagem
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Nossa equipe recebe esse plano e monta uma proposta detalhada para
+          você.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {destinosSelecionados.map((slug) => {
+          const destino = destinos.find((d) => d.slug === slug);
+          const exps = Array.from(selecoesMap[slug] ?? [])
+            .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
+            .filter(Boolean);
+          const data = datas[slug];
+
+          return (
+            <div
+              key={slug}
+              className="rounded-2xl border border-border bg-card p-5"
+            >
+              <p className="font-display text-lg">{destino?.nome}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {data
+                  ? new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR")
+                  : "Data a combinar"}{" "}
+                · {duracaoNoites} noites
+              </p>
+              {exps.length > 0 && (
+                <p className="mt-2 text-sm text-foreground">
+                  {exps.join(", ")}
+                </p>
+              )}
+            </div>
+          );
+        })}
+
+        <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+          <p>
+            <span className="font-medium">Pessoas:</span> {adultos} adulto(s)
+            {criancas > 0 ? `, ${criancas} criança(s)` : ""}
+          </p>
+          {interesses.length > 0 && (
+            <p className="mt-2">
+              <span className="font-medium">Interesses:</span>{" "}
+              {interesses.join(", ")}
+            </p>
+          )}
+          {inclusos.length > 0 && (
+            <p className="mt-2">
+              <span className="font-medium">Gostaria que incluísse:</span>{" "}
+              {inclusos.join(", ")}
+            </p>
+          )}
+          {contexto && (
+            <p className="mt-2">
+              <span className="font-medium">Contexto:</span> {contexto}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {enviado ? (
+        <div className="rounded-2xl bg-forest-900 p-6 text-center text-sand-50">
+          <p className="font-display text-xl">Plano enviado!</p>
+          <p className="mt-2 text-sm text-forest-100">
+            Recebemos o seu plano de viagem. Nossa equipe vai analisar e entrar
+            em contato com uma proposta detalhada — ou, se preferir, já fala com
+            a gente agora pelo WhatsApp.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <a
+              href={`https://wa.me/5511963220494?text=${mensagemWhatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <WhatsappButton variant="solid" />
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-4 border-t border-border pt-6 sm:flex-row sm:justify-between">
+          <button
+            type="button"
+            onClick={onVoltar}
+            className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </button>
+          <button
+            type="button"
+            onClick={onEnviar}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Enviar plano de viagem
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
