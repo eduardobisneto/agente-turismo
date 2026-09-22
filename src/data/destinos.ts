@@ -431,6 +431,171 @@ export const destinos: Destino[] = [
       { valor: "desde 1986", label: "Patrimônio Mundial da UNESCO" },
     ],
   },
+  {
+    slug: "sao-pedro",
+    nome: "São Pedro, SP",
+    tagline: "Águas termais e paraquedismo",
+    descricao:
+      "Roteiro que combina relaxamento em águas termais e mineral com um dos principais points de paraquedismo do Brasil, no interior de São Paulo.",
+    imagem: flutuacaoImg,
+    alt: "Foto ilustrativa de pessoas nadando em água cristalina",
+    duracao: "3 dias / 2 noites",
+    grupo: "Grupos de até 15 pessoas",
+    incluso: [
+      "Mobilidade ida e volta",
+      "Estadia com café da manhã",
+      "Passeios e experiências culturais do roteiro",
+      "Acompanhamento durante toda a viagem",
+    ],
+    mapsQuery: "São Pedro, SP, Brasil",
+    mapsZoom: 7,
+    atracoes: [
+      {
+        nome: "Parque das Fontes",
+        descricao:
+          "Parque com piscinas de água termal e mineral no coração da cidade, ideal para relaxar entre um passeio e outro.",
+        imagem: flutuacaoImg,
+        alt: "Foto ilustrativa de piscina de água natural",
+        experiencias: ["parques-aquaticos"],
+      },
+      {
+        nome: "Salto de Paraquedas",
+        descricao:
+          "Um dos principais points de paraquedismo do Brasil, com escola e pista para saltos com vista para o Vale do Corumbataí.",
+        imagem: destinoSocorroImg,
+        alt: "Foto ilustrativa de paisagem de montanhas vista do alto",
+      },
+      {
+        nome: "Balneário Municipal",
+        descricao:
+          "Área de lazer às margens do rio, com piscinas naturais e estrutura para famílias e grupos passarem o dia.",
+        imagem: flutuacaoImg,
+        alt: "Foto ilustrativa de piscina de água natural",
+        experiencias: ["praias"],
+      },
+    ],
+    historia: [
+      "No interior de São Paulo, perto de Piracicaba, São Pedro nasceu ao redor de suas fontes de água termal e mineral — o que rendeu à cidade o título oficial de Estância Hidromineral.",
+      "Ao longo do século 20, a cidade se estruturou em torno do turismo de águas, com parques e balneários pensados para quem busca descanso nas fontes termais.",
+      "Mais recentemente, São Pedro também se tornou um dos principais destinos do paraquedismo no Brasil, com escolas e pistas que recebem praticantes do país inteiro para saltos com vista para o Vale do Corumbataí.",
+      "É um roteiro que combina dois ritmos bem diferentes: o descanso nas águas termais e a adrenalina de um salto de paraquedas — dois jeitos opostos de sair da rotina.",
+    ],
+    numeros: [
+      { valor: "~37 mil", label: "habitantes" },
+      { valor: "Estância", label: "Hidromineral, título oficial da cidade" },
+      { valor: "polo nacional", label: "de paraquedismo" },
+    ],
+  },
+  {
+    slug: "cunha",
+    nome: "Cunha, SP",
+    tagline: "Clima de montanha, trilha histórica e vinícolas",
+    descricao:
+      "Roteiro na Serra da Bocaina, entre trilhas históricas, vinícolas de altitude e cerâmica artesanal, com clima de montanha o ano todo.",
+    imagem: trilhasImg,
+    alt: "Foto ilustrativa de trilha na Mata Atlântica",
+    duracao: "3 dias / 2 noites",
+    grupo: "Grupos de até 15 pessoas",
+    incluso: [
+      "Mobilidade ida e volta",
+      "Estadia com café da manhã",
+      "Passeios e experiências culturais do roteiro",
+      "Acompanhamento durante toda a viagem",
+    ],
+    mapsQuery: "Cunha, SP, Brasil",
+    mapsZoom: 7,
+    atracoes: [
+      {
+        nome: "Estrada do Ouro",
+        descricao:
+          "Antigo caminho colonial que ligava as minas de Minas Gerais ao litoral, hoje percorrido por quem busca trilhas e passeios de 4x4 rumo a Paraty.",
+        imagem: trilhasImg,
+        alt: "Foto ilustrativa de trilha na Mata Atlântica",
+        experiencias: ["trilhas"],
+      },
+      {
+        nome: "Vale das Videiras",
+        descricao:
+          "Região de vinícolas de altitude, com degustação e vista para os vales da Serra da Bocaina.",
+        imagem: trilhasImg,
+        alt: "Foto ilustrativa de paisagem de montanha",
+      },
+      {
+        nome: "Núcleo Santa Virgínia",
+        descricao:
+          "Núcleo do Parque Estadual da Serra do Mar em Cunha, com trilhas e cachoeiras em meio a uma das áreas mais preservadas de Mata Atlântica do estado.",
+        imagem: cachoeiraImg,
+        alt: "Foto ilustrativa de cachoeira com piscina natural",
+        experiencias: ["trilhas", "cachoeiras"],
+      },
+    ],
+    historia: [
+      "No alto da Serra do Mar, entre São Paulo e o litoral norte, Cunha cresceu isolada por décadas — um isolamento que ajudou a preservar seu clima de montanha, sua arquitetura simples e boa parte da mata ao redor.",
+      "A cidade é cortada pela antiga Estrada do Ouro, caminho colonial que ligava as minas de Minas Gerais ao litoral, hoje percorrido por quem busca trilhas e passeios de 4x4 com história.",
+      "Nas últimas décadas, Cunha também virou point de vinícolas de altitude e de cerâmica artesanal, tradição que deu à cidade o apelido de capital da cerâmica no estado de São Paulo.",
+      "É um roteiro para quem gosta de clima serrano, trilha histórica e um bom queijo com vinho ao final do dia — um contraste e tanto com o calor do litoral logo ali na descida da serra.",
+    ],
+    numeros: [
+      { valor: "~24 mil", label: "habitantes" },
+      { valor: "colonial", label: "Estrada do Ouro, ligando Cunha a Paraty" },
+      { valor: "polo de", label: "cerâmica artesanal e vinícolas de altitude" },
+    ],
+  },
+  {
+    slug: "olimpia",
+    nome: "Olímpia, SP",
+    tagline: "Capital nacional dos parques aquáticos",
+    descricao:
+      "Roteiro pelo maior polo de parques aquáticos do Brasil, com toboáguas, piscinas de ondas e águas termais para curtir o ano todo.",
+    imagem: flutuacaoImg,
+    alt: "Foto ilustrativa de pessoas nadando em água cristalina",
+    duracao: "3 dias / 2 noites",
+    grupo: "Grupos de até 20 pessoas",
+    incluso: [
+      "Mobilidade ida e volta",
+      "Estadia com café da manhã",
+      "Passeios e experiências culturais do roteiro",
+      "Acompanhamento durante toda a viagem",
+    ],
+    mapsQuery: "Olímpia, SP, Brasil",
+    mapsZoom: 7,
+    atracoes: [
+      {
+        nome: "Thermas dos Laranjais",
+        descricao:
+          "Um dos maiores parques aquáticos da América Latina, com toboáguas, piscinas de ondas e águas termais.",
+        imagem: flutuacaoImg,
+        alt: "Foto ilustrativa de pessoas nadando em água cristalina",
+        experiencias: ["parques-aquaticos"],
+      },
+      {
+        nome: "Hot Beach Olímpia",
+        descricao:
+          "Parque aquático com praia artificial, toboáguas radicais e águas termais, um dos principais points da cidade.",
+        imagem: flutuacaoImg,
+        alt: "Foto ilustrativa de pessoas nadando em água cristalina",
+        experiencias: ["parques-aquaticos"],
+      },
+      {
+        nome: "Hotéis com Águas Termais",
+        descricao:
+          "A cidade reúne dezenas de hotéis e resorts com poços próprios de água termal, muitos deles com acesso direto aos parques aquáticos.",
+        imagem: flutuacaoImg,
+        alt: "Foto ilustrativa de pessoas nadando em água cristalina",
+      },
+    ],
+    historia: [
+      "No interior de São Paulo, próxima a Rio Preto, Olímpia descobriu suas águas termais em poços perfurados ao longo do século 20 — e, a partir delas, construiu o maior polo de parques aquáticos do país.",
+      "Parques como o Thermas dos Laranjais e o Hot Beach transformaram a cidade em um dos destinos mais visitados do Brasil, com toboáguas, piscinas de ondas e águas termais que funcionam em qualquer época do ano.",
+      "O sucesso do turismo de águas rendeu a Olímpia o título de Capital Nacional do Turismo, reconhecimento oficial da força do setor na economia da cidade.",
+      "É o tipo de roteiro perfeito para quem quer um dia — ou vários — de diversão em família, sem depender do clima, com direito a toboágua de manhã e água termal ao entardecer.",
+    ],
+    numeros: [
+      { valor: "~60 mil", label: "habitantes" },
+      { valor: "maior polo", label: "de parques aquáticos do Brasil" },
+      { valor: "Capital Nacional", label: "do Turismo" },
+    ],
+  },
 ];
 
 export function getDestino(slug: string): Destino | undefined {

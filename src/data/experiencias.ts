@@ -11,6 +11,7 @@ import {
   Target,
   TreePine,
   Trees,
+  Waves,
 } from "lucide-react";
 
 import flutuacaoImg from "@/assets/flutuacao.jpeg";
@@ -518,6 +519,34 @@ export const experiencias: Experiencia[] = [
       epocaResumo: "O ano todo",
       seguranca:
         "Em passeios de barco que se aproximam de quedas d'água, o uso de colete salva-vidas é obrigatório durante todo o trajeto, e a maioria dos operadores restringe a participação de gestantes e de pessoas com problemas cardíacos, de coluna ou pressão alta, pela intensidade do movimento na aproximação das quedas. Vale sempre informar essas condições ao operador antes de contratar o passeio.",
+    },
+  },
+  {
+    slug: "parques-aquaticos",
+    titulo: "Parques Aquáticos",
+    descricao:
+      "Diversão garantida em parques aquáticos com toboáguas, piscinas de ondas e águas termais.",
+    icon: Waves,
+    contexto: {
+      opcoesTitulo: "Tipos",
+      opcoes: [
+        "Parques com águas termais — mais quentes, para curtir o ano todo",
+        "Parques com toboáguas e piscinas de ondas — mais radicais",
+      ],
+      beneficios: [
+        "Diversão para todas as idades, com áreas específicas para crianças pequenas",
+        "Boa opção em dias quentes ou de folga entre outras atividades do roteiro",
+        "Parques com águas termais podem ser aproveitados mesmo em dias mais frios",
+      ],
+      melhorEpoca:
+        "O ano todo em parques de águas termais; nos parques com piscinas de água natural, o verão costuma ser a época mais concorrida.",
+      publico:
+        "A maioria dos parques tem áreas específicas para crianças pequenas, com toboáguas e piscinas de profundidade reduzida, além das áreas para o público adulto. Bebês e crianças bem pequenas geralmente precisam de fralda própria para piscina, exigida pela maioria dos parques.",
+      nivel: "Fácil",
+      faixaEtaria: "Todas as idades",
+      epocaResumo: "O ano todo",
+      seguranca:
+        "A maioria dos parques aquáticos tem salva-vidas em todas as piscinas e sinalização de profundidade em cada área. Ainda assim, crianças pequenas devem ser sempre supervisionadas por um adulto, mesmo nas piscinas rasas, e é importante respeitar a altura mínima exigida em toboáguas mais radicais.",
     },
   },
 ];
