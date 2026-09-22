@@ -28,7 +28,12 @@ export interface PlanoViagem {
   contexto: string;
 }
 
-const PLANOS_KEY = "ao_planos_viagem";
+// v2: campos de data/pessoas/interesses/inclusos migraram de nível global
+// pra dentro de cada SelecaoDestino. Muda a versão da chave sempre que o
+// formato dos dados salvos mudar, pra planos salvos com o formato antigo
+// não quebrarem a leitura — eles simplesmente ficam invisíveis (não
+// deletados) na chave anterior.
+const PLANOS_KEY = "ao_planos_viagem_v2";
 
 function readPlanos(): PlanoViagem[] {
   try {
@@ -45,6 +50,18 @@ export function getPlanosDoUsuario(usuarioId: string): PlanoViagem[] {
     .sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
 }
 
+// localStorage não é reativo — nada re-renderiza sozinho quando outro
+// componente grava um plano novo (ex: o Header precisa saber se o
+// usuário já tem viagens, mas o wizard que salva o plano fica em outra
+// parte da árvore de componentes). Esse evento avisa quem estiver
+// escutando pra recalcular.
+const PLANOS_ATUALIZADOS_EVENT = "ao:planos-atualizados";
+
+export function onPlanosAtualizados(callback: () => void): () => void {
+  window.addEventListener(PLANOS_ATUALIZADOS_EVENT, callback);
+  return () => window.removeEventListener(PLANOS_ATUALIZADOS_EVENT, callback);
+}
+
 export function salvarPlanoViagem(
   plano: Omit<PlanoViagem, "id" | "criadoEm">,
 ): PlanoViagem {
@@ -59,6 +76,7 @@ export function salvarPlanoViagem(
     PLANOS_KEY,
     JSON.stringify([...planos, registro]),
   );
+  window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
 
   return registro;
 }

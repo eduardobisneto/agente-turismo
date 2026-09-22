@@ -70,6 +70,7 @@ function PlanejarViagemPage() {
   );
 
   const [step, setStep] = useState<Step>("tipo");
+  const [maxStepIndexVisitado, setMaxStepIndexVisitado] = useState(0);
   const [tipoInicial, setTipoInicial] = useState<TipoInicial | null>(null);
   const [selecoesMap, setSelecoesMap] = useState<SelecoesMap>({});
   const [destinoAtualIndex, setDestinoAtualIndex] = useState(0);
@@ -99,6 +100,7 @@ function PlanejarViagemPage() {
 
   function iniciarNovoPlanejamento() {
     setStep("tipo");
+    setMaxStepIndexVisitado(0);
     setTipoInicial(null);
     setSelecoesMap({});
     setDestinoAtualIndex(0);
@@ -128,6 +130,9 @@ function PlanejarViagemPage() {
 
   function irPara(novoStep: Step) {
     setStep(novoStep);
+    setMaxStepIndexVisitado((atual) =>
+      Math.max(atual, STEP_ORDER.indexOf(novoStep)),
+    );
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -207,6 +212,7 @@ function PlanejarViagemPage() {
     }
 
     setDatasFim((atual) => ({ ...atual, [slug]: iso }));
+    setCalendarioAtivo(null);
   }
 
   function toggleInteresseDoDestino(destinoSlug: string, valor: string) {
@@ -305,6 +311,15 @@ function PlanejarViagemPage() {
                   onClick={() => irPara(s)}
                   aria-label={`Voltar para ${STEP_LABELS[s]}`}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-80"
+                >
+                  {index + 1}
+                </button>
+              ) : index <= maxStepIndexVisitado ? (
+                <button
+                  type="button"
+                  onClick={() => irPara(s)}
+                  aria-label={`Ir para ${STEP_LABELS[s]}`}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-transparent text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
                 >
                   {index + 1}
                 </button>
@@ -761,8 +776,107 @@ function CalendarioStep({
     else onIrParaDestino(destinoAtualIndex + 1);
   }
 
+  function camposPessoas(escuro: boolean) {
+    const rotulo = escuro ? "text-sand-50" : "text-foreground";
+    const input = escuro
+      ? "mt-1.5 w-full rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+      : "mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary";
+    return (
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className={`text-sm font-medium ${rotulo}`}>Adultos</label>
+          <input
+            type="number"
+            min={1}
+            max={30}
+            value={adultosMap[slug!] ?? 2}
+            onChange={(e) => onAdultosChange(slug!, Number(e.target.value))}
+            className={input}
+          />
+        </div>
+        <div>
+          <label className={`text-sm font-medium ${rotulo}`}>Crianças</label>
+          <input
+            type="number"
+            min={0}
+            max={30}
+            value={criancasMap[slug!] ?? 0}
+            onChange={(e) => onCriancasChange(slug!, Number(e.target.value))}
+            className={input}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  function camposInteresses(escuro: boolean) {
+    const rotulo = escuro ? "text-sand-50" : "text-foreground";
+    return (
+      <div>
+        <p className={`text-sm font-medium ${rotulo}`}>
+          Interesses em {destino!.nome.split(",")[0]}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {destino!.interessesDisponiveis.map((interesse) => {
+            const marcado = (interessesMap[slug!] ?? []).includes(interesse);
+            return (
+              <button
+                key={interesse}
+                type="button"
+                onClick={() => onToggleInteresse(slug!, interesse)}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  marcado
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : escuro
+                      ? "border-sand-50/40 text-sand-50 hover:bg-sand-50/10"
+                      : "border-border text-foreground hover:bg-secondary"
+                }`}
+              >
+                {marcado && <Check className="h-3.5 w-3.5" />}
+                {interesse}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function camposInclusos(escuro: boolean) {
+    const rotulo = escuro ? "text-sand-50" : "text-foreground";
+    return (
+      <div>
+        <p className={`text-sm font-medium ${rotulo}`}>
+          O que gostaria que estivesse incluso em {destino!.nome.split(",")[0]}?
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {destino!.inclusosDisponiveis.map((item) => {
+            const marcado = (inclusosMap[slug!] ?? []).includes(item);
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => onToggleIncluso(slug!, item)}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  marcado
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : escuro
+                      ? "border-sand-50/40 text-sand-50 hover:bg-sand-50/10"
+                      : "border-border text-foreground hover:bg-secondary"
+                }`}
+              >
+                {marcado && <Check className="h-3.5 w-3.5" />}
+                {item}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8">
       <div>
         <span className="text-sm font-semibold uppercase tracking-wider text-primary">
           Destino {destinoAtualIndex + 1} de {destinosSelecionados.length}
@@ -776,157 +890,100 @@ function CalendarioStep({
         </p>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-foreground">Datas</p>
-            <p className="text-sm text-muted-foreground">
-              {inicio && fim
-                ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                : inicio
-                  ? `Início: ${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} — agora escolha a data de fim`
-                  : "Nenhuma data escolhida ainda"}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              onAbrirCalendario(calendarioAtivo === slug ? null : slug)
-            }
-            className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-          >
-            {inicio && fim ? "Trocar datas" : "Escolher datas"}
-          </button>
-        </div>
-
-        {calendarioAtivo === slug && (
-          <div className="relative mt-5 overflow-hidden rounded-2xl">
-            <img
-              src={heroImg}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/50 to-forest-900/30" />
-            <div className="relative flex flex-col items-center gap-3 p-6">
+      {calendarioAtivo === slug ? (
+        <div className="relative overflow-hidden rounded-2xl">
+          <img
+            src={heroImg}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-forest-900/90 via-forest-900/75 to-forest-900/60" />
+          <div className="relative p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <p className="text-sm font-medium text-sand-50">
                 {!inicio
                   ? "Escolha a data de início"
                   : !fim
                     ? "Agora escolha a data de fim"
-                    : "Clique numa data pra recomeçar a escolha"}
+                    : `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`}
               </p>
-              <Calendar
-                rangeStart={inicio}
-                rangeEnd={fim}
-                onSelect={(iso) => onSelecionarData(slug, iso)}
-              />
+              <button
+                type="button"
+                onClick={() => onAbrirCalendario(null)}
+                className="rounded-full border border-sand-50/40 px-4 py-2 text-sm font-semibold uppercase tracking-wide text-sand-50 transition-colors hover:bg-sand-50/10"
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_auto]">
+              <div className="order-2 space-y-6 lg:order-1">
+                {camposPessoas(true)}
+                {camposInteresses(true)}
+                {camposInclusos(true)}
+              </div>
+              <div className="order-1 flex justify-center lg:order-2">
+                <Calendar
+                  rangeStart={inicio}
+                  rangeEnd={fim}
+                  onSelect={(iso) => onSelecionarData(slug, iso)}
+                />
+              </div>
             </div>
           </div>
-        )}
-
-        {conflitosComOutros.length > 0 && (
-          <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Essas datas cruzam com{" "}
-            {conflitosComOutros
-              .map((s) => destinos.find((d) => d.slug === s)?.nome ?? s)
-              .join(", ")}
-            . Ajuste um dos dois períodos — você não pode estar em dois lugares
-            ao mesmo tempo.
-          </p>
-        )}
-        {conflitosComOutros.length === 0 && semFolgaComOutros.length > 0 && (
-          <p className="mt-4 rounded-xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
-            Essas datas encostam direto em{" "}
-            {semFolgaComOutros
-              .map((s) => destinos.find((d) => d.slug === s)?.nome ?? s)
-              .join(", ")}
-            , sem folga pro deslocamento. Vale considerar pelo menos 1 dia a
-            mais entre os destinos.
-          </p>
-        )}
-
-        <div className="mt-5 grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
-          <div>
-            <label className="text-sm font-medium text-foreground">
-              Adultos
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={30}
-              value={adultosMap[slug] ?? 2}
-              onChange={(e) => onAdultosChange(slug, Number(e.target.value))}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-            />
+        </div>
+      ) : (
+        <div className="space-y-6 rounded-2xl border border-border bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">Datas</p>
+              <p className="text-sm text-muted-foreground">
+                {inicio && fim
+                  ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                  : "Nenhuma data escolhida ainda"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onAbrirCalendario(slug)}
+              className="rounded-full border border-primary px-4 py-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              {inicio && fim ? "Trocar datas" : "Escolher datas"}
+            </button>
           </div>
-          <div>
-            <label className="text-sm font-medium text-foreground">
-              Crianças
-            </label>
-            <input
-              type="number"
-              min={0}
-              max={30}
-              value={criancasMap[slug] ?? 0}
-              onChange={(e) => onCriancasChange(slug, Number(e.target.value))}
-              className="mt-1.5 w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
-            />
+
+          {conflitosComOutros.length > 0 && (
+            <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              Essas datas cruzam com{" "}
+              {conflitosComOutros
+                .map((s) => destinos.find((d) => d.slug === s)?.nome ?? s)
+                .join(", ")}
+              . Ajuste um dos dois períodos — você não pode estar em dois
+              lugares ao mesmo tempo.
+            </p>
+          )}
+          {conflitosComOutros.length === 0 && semFolgaComOutros.length > 0 && (
+            <p className="rounded-xl bg-amber-100 px-4 py-3 text-sm text-amber-900">
+              Essas datas encostam direto em{" "}
+              {semFolgaComOutros
+                .map((s) => destinos.find((d) => d.slug === s)?.nome ?? s)
+                .join(", ")}
+              , sem folga pro deslocamento. Vale considerar pelo menos 1 dia a
+              mais entre os destinos.
+            </p>
+          )}
+
+          <div className="border-t border-border pt-5">
+            {camposPessoas(false)}
+          </div>
+          <div className="border-t border-border pt-5">
+            {camposInteresses(false)}
+          </div>
+          <div className="border-t border-border pt-5">
+            {camposInclusos(false)}
           </div>
         </div>
-
-        <div className="mt-5 border-t border-border pt-5">
-          <p className="text-sm font-medium text-foreground">
-            Interesses em {destino.nome.split(",")[0]}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {destino.interessesDisponiveis.map((interesse) => {
-              const marcado = (interessesMap[slug] ?? []).includes(interesse);
-              return (
-                <button
-                  key={interesse}
-                  type="button"
-                  onClick={() => onToggleInteresse(slug, interesse)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                    marcado
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  {marcado && <Check className="h-3.5 w-3.5" />}
-                  {interesse}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-5 border-t border-border pt-5">
-          <p className="text-sm font-medium text-foreground">
-            O que gostaria que estivesse incluso em {destino.nome.split(",")[0]}
-            ?
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {destino.inclusosDisponiveis.map((item) => {
-              const marcado = (inclusosMap[slug] ?? []).includes(item);
-              return (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => onToggleIncluso(slug, item)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                    marcado
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  {marcado && <Check className="h-3.5 w-3.5" />}
-                  {item}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      )}
 
       <div className="flex items-center justify-between border-t border-border pt-6">
         <button
@@ -1169,9 +1226,9 @@ function ResumoStep({
         <div className="rounded-2xl bg-forest-900 p-6 text-center text-sand-50">
           <p className="font-display text-xl">Plano enviado!</p>
           <p className="mt-2 text-sm text-forest-100">
-            Recebemos o seu plano de viagem. Nossa equipe vai analisar e entrar
-            em contato com uma proposta detalhada — ou, se preferir, já fala com
-            a gente agora pelo WhatsApp.
+            Recebemos o seu plano de viagem e já abrimos uma conversa no
+            WhatsApp com o resumo. Nossa equipe vai analisar e entrar em contato
+            com uma proposta detalhada.
           </p>
           <div className="mt-4 flex flex-col items-center gap-3">
             <a
@@ -1202,7 +1259,17 @@ function ResumoStep({
           </button>
           <button
             type="button"
-            onClick={onEnviar}
+            onClick={() => {
+              // Precisa ser síncrono no clique — se window.open rodar depois
+              // de um setState/useEffect, o navegador trata como popup e
+              // bloqueia por não vir direto de um gesto do usuário.
+              window.open(
+                `https://wa.me/5511963220494?text=${mensagemWhatsapp}`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+              onEnviar();
+            }}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Enviar plano de viagem
@@ -1321,47 +1388,95 @@ function DetalhePlanoView({
               const destino = destinos.find(
                 (d) => d.slug === selecao.destinoSlug,
               );
-              const exps = selecao.experienciaSlugs
+              const exps = (selecao.experienciaSlugs ?? [])
                 .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
                 .filter(Boolean);
               const noites = noitesEntre(selecao.dataInicio, selecao.dataFim);
+              const interesses = selecao.interesses ?? [];
+              const inclusos = selecao.inclusos ?? [];
 
               return (
                 <div
                   key={selecao.destinoSlug}
-                  className="rounded-2xl border border-border bg-card p-5"
+                  className="overflow-hidden rounded-2xl border border-border bg-card"
                 >
-                  <p className="font-display text-lg">{destino?.nome}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {selecao.dataInicio && selecao.dataFim
-                      ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
-                      : "Datas a combinar"}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {selecao.adultos} adulto(s)
-                    {selecao.criancas > 0
-                      ? `, ${selecao.criancas} criança(s)`
-                      : ""}
-                  </p>
-                  {exps.length > 0 && (
-                    <p className="mt-2 text-sm text-foreground">
-                      {exps.join(", ")}
-                    </p>
-                  )}
-                  {selecao.interesses.length > 0 && (
-                    <p className="mt-2 text-sm text-foreground">
-                      <span className="font-medium">Interesses:</span>{" "}
-                      {selecao.interesses.join(", ")}
-                    </p>
-                  )}
-                  {selecao.inclusos.length > 0 && (
-                    <p className="mt-2 text-sm text-foreground">
-                      <span className="font-medium">
-                        Gostaria que incluísse:
-                      </span>{" "}
-                      {selecao.inclusos.join(", ")}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-4 border-b border-border p-5">
+                    {destino?.imagem && (
+                      <img
+                        src={destino.imagem}
+                        alt={destino.alt}
+                        className="h-16 w-16 shrink-0 rounded-xl object-cover"
+                      />
+                    )}
+                    <div>
+                      <p className="font-display text-lg">{destino?.nome}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {selecao.dataInicio && selecao.dataFim
+                          ? `${new Date(`${selecao.dataInicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${selecao.dataFim}T00:00:00`).toLocaleDateString("pt-BR")} · ${noites} noites`
+                          : "Datas a combinar"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {selecao.adultos ?? 2} adulto(s)
+                        {(selecao.criancas ?? 0) > 0
+                          ? `, ${selecao.criancas} criança(s)`
+                          : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 p-5">
+                    {exps.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Experiências
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {exps.map((titulo) => (
+                            <span
+                              key={titulo}
+                              className="rounded-full border border-border bg-secondary px-3 py-1 text-sm text-secondary-foreground"
+                            >
+                              {titulo}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {interesses.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Interesses
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {interesses.map((interesse) => (
+                            <span
+                              key={interesse}
+                              className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
+                            >
+                              {interesse}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {inclusos.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Gostaria que incluísse
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {inclusos.map((item) => (
+                            <span
+                              key={item}
+                              className="rounded-full border border-border px-3 py-1 text-sm text-foreground"
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
