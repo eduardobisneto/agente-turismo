@@ -34,41 +34,6 @@ function SobrePage() {
         </div>
       </section>
 
-      <section className="section-padding">
-        <div className="container-tight">
-          <div className="mx-auto max-w-3xl">
-            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-              Minha história
-            </span>
-            <h2 className="mt-3 text-balance text-2xl md:text-3xl">
-              De onde veio essa vontade de organizar cada detalhe
-            </h2>
-            <div className="mt-6 space-y-4 text-muted-foreground">
-              <p>
-                Em 2017 morei na Irlanda, onde estudei e trabalhei. Foi lá que
-                juntei uma grana para fazer um tour por 15 países de uma vez só
-                — e para tirar essa viagem do papel, tive que planejar tudo
-                sozinho: do orçamento a cada deslocamento, passando pela
-                pesquisa de entretenimento cultural e social e pelos melhores
-                lugares para comer em cada cidade.
-              </p>
-              <p>
-                Foi todo esse trabalho de planejamento — encaixar horários de
-                refeições, chegadas e saídas, e deixar o roteiro com o mínimo de
-                imprevisto possível — que despertou em mim um hobby e um gosto
-                especial por organização e detalhe.
-              </p>
-              <p>
-                Foi esse gosto que me motivou a criar a Aventura Organizada:
-                para ajudar grupos de amigos e famílias a terem uma experiência
-                mais fluida nas suas viagens, sem precisar passar pelo mesmo
-                trabalho que passei para planejar a minha.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="section-padding bg-sand-100">
         <div className="container-tight grid gap-8 md:grid-cols-2 md:items-center">
           <img
