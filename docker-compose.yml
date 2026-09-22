@@ -42,6 +42,9 @@ services:
     container_name: greatgrandson-aventuraorganizada-viagens-api-container
     environment:
       CONNECTION_STRING: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=aventuraorganizada-viagem;Username=aventuraorganizada-viagem;Password=${POSTGRES_PASSWORD}"
+      COGNITO_REGION: ${COGNITO_REGION}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -59,6 +62,9 @@ services:
       # 8080 é onde as 3 APIs .NET escutam (ver ASPNETCORE_HTTP_PORTS nos Dockerfiles).
       IDENTITY_API_URL: "http://greatgrandson-aventuraorganizada-identity-api:8080"
       VIAGENS_API_URL: "http://greatgrandson-aventuraorganizada-viagens-api:8080"
+      COGNITO_REGION: ${COGNITO_REGION}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
