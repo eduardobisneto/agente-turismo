@@ -1368,9 +1368,9 @@ function DetalhePlanoView({
 
   return (
     <>
-      <section className="section-padding bg-sand-100">
+      <section className="section-padding">
         <div className="container-tight">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-2xl">
             <button
               type="button"
               onClick={onVoltar}
@@ -1380,41 +1380,33 @@ function DetalhePlanoView({
               Voltar para minhas viagens
             </button>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-                  Planejar viagem
-                </span>
-                <h1 className="mt-1 text-balance text-2xl md:text-3xl">
-                  Detalhes do plano
-                </h1>
-              </div>
-              <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
-                Em análise
+            <div className="mt-6 text-center">
+              <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+                Planejar viagem
               </span>
+              <h1 className="mt-3 text-balance text-3xl md:text-4xl">
+                {juntarNomes(nomesDestinos)}
+              </h1>
+              <p className="mt-4 text-muted-foreground">
+                {inicioGeral && fimGeral
+                  ? `${new Date(`${inicioGeral}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}`
+                  : "Datas a combinar"}
+              </p>
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
+                  Em análise
+                </span>
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Enviado em{" "}
+                {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}. Nossa
+                equipe está analisando e vai entrar em contato com uma proposta
+                detalhada.
+              </p>
             </div>
 
-            <p className="mt-3 text-sm text-foreground">
-              {juntarNomes(nomesDestinos)}
-              {inicioGeral && fimGeral && (
-                <>
-                  {" · "}
-                  {new Date(`${inicioGeral}T00:00:00`).toLocaleDateString(
-                    "pt-BR",
-                  )}
-                  {" a "}
-                  {new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}
-                </>
-              )}
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Enviado em {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}.
-              Nossa equipe está analisando e vai entrar em contato com uma
-              proposta detalhada.
-            </p>
-
             {plano.contexto && (
-              <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm text-foreground">
+              <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-left text-sm text-foreground">
                 <span className="font-medium">Contexto:</span> {plano.contexto}
               </div>
             )}
@@ -1422,7 +1414,7 @@ function DetalhePlanoView({
         </div>
       </section>
 
-      <section className="section-padding">
+      <section className="section-padding bg-sand-100">
         <div className="container-tight">
           <div className="mx-auto max-w-3xl">
             {!selecaoAberta ? (
@@ -1609,7 +1601,7 @@ function DetalhePlanoView({
         </div>
       </section>
 
-      <section className="section-padding bg-sand-100">
+      <section className="section-padding">
         <div className="container-tight">
           <div className="mx-auto max-w-3xl">
             <h2 className="font-display text-2xl md:text-3xl">
