@@ -1,15 +1,21 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  ListChecks,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
 
 import { WhatsappButton } from "@/components/WhatsappButton";
 import { getExperiencia, getDestinosPorExperiencia } from "@/data/experiencias";
 
-export const Route = createFileRoute("/experiencias/$slug")({
+export const Route = createFileRoute("/experiencias_/$slug")({
   loader: ({ params }) => {
     const experiencia = getExperiencia(params.slug);
     if (!experiencia) throw notFound();
     return {
-      experiencia,
       destinos: getDestinosPorExperiencia(params.slug),
     };
   },
@@ -17,7 +23,9 @@ export const Route = createFileRoute("/experiencias/$slug")({
 });
 
 function ExperienciaPage() {
-  const { experiencia, destinos } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const { destinos } = Route.useLoaderData();
+  const experiencia = getExperiencia(slug)!;
   const Icon = experiencia.icon;
 
   return (
@@ -51,6 +59,63 @@ function ExperienciaPage() {
           <p className="max-w-xl text-lg text-forest-100">
             {experiencia.descricao}
           </p>
+        </div>
+      </section>
+
+      <section className="section-padding bg-sand-100">
+        <div className="container-tight grid gap-10 lg:grid-cols-[2fr_1fr]">
+          <div>
+            <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+              Contexto
+            </span>
+            <h2 className="mt-3 text-balance text-3xl md:text-4xl">
+              O que esperar de {experiencia.titulo.toLowerCase()}
+            </h2>
+
+            <div className="mt-6">
+              <h3 className="flex items-center gap-2 font-display text-lg">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Benefícios
+              </h3>
+              <ul className="mt-3 space-y-2">
+                {experiencia.contexto.beneficios.map((beneficio) => (
+                  <li
+                    key={beneficio}
+                    className="text-sm leading-relaxed text-muted-foreground"
+                  >
+                    {beneficio}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-6">
+              <h3 className="flex items-center gap-2 font-display text-lg">
+                <Calendar className="h-5 w-5 text-primary" />
+                Melhor época
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {experiencia.contexto.melhorEpoca}
+              </p>
+            </div>
+          </div>
+
+          <aside className="h-fit rounded-2xl border border-border bg-card p-6">
+            <h3 className="flex items-center gap-2 font-display text-lg">
+              <ListChecks className="h-5 w-5 text-primary" />
+              {experiencia.contexto.opcoesTitulo}
+            </h3>
+            <ul className="mt-4 space-y-3">
+              {experiencia.contexto.opcoes.map((opcao) => (
+                <li
+                  key={opcao}
+                  className="rounded-xl bg-secondary px-4 py-3 text-sm text-foreground"
+                >
+                  {opcao}
+                </li>
+              ))}
+            </ul>
+          </aside>
         </div>
       </section>
 

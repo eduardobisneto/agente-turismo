@@ -38,6 +38,14 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  to="/experiencias"
+                  className="transition-colors hover:text-sand-50"
+                >
+                  Experiências
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/sobre"
                   className="transition-colors hover:text-sand-50"
                 >
