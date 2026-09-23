@@ -10,11 +10,10 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Calendar } from "@/components/Calendar";
 import { RequireAuth } from "@/components/RequireAuth";
-import { WhatsappButton } from "@/components/WhatsappButton";
 import { destinos } from "@/data/destinos";
 import {
   experiencias,
@@ -90,7 +89,6 @@ function PlanejarViagemPage() {
   >({});
 
   const [contexto, setContexto] = useState("");
-  const [enviado, setEnviado] = useState(false);
 
   const destinosSelecionados = Object.keys(selecoesMap);
 
@@ -126,7 +124,6 @@ function PlanejarViagemPage() {
     setInclusosMap({});
     setContextoDestinoMap({});
     setContexto("");
-    setEnviado(false);
     setModo("wizard");
   }
 
@@ -278,14 +275,14 @@ function PlanejarViagemPage() {
       contextoDestino: contextoDestinoMap[slug] || undefined,
     }));
 
-    salvarPlanoViagem({
+    const criado = salvarPlanoViagem({
       usuarioId: user.id,
       tipoInicial: tipoInicial ?? "destinos",
       selecoes,
       contexto,
     });
 
-    setEnviado(true);
+    abrirPlano(criado);
   }
 
   const stepIndex = STEP_ORDER.indexOf(step);
@@ -454,11 +451,8 @@ function PlanejarViagemPage() {
               interessesMap={interessesMap}
               inclusosMap={inclusosMap}
               contextoDestinoMap={contextoDestinoMap}
-              contexto={contexto}
-              enviado={enviado}
               onVoltar={() => irPara("calendario")}
               onEnviar={handleEnviar}
-              onVerMeusPlanos={verMeusPlanos}
             />
           )}
         </div>
@@ -1102,11 +1096,8 @@ function ResumoStep({
   interessesMap,
   inclusosMap,
   contextoDestinoMap,
-  contexto,
-  enviado,
   onVoltar,
   onEnviar,
-  onVerMeusPlanos,
 }: {
   destinosSelecionados: string[];
   selecoesMap: SelecoesMap;
@@ -1117,68 +1108,9 @@ function ResumoStep({
   interessesMap: Record<string, string[]>;
   inclusosMap: Record<string, string[]>;
   contextoDestinoMap: Record<string, string>;
-  contexto: string;
-  enviado: boolean;
   onVoltar: () => void;
   onEnviar: () => void;
-  onVerMeusPlanos: () => void;
 }) {
-  const mensagemWhatsapp = useMemo(() => {
-    const linhasDestinos = destinosSelecionados.map((slug) => {
-      const destino = destinos.find((d) => d.slug === slug);
-      const exps = Array.from(selecoesMap[slug] ?? [])
-        .map((s) => experiencias.find((e) => e.slug === s)?.titulo)
-        .filter(Boolean)
-        .join(", ");
-      const inicio = datasInicio[slug];
-      const fim = datasFim[slug];
-      const noites = noitesEntre(inicio, fim);
-      const periodo =
-        inicio && fim
-          ? `${new Date(`${inicio}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fim}T00:00:00`).toLocaleDateString("pt-BR")}, ${noites} noites`
-          : "datas a combinar";
-      const adultos = adultosMap[slug] ?? 2;
-      const criancas = criancasMap[slug] ?? 0;
-      const pessoas = `${adultos} adulto(s)${criancas > 0 ? ` e ${criancas} criança(s)` : ""}`;
-      const interesses = interessesMap[slug] ?? [];
-      const inclusos = inclusosMap[slug] ?? [];
-      const contextoDestino = contextoDestinoMap[slug];
-
-      return [
-        `- ${destino?.nome} (${periodo}) — ${pessoas}`,
-        `  Experiências: ${exps || "a combinar"}`,
-        interesses.length > 0 ? `  Interesses: ${interesses.join(", ")}` : null,
-        inclusos.length > 0
-          ? `  Gostaria que incluísse: ${inclusos.join(", ")}`
-          : null,
-        contextoDestino ? `  Contexto: ${contextoDestino}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n");
-    });
-
-    return encodeURIComponent(
-      [
-        "Olá! Montei um plano de viagem no site e queria fechar com vocês:",
-        ...linhasDestinos,
-        contexto ? `Mais detalhes: ${contexto}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    );
-  }, [
-    destinosSelecionados,
-    selecoesMap,
-    datasInicio,
-    datasFim,
-    adultosMap,
-    criancasMap,
-    interessesMap,
-    inclusosMap,
-    contextoDestinoMap,
-    contexto,
-  ]);
-
   const experienciaSlugsUnicos = Array.from(
     new Set(
       destinosSelecionados.flatMap((slug) =>
@@ -1301,33 +1233,7 @@ function ResumoStep({
         )}
       </div>
 
-      {enviado ? (
-        <div className="rounded-2xl bg-forest-900 p-6 text-center text-sand-50">
-          <p className="font-display text-xl">Plano enviado!</p>
-          <p className="mt-2 text-sm text-forest-100">
-            Recebemos o seu plano de viagem. Nossa equipe vai analisar e entrar
-            em contato com uma proposta detalhada — ou, se preferir, já fala com
-            a gente agora pelo WhatsApp.
-          </p>
-          <div className="mt-4 flex flex-col items-center gap-3">
-            <a
-              href={`https://wa.me/5511963220494?text=${mensagemWhatsapp}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <WhatsappButton variant="solid" />
-            </a>
-            <button
-              type="button"
-              onClick={onVerMeusPlanos}
-              className="text-sm font-semibold uppercase tracking-wide text-sand-50 underline-offset-4 hover:underline"
-            >
-              Ver meus planos de viagem
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-4 border-t border-border pt-6 sm:flex-row sm:justify-between">
+      <div className="flex flex-col items-center gap-4 border-t border-border pt-6 sm:flex-row sm:justify-between">
           <button
             type="button"
             onClick={onVoltar}
@@ -1344,8 +1250,7 @@ function ResumoStep({
             Enviar plano de viagem
             <ArrowRight className="h-4 w-4" />
           </button>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -1764,16 +1669,28 @@ function DetalhePlanoView({
             <div className="flex items-center justify-between gap-1">
               {CONSULTA_STEP_ORDER.map((s, index) => {
                 const ativo = s === stepConsulta;
+                const consultavel = s !== "tipo";
                 return (
                   <div key={s} className="flex flex-1 items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => setStepConsulta(s)}
-                      aria-label={`Ver ${CONSULTA_STEP_LABELS[s]}`}
+                      disabled={!consultavel}
+                      onClick={() => {
+                        if (consultavel) setStepConsulta(s);
+                      }}
+                      aria-label={
+                        consultavel
+                          ? `Ver ${CONSULTA_STEP_LABELS[s]}`
+                          : undefined
+                      }
+                      aria-hidden={!consultavel}
+                      tabIndex={consultavel ? 0 : -1}
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                        ativo
-                          ? "bg-primary text-primary-foreground"
-                          : "border-2 border-primary bg-transparent text-primary hover:bg-primary/10"
+                        !consultavel
+                          ? "cursor-default border-2 border-border bg-transparent text-muted-foreground/40"
+                          : ativo
+                            ? "bg-primary text-primary-foreground"
+                            : "border-2 border-primary bg-transparent text-primary hover:bg-primary/10"
                       }`}
                     >
                       {index + 1}
@@ -1790,64 +1707,15 @@ function DetalhePlanoView({
             </p>
 
             <div className="mt-10">
-              {stepConsulta === "tipo" && (
-                <div className="mx-auto grid max-w-2xl gap-6 sm:grid-cols-2">
-                  <div
-                    className={`flex flex-col items-center gap-4 rounded-2xl border p-8 text-center ${
-                      plano.tipoInicial === "destinos"
-                        ? "border-primary bg-card"
-                        : "border-border bg-card opacity-50"
-                    }`}
-                  >
-                    <MapPin className="h-10 w-10 text-primary" />
-                    <div>
-                      <h3 className="font-display text-xl">
-                        Já sei o destino
-                      </h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Começou escolhendo para onde ir, e depois viu as
-                        experiências disponíveis em cada lugar.
-                      </p>
-                    </div>
-                    {plano.tipoInicial === "destinos" && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground">
-                        <Check className="h-3.5 w-3.5" />
-                        Escolhido
-                      </span>
-                    )}
-                  </div>
-
-                  <div
-                    className={`flex flex-col items-center gap-4 rounded-2xl border p-8 text-center ${
-                      plano.tipoInicial === "experiencias"
-                        ? "border-primary bg-card"
-                        : "border-border bg-card opacity-50"
-                    }`}
-                  >
-                    <Sparkles className="h-10 w-10 text-primary" />
-                    <div>
-                      <h3 className="font-display text-xl">
-                        Já sei o que quero viver
-                      </h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Começou escolhendo experiências, e depois viu em quais
-                        destinos elas acontecem.
-                      </p>
-                    </div>
-                    {plano.tipoInicial === "experiencias" && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground">
-                        <Check className="h-3.5 w-3.5" />
-                        Escolhido
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {stepConsulta === "selecao" && (
                 <div className="mx-auto max-w-4xl space-y-12">
                   <div>
-                    <h2 className="text-balance text-2xl md:text-3xl">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                      {plano.tipoInicial === "experiencias"
+                        ? "Já sei o que quero viver"
+                        : "Já sei o destino"}
+                    </span>
+                    <h2 className="mt-3 text-balance text-2xl md:text-3xl">
                       Destinos escolhidos
                     </h2>
                     <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -2034,9 +1902,7 @@ function DetalhePlanoView({
                       Análise da nossa equipe
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Nosso time responde em até 24 horas com os próximos passos
-                      do seu plano. Você pode enviar dúvidas por aqui a qualquer
-                      momento.
+                      Você pode enviar dúvidas por aqui a qualquer momento.
                     </p>
                   </div>
 

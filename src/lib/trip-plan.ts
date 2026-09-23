@@ -115,7 +115,7 @@ export function salvarPlanoViagem(
         id: crypto.randomUUID(),
         autor: "analista",
         texto:
-          "Recebemos seu plano! Já começamos a montar a proposta com base nos destinos e experiências que você escolheu — em breve trazemos os detalhes por aqui.",
+          "Recebemos seu plano! Nosso time responde em até 34 horas com os próximos passos da sua viagem — já começamos a montar a proposta com base nos destinos e experiências que você escolheu.",
         criadoEm: horasDepois(agora, 3),
         tipo: "mensagem",
       },
