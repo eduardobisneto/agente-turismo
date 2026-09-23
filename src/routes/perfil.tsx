@@ -57,10 +57,13 @@ function PerfilPage() {
   const [erro, setErro] = useState<string | null>(null);
 
   const etapaIndex = ETAPA_ORDER.indexOf(etapa);
+  const buscaCepIdRef = useRef(0);
 
   async function buscarCep(valor: string) {
     const digitos = valor.replace(/\D/g, "");
     if (digitos.length !== 8) return;
+
+    const idDestaBusca = ++buscaCepIdRef.current;
 
     setErroCep(null);
     setBuscandoCep(true);
@@ -69,6 +72,11 @@ function PerfilPage() {
         `https://viacep.com.br/ws/${digitos}/json/`,
       );
       const dados = await resposta.json();
+
+      // Se o usuário já digitou outro CEP enquanto essa resposta ainda
+      // estava a caminho, ela chegou desatualizada — ignora.
+      if (idDestaBusca !== buscaCepIdRef.current) return;
+
       if (dados.erro) {
         setErroCep("CEP não encontrado.");
         return;
@@ -79,9 +87,10 @@ function PerfilPage() {
       setEstado(dados.uf || "");
       setSalvo(false);
     } catch {
+      if (idDestaBusca !== buscaCepIdRef.current) return;
       setErroCep("Não foi possível consultar o CEP agora.");
     } finally {
-      setBuscandoCep(false);
+      if (idDestaBusca === buscaCepIdRef.current) setBuscandoCep(false);
     }
   }
 

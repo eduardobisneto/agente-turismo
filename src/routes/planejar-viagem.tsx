@@ -211,6 +211,15 @@ function PlanejarViagemPage() {
       } else {
         novoSet.add(expSlug);
       }
+
+      // No fluxo "já sei o que quero viver", um destino só entra na seleção
+      // através de uma experiência — sem isso, ele precisa sumir de novo,
+      // senão fica "fantasma" nos próximos passos mesmo sem nada escolhido.
+      if (novoSet.size === 0 && tipoInicial === "experiencias") {
+        const { [destinoSlug]: _removido, ...resto } = atual;
+        return resto;
+      }
+
       return { ...atual, [destinoSlug]: novoSet };
     });
   }
@@ -230,8 +239,9 @@ function PlanejarViagemPage() {
       return;
     }
 
-    if (iso < inicioAtual) {
-      // Clicou numa data antes do início escolhido: essa vira o novo início.
+    if (iso <= inicioAtual) {
+      // Clicou numa data antes do início (ou no próprio início de novo):
+      // essa vira o novo início — uma viagem não pode ter 0 noites.
       setDatasInicio((atual) => ({ ...atual, [slug]: iso }));
       return;
     }
@@ -803,7 +813,7 @@ function CalendarioStep({
   );
 
   const podeAvancarDesteDestino =
-    !!inicio && !!fim && conflitosComOutros.length === 0;
+    !!inicio && !!fim && fim > inicio && conflitosComOutros.length === 0;
   const podeAvancar = ehUltimo
     ? podeAvancarDesteDestino && todasAsDatasPreenchidas
     : podeAvancarDesteDestino;
@@ -833,7 +843,12 @@ function CalendarioStep({
               min={1}
               max={30}
               value={adultosMap[slug!] ?? 2}
-              onChange={(e) => onAdultosChange(slug!, Number(e.target.value))}
+              onChange={(e) =>
+                onAdultosChange(
+                  slug!,
+                  Math.min(30, Math.max(1, Number(e.target.value) || 1)),
+                )
+              }
               className={input}
             />
           </div>
@@ -844,7 +859,12 @@ function CalendarioStep({
               min={0}
               max={30}
               value={numCriancas}
-              onChange={(e) => onCriancasChange(slug!, Number(e.target.value))}
+              onChange={(e) =>
+                onCriancasChange(
+                  slug!,
+                  Math.min(30, Math.max(0, Number(e.target.value) || 0)),
+                )
+              }
               className={input}
             />
           </div>
@@ -1647,11 +1667,11 @@ function DetalhePlanoView({
                 {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}. Previsão
                 de retorno até{" "}
                 {new Date(
-                  new Date(plano.criadoEm).getTime() + 24 * 60 * 60 * 1000,
+                  new Date(plano.criadoEm).getTime() + 34 * 60 * 60 * 1000,
                 ).toLocaleDateString("pt-BR")}{" "}
                 às{" "}
                 {new Date(
-                  new Date(plano.criadoEm).getTime() + 24 * 60 * 60 * 1000,
+                  new Date(plano.criadoEm).getTime() + 34 * 60 * 60 * 1000,
                 ).toLocaleTimeString("pt-BR", {
                   hour: "2-digit",
                   minute: "2-digit",
