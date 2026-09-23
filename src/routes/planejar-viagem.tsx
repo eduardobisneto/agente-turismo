@@ -28,6 +28,7 @@ import { useAuth } from "@/lib/auth-context";
 import {
   adicionarInteracao,
   confirmarPagamentoSinal,
+  confirmarRevisaoDoPacote,
   fecharPacote,
   getPlanosDoUsuario,
   noitesEntre,
@@ -990,7 +991,7 @@ function CalendarioStep({
 
   function camposContexto() {
     return (
-      <div className="flex h-full flex-col">
+      <div className="flex flex-col">
         <label className="text-sm font-medium text-sand-50">
           O que vai fazer da sua passagem por {destino!.nome.split(",")[0]}{" "}
           inesquecível? (opcional)
@@ -999,7 +1000,8 @@ function CalendarioStep({
           value={contextoDestinoMap[slug!] ?? ""}
           onChange={(e) => onContextoDestinoChange(slug!, e.target.value)}
           placeholder="Conta pra gente suas expectativas — quanto mais detalhes, mais completa fica a proposta que preparamos especialmente pra você."
-          className="mt-1.5 w-full flex-1 resize-none rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
+          rows={3}
+          className="mt-1.5 w-full resize-none rounded-xl border border-sand-50/30 bg-background/90 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary"
         />
       </div>
     );
@@ -1104,7 +1106,6 @@ function CalendarioStep({
               {camposPessoas()}
               {camposInteresses()}
               {camposInclusos()}
-              <div className="flex-1">{camposContexto()}</div>
             </div>
             <div className="order-1 flex justify-center lg:order-2">
               <Calendar
@@ -1114,6 +1115,8 @@ function CalendarioStep({
               />
             </div>
           </div>
+
+          <div className="mt-6">{camposContexto()}</div>
         </div>
       </div>
 
@@ -1449,6 +1452,31 @@ function juntarNomes(nomes: string[]): string {
   return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
 }
 
+const AGENTES_VIAGEM = [
+  {
+    nome: "Ana Beatriz Lima",
+    codigo: "AO-1042",
+    email: "ana.lima@aventuraorganizada.com.br",
+  },
+  {
+    nome: "Carlos Eduardo Souza",
+    codigo: "AO-2078",
+    email: "carlos.souza@aventuraorganizada.com.br",
+  },
+  {
+    nome: "Fernanda Ribeiro",
+    codigo: "AO-3315",
+    email: "fernanda.ribeiro@aventuraorganizada.com.br",
+  },
+];
+
+/** Agente responsável — derivado do id do plano, pra ser sempre o mesmo agente naquela viagem. */
+function agenteDoPlano(planoId: string) {
+  let hash = 0;
+  for (const c of planoId) hash = (hash * 31 + c.charCodeAt(0)) % 1000000007;
+  return AGENTES_VIAGEM[hash % AGENTES_VIAGEM.length]!;
+}
+
 type ConsultaStep =
   | "tipo"
   | "selecao"
@@ -1568,6 +1596,15 @@ function DetalhePlanoView({
     }
   }
 
+  function handleConfirmarRevisao() {
+    const atualizado = confirmarRevisaoDoPacote(planoAtual.id);
+    if (atualizado) {
+      setPlanoAtual(atualizado);
+      setStepConsulta("pagamento");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
   async function handleFecharPacote() {
     setPagando(true);
     // Sem gateway de pagamento de verdade por trás disso ainda — simula o
@@ -1659,34 +1696,55 @@ function DetalhePlanoView({
       return data.toLocaleDateString("pt-BR");
     }
 
+    const agente = agenteDoPlano(planoAtual.id);
+    const impostos = Math.round(planoAtual.valorPacoteReais * 0.08);
+
     return (
       <div className="space-y-8 text-left">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <p className="font-display text-lg">Aventura Organizada</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              (11) 96322-0494 · contato@aventuraorganizada.com.br
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gerado em {new Date().toLocaleDateString("pt-BR")} às{" "}
-              {new Date().toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex flex-wrap items-start justify-between gap-6 border-b border-border pb-4">
+            <div>
+              <p className="font-display text-xl">Aventura Organizada</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Rua dos Viajantes, 245 — São Paulo, SP
+              </p>
+              <p className="text-xs text-muted-foreground">
+                CNPJ 12.345.678/0001-90
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                (11) 96322-0494 · contato@aventuraorganizada.com.br
+              </p>
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="font-display text-lg text-primary">
+                Ficha de viagem
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Gerado em {new Date().toLocaleDateString("pt-BR")} às{" "}
+                {new Date().toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Agente: {agente.nome} · Cód. {agente.codigo}
+              </p>
+              <p className="text-xs text-muted-foreground">{agente.email}</p>
+            </div>
           </div>
-          <div className="rounded-2xl border border-border bg-card p-5">
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <p className="text-sm">
               <span className="font-semibold text-foreground">Cliente:</span>{" "}
               {nomeUsuario}
             </p>
-            <p className="mt-1 text-sm">
+            <p className="text-sm">
               <span className="font-semibold text-foreground">
                 Destino(s):
               </span>{" "}
               {juntarNomes(nomesDestinos)}
             </p>
-            <p className="mt-1 text-sm">
+            <p className="text-sm">
               <span className="font-semibold text-foreground">Chegada:</span>{" "}
               {inicioGeral
                 ? new Date(`${inicioGeral}T00:00:00`).toLocaleDateString(
@@ -1702,7 +1760,7 @@ function DetalhePlanoView({
                 : "—"}
               {totalNoites ? `  ·  ${totalNoites} noites` : ""}
             </p>
-            <p className="mt-1 text-sm">
+            <p className="text-sm">
               <span className="font-semibold text-foreground">
                 Viajantes:
               </span>{" "}
@@ -1718,47 +1776,34 @@ function DetalhePlanoView({
           <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
             Atividades
           </h3>
-          <div className="mt-3 overflow-x-auto rounded-2xl border border-border">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-border bg-secondary/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-2.5">Data</th>
-                  <th className="px-4 py-2.5">Horário</th>
-                  <th className="px-4 py-2.5">Atividade</th>
-                  <th className="px-4 py-2.5">Local / Endereço</th>
-                  <th className="px-4 py-2.5">Duração</th>
-                </tr>
-              </thead>
-              <tbody>
-                {itensOrdenados.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-border last:border-0"
-                  >
-                    <td className="whitespace-nowrap px-4 py-2.5 align-top text-muted-foreground">
-                      {dataAbsoluta(item.dia)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2.5 align-top text-muted-foreground">
-                      {item.horario}
-                    </td>
-                    <td className="px-4 py-2.5 align-top">
-                      <p className="font-semibold text-foreground">
-                        {item.local}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {item.descricao}
-                      </p>
-                    </td>
-                    <td className="px-4 py-2.5 align-top text-muted-foreground">
-                      {item.endereco ?? "—"}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2.5 align-top text-muted-foreground">
-                      {item.duracao ?? "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border">
+            {itensOrdenados.map((item) => (
+              <div
+                key={item.id}
+                className="grid gap-1 p-4 sm:grid-cols-[150px_1fr] sm:gap-4"
+              >
+                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p>{dataAbsoluta(item.dia)}</p>
+                  <p className="mt-0.5">
+                    {item.horario}
+                    {item.duracao ? ` · ${item.duracao}` : ""}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {item.local}
+                  </p>
+                  {item.endereco && (
+                    <p className="text-xs text-muted-foreground">
+                      {item.endereco}
+                    </p>
+                  )}
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {item.descricao}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -1775,7 +1820,15 @@ function DetalhePlanoView({
                 R$ {planoAtual.valorPacoteReais.toLocaleString("pt-BR")}
               </span>
             </p>
-            <p className="flex items-center justify-between">
+            <p className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">
+                Taxas e impostos (já inclusos no valor acima)
+              </span>
+              <span className="text-muted-foreground">
+                R$ {impostos.toLocaleString("pt-BR")}
+              </span>
+            </p>
+            <p className="flex items-center justify-between pt-1.5">
               <span className="text-muted-foreground">
                 Sinal pago
                 {planoAtual.sinalPagoEm
@@ -2125,7 +2178,9 @@ function DetalhePlanoView({
                   (s !== "pacote" ||
                     (planoAtual.sinalPago && pacoteRevisavel)) &&
                   (s !== "pagamento" ||
-                    (planoAtual.sinalPago && pacoteRevisavel)) &&
+                    (planoAtual.sinalPago &&
+                      pacoteRevisavel &&
+                      planoAtual.pacoteRevisado)) &&
                   (s !== "fechado" || planoAtual.pacoteFechado);
                 return (
                   <div key={s} className="flex flex-1 items-center gap-1">
@@ -2647,7 +2702,7 @@ function DetalhePlanoView({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setStepConsulta("pagamento")}
+                      onClick={handleConfirmarRevisao}
                       className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
                     >
                       Fechar pacote
@@ -2662,7 +2717,23 @@ function DetalhePlanoView({
                   <h2 className="font-display text-2xl md:text-3xl">
                     Pagamento final
                   </h2>
-                  {planoAtual.pacoteFechado ? (
+                  {!planoAtual.pacoteRevisado ? (
+                    <>
+                      <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Essa etapa libera depois que você revisar a ficha
+                        completa e confirmar "Fechar pacote" na etapa 7.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setStepConsulta("pacote")}
+                        className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Revisar o pacote
+                      </button>
+                    </>
+                  ) : planoAtual.pacoteFechado ? (
                     <p className="text-sm text-muted-foreground">
                       Pagamento já confirmado — sua viagem está garantida!
                     </p>

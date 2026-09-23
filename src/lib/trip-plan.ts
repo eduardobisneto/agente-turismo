@@ -90,6 +90,8 @@ export interface PlanoViagem {
   sinalPagoEm?: string | undefined;
   /** Programação dia a dia, sendo montada conforme as sugestões vão sendo aceitas. */
   itinerario: ItemItinerario[];
+  /** Cliente revisou a ficha completa na etapa 7 e confirmou que está tudo certo — só depois disso a etapa 8 (pagamento final) libera. */
+  pacoteRevisado?: boolean | undefined;
   /** Preço total mockado do pacote, calculado na criação do plano. */
   valorPacoteReais: number;
   /** Contrato fechado depois do pagamento final (etapa 8 → 9). */
@@ -760,6 +762,26 @@ export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
     interacoes: revelado.interacoes,
     filaSugestoes: revelado.filaSugestoes,
   };
+  planos[index] = atualizado;
+  window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
+  window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
+
+  return atualizado;
+}
+
+/**
+ * Cliente revisou a ficha completa na etapa 7 e confirmou "Fechar pacote"
+ * — só a partir daqui a etapa 8 (pagamento final) libera. Sem isso, dava
+ * pra pular direto pra etapa 8 pelo indicador de etapas sem nunca ter
+ * revisado a programação.
+ */
+export function confirmarRevisaoDoPacote(planoId: string): PlanoViagem | null {
+  const planos = readPlanos();
+  const index = planos.findIndex((p) => p.id === planoId);
+  if (index === -1) return null;
+
+  const atual = planos[index]!;
+  const atualizado: PlanoViagem = { ...atual, pacoteRevisado: true };
   planos[index] = atualizado;
   window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
   window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
