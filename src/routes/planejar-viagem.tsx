@@ -17,6 +17,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { Calendar } from "@/components/Calendar";
+import { PagamentoModal } from "@/components/PagamentoModal";
 import { RequireAuth } from "@/components/RequireAuth";
 import { destinos } from "@/data/destinos";
 import {
@@ -1534,6 +1535,9 @@ function DetalhePlanoView({
   const [planoAtual, setPlanoAtual] = useState<PlanoViagem>(plano);
   const [mensagem, setMensagem] = useState("");
   const [pagando, setPagando] = useState(false);
+  const [modalPagamento, setModalPagamento] = useState<
+    "sinal" | "pacote" | null
+  >(null);
   const [diaProgramacaoAtual, setDiaProgramacaoAtual] = useState(1);
 
   const interacoes = planoAtual.interacoes ?? [];
@@ -1591,6 +1595,7 @@ function DetalhePlanoView({
     await new Promise((resolve) => setTimeout(resolve, 1200));
     const atualizado = confirmarPagamentoSinal(planoAtual.id);
     setPagando(false);
+    setModalPagamento(null);
     if (atualizado) {
       setPlanoAtual(atualizado);
     }
@@ -1612,6 +1617,7 @@ function DetalhePlanoView({
     await new Promise((resolve) => setTimeout(resolve, 1200));
     const atualizado = fecharPacote(planoAtual.id);
     setPagando(false);
+    setModalPagamento(null);
     if (atualizado) {
       setPlanoAtual(atualizado);
       setStepConsulta("fechado");
@@ -2532,7 +2538,7 @@ function DetalhePlanoView({
                                 ) : (
                                   <button
                                     type="button"
-                                    onClick={handlePagarSinal}
+                                    onClick={() => setModalPagamento("sinal")}
                                     disabled={pagando}
                                     className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
                                   >
@@ -2751,7 +2757,7 @@ function DetalhePlanoView({
                       </p>
                       <button
                         type="button"
-                        onClick={handleFecharPacote}
+                        onClick={() => setModalPagamento("pacote")}
                         disabled={pagando}
                         className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
                       >
@@ -2810,6 +2816,25 @@ function DetalhePlanoView({
           </div>
         </div>
       </section>
+
+      <PagamentoModal
+        aberto={modalPagamento !== null}
+        titulo={
+          modalPagamento === "sinal" ? "Pagamento do sinal" : "Pagamento final"
+        }
+        valorReais={
+          modalPagamento === "sinal"
+            ? VALOR_SINAL_REAIS
+            : planoAtual.valorPacoteReais - VALOR_SINAL_REAIS
+        }
+        processando={pagando}
+        onConfirmar={
+          modalPagamento === "sinal" ? handlePagarSinal : handleFecharPacote
+        }
+        onFechar={() => {
+          if (!pagando) setModalPagamento(null);
+        }}
+      />
     </>
   );
 }
