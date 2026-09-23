@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CookieConsent } from "@/components/CookieConsent";
+import { AuthProvider } from "@/lib/auth-context";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
@@ -40,10 +41,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootComponent() {
   return (
     <RootDocument>
-      <Header />
-      <Outlet />
-      <Footer />
-      <CookieConsent />
+      <AuthProvider>
+        <Header />
+        <Outlet />
+        <Footer />
+        <CookieConsent />
+      </AuthProvider>
     </RootDocument>
   );
 }

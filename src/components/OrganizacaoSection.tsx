@@ -29,7 +29,7 @@ const itens = [
 
 export function OrganizacaoSection() {
   return (
-    <section className="section-padding bg-sand-100">
+    <section className="section-padding">
       <div className="container-tight">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold uppercase tracking-wider text-primary">

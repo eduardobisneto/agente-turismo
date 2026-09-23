@@ -1,7 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  ArrowRight,
   Calendar,
   ListChecks,
   MapPin,
@@ -64,7 +63,7 @@ function ExperienciaPage() {
         </div>
       </section>
 
-      <section className="section-padding bg-sand-100">
+      <section className="section-padding">
         <div className="container-tight grid gap-10 lg:grid-cols-[2fr_1fr]">
           <div>
             <h2 className="text-balance text-3xl md:text-4xl">
@@ -145,7 +144,7 @@ function ExperienciaPage() {
         </div>
       </section>
 
-      <section className="section-padding">
+      <section className="section-padding bg-sand-100">
         <div className="container-tight">
           <div className="mx-auto max-w-2xl text-center">
             <span className="text-sm font-semibold uppercase tracking-wider text-primary">
@@ -157,40 +156,32 @@ function ExperienciaPage() {
           </div>
 
           {destinos.length > 0 ? (
-            <div className="mt-12 grid gap-8 sm:grid-cols-2">
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {destinos.map((item) => (
                 <Link
                   key={`${item.destinoSlug}-${item.atracaoNome}`}
                   to="/destinos/$slug"
                   params={{ slug: item.destinoSlug }}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md"
+                  className="group relative overflow-hidden rounded-2xl"
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={item.imagem}
-                      alt={item.alt}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-forest-900/60 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-forest-800/70 px-3 py-1 text-xs font-medium uppercase tracking-wide text-sand-50 backdrop-blur-sm">
-                        <MapPin className="h-3 w-3" />
-                        {item.destinoNome}
-                      </span>
-                      <h3 className="mt-2 font-display text-xl text-sand-50">
-                        {item.atracaoNome}
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <p className="mb-4 flex-1 text-sm leading-relaxed text-muted-foreground">
+                  <img
+                    src={item.imagem}
+                    alt={item.alt}
+                    className="aspect-[4/3] h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-sand-50">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-forest-800/70 px-3 py-1 text-xs font-medium uppercase tracking-wide backdrop-blur-sm">
+                      <MapPin className="h-3 w-3" />
+                      {item.destinoNome}
+                    </span>
+                    <h3 className="mt-2 font-display text-2xl">
+                      {item.atracaoNome}
+                    </h3>
+                    <p className="mt-1 text-sm text-forest-100">
                       {item.descricao}
                     </p>
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-primary transition-colors group-hover:text-primary/80">
-                      Ver roteiro de {item.destinoNome.split(",")[0]}
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </span>
                   </div>
                 </Link>
               ))}
