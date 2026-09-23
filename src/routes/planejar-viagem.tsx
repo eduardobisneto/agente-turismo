@@ -1309,6 +1309,8 @@ function ResumoStep({
   );
 }
 
+const PLANOS_POR_PAGINA = 5;
+
 function ListaPlanosView({
   nome,
   planos,
@@ -1320,6 +1322,22 @@ function ListaPlanosView({
   onNovoPlanejamento: () => void;
   onAbrirPlano: (plano: PlanoViagem) => void;
 }) {
+  const [pagina, setPagina] = useState(1);
+  // Sempre do mais novo pro mais antigo (getPlanosDoUsuario já entrega
+  // assim, mas a ordenação fica explícita aqui também).
+  const planosOrdenados = [...planos].sort((a, b) =>
+    b.criadoEm.localeCompare(a.criadoEm),
+  );
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(planosOrdenados.length / PLANOS_POR_PAGINA),
+  );
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const planosDaPagina = planosOrdenados.slice(
+    (paginaAtual - 1) * PLANOS_POR_PAGINA,
+    paginaAtual * PLANOS_POR_PAGINA,
+  );
+
   return (
     <>
       <section className="section-padding">
@@ -1348,7 +1366,7 @@ function ListaPlanosView({
       <section className="section-padding bg-sand-100">
         <div className="container-tight">
           <div className="mx-auto max-w-2xl space-y-4">
-            {planos.map((plano) => {
+            {planosDaPagina.map((plano) => {
               const nomesDestinos = plano.selecoes
                 .map(
                   (s) => destinos.find((d) => d.slug === s.destinoSlug)?.nome,
@@ -1384,6 +1402,40 @@ function ListaPlanosView({
                 </button>
               );
             })}
+
+            {planosOrdenados.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground">
+                Você ainda não tem viagens planejadas.
+              </p>
+            )}
+
+            {totalPaginas > 1 && (
+              <div className="flex items-center justify-between border-t border-border pt-4">
+                <button
+                  type="button"
+                  onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                  disabled={paginaAtual === 1}
+                  className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground disabled:cursor-default disabled:opacity-40"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Mais recentes
+                </button>
+                <span className="text-sm text-muted-foreground">
+                  Página {paginaAtual} de {totalPaginas}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPagina((p) => Math.min(totalPaginas, p + 1))
+                  }
+                  disabled={paginaAtual === totalPaginas}
+                  className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground disabled:cursor-default disabled:opacity-40"
+                >
+                  Mais antigas
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
