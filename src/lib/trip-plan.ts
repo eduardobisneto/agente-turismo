@@ -669,6 +669,69 @@ export function fecharPacote(planoId: string): PlanoViagem | null {
   return atualizado;
 }
 
+export interface Pagamento {
+  id: string;
+  planoId: string;
+  tipo: "sinal" | "pacote";
+  descricao: string;
+  valorReais: number;
+  status: "pendente" | "pago";
+  dataVencimento: string;
+}
+
+/**
+ * Lista os pagamentos (sinal e/ou fechamento do pacote) de todos os planos
+ * do usuário, derivados do próprio histórico de interações — só existe um
+ * pagamento de sinal depois que o analista pede ("plano_pronto"), e só
+ * existe um pagamento de pacote depois que a programação está completa
+ * ("pacote_pronto").
+ */
+export function getPagamentosDoUsuario(usuarioId: string): Pagamento[] {
+  const pagamentos: Pagamento[] = [];
+
+  for (const plano of getPlanosDoUsuario(usuarioId)) {
+    const nomesDestinos = plano.selecoes
+      .map((s) => destinos.find((d) => d.slug === s.destinoSlug)?.nome)
+      .filter((n): n is string => !!n)
+      .join(", ");
+    const descricaoDestino = nomesDestinos || "viagem";
+
+    const pedidoSinal = plano.interacoes?.find(
+      (i) => i.tipo === "plano_pronto",
+    );
+    if (pedidoSinal) {
+      pagamentos.push({
+        id: `${plano.id}:sinal`,
+        planoId: plano.id,
+        tipo: "sinal",
+        descricao: `Sinal — viagem para ${descricaoDestino}`,
+        valorReais: VALOR_SINAL_REAIS,
+        status: plano.sinalPago ? "pago" : "pendente",
+        dataVencimento: horasDepois(pedidoSinal.criadoEm, 48),
+      });
+    }
+
+    const pedidoPacote = plano.interacoes?.find(
+      (i) => i.tipo === "pacote_pronto",
+    );
+    if (pedidoPacote) {
+      pagamentos.push({
+        id: `${plano.id}:pacote`,
+        planoId: plano.id,
+        tipo: "pacote",
+        descricao: `Fechamento do pacote — viagem para ${descricaoDestino}`,
+        valorReais: plano.valorPacoteReais - VALOR_SINAL_REAIS,
+        status: plano.pacoteFechado ? "pago" : "pendente",
+        dataVencimento: horasDepois(pedidoPacote.criadoEm, 72),
+      });
+    }
+  }
+
+  return pagamentos.sort((a, b) =>
+    a.dataVencimento.localeCompare(b.dataVencimento),
+  );
+}
+
 export function noitesEntre(
   dataInicio?: string,
   dataFim?: string,

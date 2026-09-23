@@ -15,6 +15,7 @@ import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as DestinosRouteImport } from './routes/destinos'
 import { Route as ExperienciasRouteImport } from './routes/experiencias'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PagamentosRouteImport } from './routes/pagamentos'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PlanejarViagemRouteImport } from './routes/planejar-viagem'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
@@ -51,6 +52,11 @@ const ExperienciasRoute = ExperienciasRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PagamentosRoute = PagamentosRouteImport.update({
+  id: '/pagamentos',
+  path: '/pagamentos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/destinos': typeof DestinosRoute
   '/experiencias': typeof ExperienciasRoute
   '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
   '/perfil': typeof PerfilRoute
   '/planejar-viagem': typeof PlanejarViagemRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/destinos': typeof DestinosRoute
   '/experiencias': typeof ExperienciasRoute
   '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
   '/perfil': typeof PerfilRoute
   '/planejar-viagem': typeof PlanejarViagemRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/destinos': typeof DestinosRoute
   '/experiencias': typeof ExperienciasRoute
   '/login': typeof LoginRoute
+  '/pagamentos': typeof PagamentosRoute
   '/perfil': typeof PerfilRoute
   '/planejar-viagem': typeof PlanejarViagemRoute
   '/privacidade': typeof PrivacidadeRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/destinos'
     | '/experiencias'
     | '/login'
+    | '/pagamentos'
     | '/perfil'
     | '/planejar-viagem'
     | '/privacidade'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/destinos'
     | '/experiencias'
     | '/login'
+    | '/pagamentos'
     | '/perfil'
     | '/planejar-viagem'
     | '/privacidade'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/destinos'
     | '/experiencias'
     | '/login'
+    | '/pagamentos'
     | '/perfil'
     | '/planejar-viagem'
     | '/privacidade'
@@ -190,6 +202,7 @@ export interface RootRouteChildren {
   DestinosRoute: typeof DestinosRoute
   ExperienciasRoute: typeof ExperienciasRoute
   LoginRoute: typeof LoginRoute
+  PagamentosRoute: typeof PagamentosRoute
   PerfilRoute: typeof PerfilRoute
   PlanejarViagemRoute: typeof PlanejarViagemRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pagamentos': {
+      id: '/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/pagamentos'
+      preLoaderRoute: typeof PagamentosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -302,6 +322,7 @@ const rootRouteChildren: RootRouteChildren = {
   DestinosRoute: DestinosRoute,
   ExperienciasRoute: ExperienciasRoute,
   LoginRoute: LoginRoute,
+  PagamentosRoute: PagamentosRoute,
   PerfilRoute: PerfilRoute,
   PlanejarViagemRoute: PlanejarViagemRoute,
   PrivacidadeRoute: PrivacidadeRoute,

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowRight,
@@ -39,6 +39,10 @@ import {
 } from "@/lib/trip-plan";
 
 export const Route = createFileRoute("/planejar-viagem")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    planoId: typeof search["planoId"] === "string" ? search["planoId"] : undefined,
+    step: typeof search["step"] === "string" ? search["step"] : undefined,
+  }),
   component: () => (
     <RequireAuth>
       <PlanejarViagemPage />
@@ -65,12 +69,17 @@ const CRIANCAS_PADRAO = 0;
 
 function PlanejarViagemPage() {
   const { user } = useAuth();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
 
   const [modo, setModo] = useState<Modo | null>(null);
   const [planos, setPlanos] = useState<PlanoViagem[]>([]);
   const [planoSelecionado, setPlanoSelecionado] = useState<PlanoViagem | null>(
     null,
   );
+  const [stepInicialConsulta, setStepInicialConsulta] = useState<
+    string | undefined
+  >(undefined);
 
   const [step, setStep] = useState<Step>("tipo");
   const [maxStepIndexVisitado, setMaxStepIndexVisitado] = useState(0);
@@ -113,6 +122,24 @@ function PlanejarViagemPage() {
       setModo("lista");
     });
   }, [user]);
+
+  // Deep link vindo da tela de Pagamentos: abre direto o plano e a etapa
+  // relacionada ao pagamento clicado (5 pra sinal, 8 pra fechamento).
+  useEffect(() => {
+    if (!search.planoId || planos.length === 0) return;
+    const plano = planos.find((p) => p.id === search.planoId);
+    if (!plano) return;
+
+    setPlanoSelecionado(plano);
+    setStepInicialConsulta(search.step);
+    setModo("detalhe");
+    navigate({
+      to: "/planejar-viagem",
+      search: { planoId: undefined, step: undefined },
+      replace: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planos, search.planoId]);
 
   function iniciarNovoPlanejamento() {
     setStep("tipo");
@@ -331,6 +358,7 @@ function PlanejarViagemPage() {
         plano={planoSelecionado}
         nomeUsuario={user?.nome.split(" ")[0] ?? ""}
         avatarUrlUsuario={user?.avatarUrl}
+        stepInicial={stepInicialConsulta}
         onVoltar={verMeusPlanos}
       />
     );
@@ -1407,14 +1435,20 @@ function DetalhePlanoView({
   plano,
   nomeUsuario,
   avatarUrlUsuario,
+  stepInicial,
   onVoltar,
 }: {
   plano: PlanoViagem;
   nomeUsuario: string;
   avatarUrlUsuario?: string | undefined;
+  stepInicial?: string | undefined;
   onVoltar: () => void;
 }) {
-  const [stepConsulta, setStepConsulta] = useState<ConsultaStep>("analise");
+  const [stepConsulta, setStepConsulta] = useState<ConsultaStep>(
+    stepInicial && (CONSULTA_STEP_ORDER as string[]).includes(stepInicial)
+      ? (stepInicial as ConsultaStep)
+      : "analise",
+  );
   const [destinoAtualIndex, setDestinoAtualIndex] = useState(0);
   const [planoAtual, setPlanoAtual] = useState<PlanoViagem>(plano);
   const [mensagem, setMensagem] = useState("");
