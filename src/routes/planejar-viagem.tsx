@@ -1557,14 +1557,14 @@ function DetalhePlanoView({
   async function handlePagarSinal() {
     setPagando(true);
     // Sem gateway de pagamento de verdade por trás disso ainda — simula o
-    // tempo de processamento antes de liberar a etapa 6 (programação).
+    // tempo de processamento. Fica na própria etapa 5 depois de pagar — só
+    // mostra "Sinal pago" e segue a conversa; as etapas 6 e 7 só liberam
+    // juntas quando o analista avisar que a programação está completa.
     await new Promise((resolve) => setTimeout(resolve, 1200));
     const atualizado = confirmarPagamentoSinal(planoAtual.id);
     setPagando(false);
     if (atualizado) {
       setPlanoAtual(atualizado);
-      setStepConsulta("itinerario");
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
 
@@ -2120,7 +2120,8 @@ function DetalhePlanoView({
                 const ativo = s === stepConsulta;
                 const consultavel =
                   s !== "tipo" &&
-                  (s !== "itinerario" || planoAtual.sinalPago) &&
+                  (s !== "itinerario" ||
+                    (planoAtual.sinalPago && pacoteRevisavel)) &&
                   (s !== "pacote" ||
                     (planoAtual.sinalPago && pacoteRevisavel)) &&
                   (s !== "pagamento" ||
@@ -2557,7 +2558,7 @@ function DetalhePlanoView({
 
               {stepConsulta === "itinerario" &&
                 (() => {
-                  if (!planoAtual.sinalPago) {
+                  if (!planoAtual.sinalPago || !pacoteRevisavel) {
                     return (
                       <div className="mx-auto max-w-2xl space-y-4 text-center">
                         <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
@@ -2565,9 +2566,9 @@ function DetalhePlanoView({
                           Programação da viagem
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                          Essa etapa libera assim que você confirmar o
-                          pagamento do sinal de R$ {VALOR_SINAL_REAIS}{" "}
-                          solicitado pelo analista, na etapa 5.
+                          {!planoAtual.sinalPago
+                            ? `Essa etapa libera assim que você confirmar o pagamento do sinal de R$ ${VALOR_SINAL_REAIS} solicitado pelo analista, na etapa 5.`
+                            : "Essa etapa libera assim que o analista avisar, na etapa 5, que a programação da viagem está completa."}
                         </p>
                         <button
                           type="button"
