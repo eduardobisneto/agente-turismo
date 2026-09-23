@@ -61,6 +61,8 @@ export interface ItemItinerario {
   imagem: string;
   /** Duração aproximada da atividade (ex: "1h30"). */
   duracao?: string | undefined;
+  /** Endereço/localização do local — já vem enriquecido a partir da etapa 6, pra versão final (etapa 7) ter o máximo de detalhe. */
+  endereco?: string | undefined;
 }
 
 /** Sugestão ainda não revelada ao cliente — fica na fila até a anterior ser respondida. */
@@ -84,12 +86,16 @@ export interface PlanoViagem {
   filaSugestoes: SugestaoTemplate[];
   /** Sinal de R$200 pago pelo cliente pra acompanhar a montagem da programação (etapa 6) em tempo real. */
   sinalPago: boolean;
+  /** Data/hora em que o sinal foi confirmado — usada na ficha da viagem (etapa 7/9). */
+  sinalPagoEm?: string | undefined;
   /** Programação dia a dia, sendo montada conforme as sugestões vão sendo aceitas. */
   itinerario: ItemItinerario[];
   /** Preço total mockado do pacote, calculado na criação do plano. */
   valorPacoteReais: number;
   /** Contrato fechado depois do pagamento final (etapa 8 → 9). */
   pacoteFechado: boolean;
+  /** Data/hora em que o pagamento final foi confirmado — usada na ficha da viagem (etapa 7/9). */
+  pacoteFechadoEm?: string | undefined;
 }
 
 export const VALOR_SINAL_REAIS = 200;
@@ -170,6 +176,16 @@ const RESTAURANTES_JANTAR = [
   "Point Gastronômico",
 ];
 const PRATOS_SUGERIDOS = ["Massa", "Carne", "Frango", "Salada"];
+const HOTEIS = [
+  "Pousada Recanto Verde",
+  "Hotel Fazenda Águas Claras",
+  "Pousada Vista da Serra",
+];
+const RUAS_RESTAURANTES = [
+  "Rua das Palmeiras",
+  "Avenida Central",
+  "Rua do Comércio",
+];
 
 /**
  * Monta a fila completa de sugestões do analista pra um plano, dia a dia,
@@ -182,13 +198,16 @@ const PRATOS_SUGERIDOS = ["Massa", "Carne", "Frango", "Salada"];
 function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
   const fila: SugestaoTemplate[] = [];
 
-  for (const selecao of selecoes) {
+  for (const [indiceSelecao, selecao] of selecoes.entries()) {
     const destino = destinos.find((d) => d.slug === selecao.destinoSlug);
     if (!destino || !selecao.dataInicio || !selecao.dataFim) continue;
 
     const nomeCurto = destino.nome.split(",")[0] ?? destino.nome;
     const noites = noitesEntre(selecao.dataInicio, selecao.dataFim) ?? 1;
     const atracoes = destino.atracoes;
+    const hotel = HOTEIS[indiceSelecao % HOTEIS.length]!;
+    const enderecoHotel = `${hotel} — Zona Rural, ${destino.nome}`;
+    const enderecoCentro = `Centro, ${destino.nome}`;
     let indiceAtracao = 0;
     const proximaAtracao = () => {
       if (atracoes.length === 0) return null;
@@ -206,15 +225,17 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
     const cafeDaManha = (dia: number): Omit<ItemItinerario, "id"> => ({
       dia,
       horario: HORARIO_CAFE,
-      local: "Café da manhã no hotel",
+      local: `Café da manhã no ${hotel}`,
       descricao: "Incluso na hospedagem.",
       imagem: hospedagemImg,
       duracao: "30 min",
+      endereco: enderecoHotel,
     });
 
     const almoco = (dia: number): Omit<ItemItinerario, "id"> => {
       const restaurante =
         RESTAURANTES_ALMOCO[dia % RESTAURANTES_ALMOCO.length]!;
+      const rua = RUAS_RESTAURANTES[dia % RUAS_RESTAURANTES.length]!;
       const prato = proximoPrato();
       return {
         dia,
@@ -223,12 +244,14 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         descricao: `Prato sugerido: ${prato}. Avise se preferir outra opção.`,
         imagem: destino.imagem,
         duracao: "1h",
+        endereco: `${rua}, ${100 + dia * 10} — Centro, ${destino.nome}`,
       };
     };
 
     const jantar = (dia: number): Omit<ItemItinerario, "id"> => {
       const restaurante =
         RESTAURANTES_JANTAR[dia % RESTAURANTES_JANTAR.length]!;
+      const rua = RUAS_RESTAURANTES[(dia + 1) % RUAS_RESTAURANTES.length]!;
       const prato = proximoPrato();
       return {
         dia,
@@ -237,12 +260,13 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         descricao: `Prato sugerido: ${prato}. Avise se preferir outra opção.`,
         imagem: destino.imagem,
         duracao: "1h30",
+        endereco: `${rua}, ${200 + dia * 10} — Centro, ${destino.nome}`,
       };
     };
 
     // Dia 1 — hospedagem (com café da manhã incluso), manhã, almoço e tarde.
     fila.push({
-      texto: `Encontramos uma ótima acomodação em ${nomeCurto}, com café da manhã incluso servido a partir das ${HORARIO_CAFE}. Podemos reservar?`,
+      texto: `Encontramos uma ótima opção de hospedagem no ${hotel}, em ${nomeCurto}, com café da manhã incluso servido a partir das ${HORARIO_CAFE}. Podemos reservar?`,
       categoria: "acomodacao",
       imagem: hospedagemImg,
       itemItinerario: cafeDaManha(1),
@@ -262,6 +286,9 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         descricao: manha1?.descricao ?? `Manhã livre em ${nomeCurto}.`,
         imagem: manha1?.imagem ?? destino.imagem,
         duracao: "cerca de 2h",
+        endereco: manha1
+          ? `Acesso pela zona rural de ${nomeCurto} — ${destino.nome}`
+          : enderecoCentro,
       },
     });
 
@@ -281,6 +308,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         descricao: "Tempo livre para lojinhas, cafés e artesanato local.",
         imagem: destino.imagem,
         duracao: "cerca de 1h30",
+        endereco: enderecoCentro,
       },
     });
 
@@ -301,6 +329,9 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           descricao: manha?.descricao ?? `Manhã livre em ${nomeCurto}.`,
           imagem: manha?.imagem ?? destino.imagem,
           duracao: "cerca de 2h",
+          endereco: manha
+            ? `Acesso pela zona rural de ${nomeCurto} — ${destino.nome}`
+            : enderecoCentro,
         },
         // O café da manhã não precisa de sugestão própria — é o mesmo
         // hotel já aceito no dia 1, então já vem preenchido automaticamente.
@@ -327,6 +358,9 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           descricao: tarde?.descricao ?? `Tarde livre em ${nomeCurto}.`,
           imagem: tarde?.imagem ?? destino.imagem,
           duracao: "cerca de 2h",
+          endereco: tarde
+            ? `Acesso pela zona rural de ${nomeCurto} — ${destino.nome}`
+            : enderecoCentro,
         },
       });
 
@@ -346,6 +380,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           descricao: "Programação noturna opcional, perto da hospedagem.",
           imagem: destino.imagem,
           duracao: "cerca de 2h",
+          endereco: `Rua da Praça, s/n — Centro, ${destino.nome}`,
         },
       });
     }
@@ -363,6 +398,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           descricao: "Check-out e traslado de volta.",
           imagem: transporteImg,
           duracao: "1h",
+          endereco: `Saindo do ${hotel} — ${destino.nome}`,
         },
       ];
     }
@@ -720,6 +756,7 @@ export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
   const atualizado: PlanoViagem = {
     ...atual,
     sinalPago: true,
+    sinalPagoEm: new Date().toISOString(),
     interacoes: revelado.interacoes,
     filaSugestoes: revelado.filaSugestoes,
   };
@@ -740,7 +777,11 @@ export function fecharPacote(planoId: string): PlanoViagem | null {
   if (index === -1) return null;
 
   const atual = planos[index]!;
-  const atualizado: PlanoViagem = { ...atual, pacoteFechado: true };
+  const atualizado: PlanoViagem = {
+    ...atual,
+    pacoteFechado: true,
+    pacoteFechadoEm: new Date().toISOString(),
+  };
   planos[index] = atualizado;
   window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
   window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));

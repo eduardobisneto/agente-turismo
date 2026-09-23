@@ -1457,6 +1457,7 @@ function DetalhePlanoView({
   const [diaProgramacaoAtual, setDiaProgramacaoAtual] = useState(1);
 
   const interacoes = planoAtual.interacoes ?? [];
+  const pacoteRevisavel = interacoes.some((i) => i.tipo === "pacote_pronto");
 
   const selecaoAtual = plano.selecoes[destinoAtualIndex];
   const destinoAtualInfo = selecaoAtual
@@ -1562,6 +1563,12 @@ function DetalhePlanoView({
                 <p className="mt-1 text-sm text-muted-foreground">
                   {item.descricao}
                 </p>
+                {item.endereco && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    {item.endereco}
+                  </p>
+                )}
               </div>
             </div>
           );
@@ -1570,13 +1577,14 @@ function DetalhePlanoView({
     );
   }
 
-  /** Relatório final (etapa 8): todos os dias em sequência, pronto pra revisão/PDF. */
-  function renderProgramacaoDias() {
-    const dias = Array.from(
-      new Set(planoAtual.itinerario.map((item) => item.dia)),
-    ).sort((a, b) => a - b);
-
-    if (dias.length === 0) {
+  /**
+   * Ficha da viagem (etapa 7, e o que sai no PDF da etapa 9): documento
+   * formal com os dados da agência, do cliente e da viagem, e uma tabela
+   * com todas as atividades — o que de fato vai pro cliente, não só um
+   * rascunho de conversa.
+   */
+  function renderFichaProgramacao() {
+    if (planoAtual.itinerario.length === 0) {
       return (
         <p className="text-center text-sm text-muted-foreground">
           Sua programação ainda está sendo montada — volte em instantes.
@@ -1584,21 +1592,170 @@ function DetalhePlanoView({
       );
     }
 
+    const totalAdultos = plano.selecoes.reduce((t, s) => t + s.adultos, 0);
+    const totalCriancas = plano.selecoes.reduce((t, s) => t + s.criancas, 0);
+    const totalNoites = noitesEntre(inicioGeral, fimGeral);
+
+    const itensOrdenados = [...planoAtual.itinerario].sort((a, b) =>
+      a.dia !== b.dia ? a.dia - b.dia : a.horario.localeCompare(b.horario),
+    );
+
+    function dataAbsoluta(dia: number): string {
+      if (!inicioGeral) return `Dia ${dia}`;
+      const data = new Date(`${inicioGeral}T00:00:00`);
+      data.setDate(data.getDate() + (dia - 1));
+      return data.toLocaleDateString("pt-BR");
+    }
+
     return (
-      <>
-        {dias.map((dia) => (
-          <div key={dia}>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
-              Dia {dia}
-            </h3>
-            <div className="mt-4">
-              {renderItensDoDia(
-                planoAtual.itinerario.filter((item) => item.dia === dia),
-              )}
-            </div>
+      <div className="space-y-8 text-left">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="font-display text-lg">Aventura Organizada</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              (11) 96322-0494 · contato@aventuraorganizada.com.br
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Gerado em {new Date().toLocaleDateString("pt-BR")} às{" "}
+              {new Date().toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
           </div>
-        ))}
-      </>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-sm">
+              <span className="font-semibold text-foreground">Cliente:</span>{" "}
+              {nomeUsuario}
+            </p>
+            <p className="mt-1 text-sm">
+              <span className="font-semibold text-foreground">
+                Destino(s):
+              </span>{" "}
+              {juntarNomes(nomesDestinos)}
+            </p>
+            <p className="mt-1 text-sm">
+              <span className="font-semibold text-foreground">Chegada:</span>{" "}
+              {inicioGeral
+                ? new Date(`${inicioGeral}T00:00:00`).toLocaleDateString(
+                    "pt-BR",
+                  )
+                : "—"}
+              {"  ·  "}
+              <span className="font-semibold text-foreground">Partida:</span>{" "}
+              {fimGeral
+                ? new Date(`${fimGeral}T00:00:00`).toLocaleDateString(
+                    "pt-BR",
+                  )
+                : "—"}
+              {totalNoites ? `  ·  ${totalNoites} noites` : ""}
+            </p>
+            <p className="mt-1 text-sm">
+              <span className="font-semibold text-foreground">
+                Viajantes:
+              </span>{" "}
+              {totalAdultos} adulto{totalAdultos === 1 ? "" : "s"}
+              {totalCriancas > 0
+                ? `, ${totalCriancas} criança${totalCriancas === 1 ? "" : "s"}`
+                : ""}
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
+            Atividades
+          </h3>
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-border">
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-border bg-secondary/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-2.5">Data</th>
+                  <th className="px-4 py-2.5">Horário</th>
+                  <th className="px-4 py-2.5">Atividade</th>
+                  <th className="px-4 py-2.5">Local / Endereço</th>
+                  <th className="px-4 py-2.5">Duração</th>
+                </tr>
+              </thead>
+              <tbody>
+                {itensOrdenados.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="border-b border-border last:border-0"
+                  >
+                    <td className="whitespace-nowrap px-4 py-2.5 align-top text-muted-foreground">
+                      {dataAbsoluta(item.dia)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2.5 align-top text-muted-foreground">
+                      {item.horario}
+                    </td>
+                    <td className="px-4 py-2.5 align-top">
+                      <p className="font-semibold text-foreground">
+                        {item.local}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {item.descricao}
+                      </p>
+                    </td>
+                    <td className="px-4 py-2.5 align-top text-muted-foreground">
+                      {item.endereco ?? "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2.5 align-top text-muted-foreground">
+                      {item.duracao ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
+            Pagamentos
+          </h3>
+          <div className="mt-3 space-y-1.5 text-sm">
+            <p className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                Valor total do pacote
+              </span>
+              <span className="font-semibold text-foreground">
+                R$ {planoAtual.valorPacoteReais.toLocaleString("pt-BR")}
+              </span>
+            </p>
+            <p className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                Sinal pago
+                {planoAtual.sinalPagoEm
+                  ? ` em ${new Date(planoAtual.sinalPagoEm).toLocaleDateString("pt-BR")}`
+                  : ""}
+              </span>
+              <span className="font-semibold text-primary">
+                − R$ {VALOR_SINAL_REAIS.toLocaleString("pt-BR")}
+              </span>
+            </p>
+            <p className="flex items-center justify-between border-t border-border pt-1.5">
+              <span className="font-semibold text-foreground">
+                {planoAtual.pacoteFechado
+                  ? `Saldo pago${
+                      planoAtual.pacoteFechadoEm
+                        ? ` em ${new Date(
+                            planoAtual.pacoteFechadoEm,
+                          ).toLocaleDateString("pt-BR")}`
+                        : ""
+                    }`
+                  : "Saldo restante"}
+              </span>
+              <span className="font-semibold text-foreground">
+                R${" "}
+                {(
+                  planoAtual.valorPacoteReais - VALOR_SINAL_REAIS
+                ).toLocaleString("pt-BR")}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -1909,9 +2066,6 @@ function DetalhePlanoView({
             <div className="flex items-center justify-between gap-1 print:hidden">
               {CONSULTA_STEP_ORDER.map((s, index) => {
                 const ativo = s === stepConsulta;
-                const pacoteRevisavel = interacoes.some(
-                  (i) => i.tipo === "pacote_pronto",
-                );
                 const consultavel =
                   s !== "tipo" &&
                   (s !== "itinerario" || planoAtual.sinalPago) &&
@@ -2304,10 +2458,10 @@ function DetalhePlanoView({
                                 ) : (
                                   <button
                                     type="button"
-                                    onClick={() => setStepConsulta("pacote")}
+                                    onClick={() => setStepConsulta("itinerario")}
                                     className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
                                   >
-                                    Revisar e fechar o pacote
+                                    Ver programação da viagem
                                     <ArrowRight className="h-4 w-4" />
                                   </button>
                                 )}
@@ -2389,7 +2543,7 @@ function DetalhePlanoView({
 
                       {renderProgramacaoPorDia()}
 
-                      <div className="border-t border-border pt-6">
+                      <div className="flex items-center justify-between border-t border-border pt-6">
                         <button
                           type="button"
                           onClick={() => setStepConsulta("analise")}
@@ -2398,6 +2552,16 @@ function DetalhePlanoView({
                           <ArrowLeft className="h-4 w-4" />
                           Ajustar com o analista
                         </button>
+                        {pacoteRevisavel && !planoAtual.pacoteFechado && (
+                          <button
+                            type="button"
+                            onClick={() => setStepConsulta("pacote")}
+                            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+                          >
+                            Revisar e fechar o pacote
+                            <ArrowRight className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -2417,37 +2581,7 @@ function DetalhePlanoView({
                     </p>
                   </div>
 
-                  {renderProgramacaoDias()}
-
-                  <div className="space-y-3 rounded-2xl border border-border bg-card p-5">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Valor total do pacote
-                      </span>
-                      <span className="font-semibold text-foreground">
-                        R$ {planoAtual.valorPacoteReais.toLocaleString("pt-BR")}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Sinal já pago
-                      </span>
-                      <span className="font-semibold text-primary">
-                        − R$ {VALOR_SINAL_REAIS.toLocaleString("pt-BR")}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-border pt-3 text-base">
-                      <span className="font-semibold text-foreground">
-                        Saldo restante
-                      </span>
-                      <span className="font-semibold text-foreground">
-                        R${" "}
-                        {(
-                          planoAtual.valorPacoteReais - VALOR_SINAL_REAIS
-                        ).toLocaleString("pt-BR")}
-                      </span>
-                    </div>
-                  </div>
+                  {renderFichaProgramacao()}
 
                   <div className="flex items-center justify-between border-t border-border pt-6">
                     <button
@@ -2543,26 +2677,11 @@ function DetalhePlanoView({
 
             {/* Relatório completo pra impressão/PDF — só aparece ao imprimir. */}
             <div className="hidden print:block">
-              <h1 className="font-display text-2xl">
-                Viagem de {nomeUsuario} para {juntarNomes(nomesDestinos)}
-              </h1>
-              <p className="mt-1 text-sm">
-                {inicioGeral && fimGeral
-                  ? `${new Date(`${inicioGeral}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}`
-                  : "Datas a combinar"}
-              </p>
+              <h1 className="font-display text-2xl">Confirmação de viagem</h1>
               <p className="mt-1 text-sm font-semibold">
-                Contratação fechada — pacote R${" "}
-                {planoAtual.valorPacoteReais.toLocaleString("pt-BR")}{" "}
-                (sinal de R$ {VALOR_SINAL_REAIS.toLocaleString("pt-BR")} +
-                saldo de R${" "}
-                {(
-                  planoAtual.valorPacoteReais - VALOR_SINAL_REAIS
-                ).toLocaleString("pt-BR")}
-                ).
+                Contratação fechada — programação completa a seguir.
               </p>
-              <h2 className="mt-6 font-display text-xl">Programação</h2>
-              <div className="mt-3 space-y-6">{renderProgramacaoDias()}</div>
+              <div className="mt-6">{renderFichaProgramacao()}</div>
             </div>
           </div>
         </div>
