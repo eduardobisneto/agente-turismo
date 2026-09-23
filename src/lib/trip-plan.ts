@@ -8,6 +8,10 @@
  * conseguir ver e detalhar a proposta.
  */
 
+import { destinos } from "@/data/destinos";
+import hospedagemImg from "@/assets/hospedagem.jpeg";
+import transporteImg from "@/assets/transporte.jpeg";
+
 export interface SelecaoDestino {
   destinoSlug: string;
   experienciaSlugs: string[];
@@ -22,13 +26,48 @@ export interface SelecaoDestino {
   contextoDestino?: string | undefined;
 }
 
+export type CategoriaSugestao =
+  | "voo"
+  | "transfer"
+  | "acomodacao"
+  | "refeicao"
+  | "passeio"
+  | "geral";
+
 export interface Interacao {
   id: string;
   autor: "usuario" | "analista";
   texto: string;
   criadoEm: string;
-  tipo?: "mensagem" | "sugestao";
+  tipo?: "mensagem" | "sugestao" | "plano_pronto" | "pacote_pronto";
   sugestaoStatus?: "pendente" | "aceita" | "recusada";
+  /** Categoria da sugestão (voo, transfer, acomodação...) — ajuda a agrupar/filtrar no backoffice. */
+  categoria?: CategoriaSugestao | undefined;
+  /** Foto do que está sendo sugerido (hotel, passeio, etc.), enviada junto pelo analista. */
+  imagem?: string | undefined;
+  /** Item que entra na programação (etapa 6) quando essa sugestão for aceita. */
+  itemItinerario?: Omit<ItemItinerario, "id"> | undefined;
+  /** Itens que entram junto, sem precisar de sugestão própria (ex: café da manhã dos dias seguintes, já incluso no mesmo hotel aceito antes). */
+  itensAutomaticos?: Omit<ItemItinerario, "id">[] | undefined;
+}
+
+export interface ItemItinerario {
+  id: string;
+  /** Dia da viagem, 1-based. */
+  dia: number;
+  horario: string;
+  local: string;
+  descricao: string;
+  imagem: string;
+}
+
+/** Sugestão ainda não revelada ao cliente — fica na fila até a anterior ser respondida. */
+export interface SugestaoTemplate {
+  texto: string;
+  categoria: CategoriaSugestao;
+  imagem?: string;
+  itemItinerario: Omit<ItemItinerario, "id">;
+  itensAutomaticos?: Omit<ItemItinerario, "id">[];
 }
 
 export interface PlanoViagem {
@@ -39,7 +78,19 @@ export interface PlanoViagem {
   selecoes: SelecaoDestino[];
   contexto: string;
   interacoes: Interacao[];
+  /** Sugestões do analista ainda não reveladas — cada uma só aparece depois que a anterior é respondida. */
+  filaSugestoes: SugestaoTemplate[];
+  /** Sinal de R$200 pago pelo cliente pra acompanhar a montagem da programação (etapa 6) em tempo real. */
+  sinalPago: boolean;
+  /** Programação dia a dia, sendo montada conforme as sugestões vão sendo aceitas. */
+  itinerario: ItemItinerario[];
+  /** Preço total mockado do pacote, calculado na criação do plano. */
+  valorPacoteReais: number;
+  /** Contrato fechado depois do pagamento final (etapa 8 → 9). */
+  pacoteFechado: boolean;
 }
+
+export const VALOR_SINAL_REAIS = 200;
 
 // v2: campos de data/pessoas/interesses/inclusos migraram de nível global
 // pra dentro de cada SelecaoDestino. Muda a versão da chave sempre que o
@@ -95,40 +146,254 @@ function horasDepois(base: string, horas: number): string {
   return new Date(new Date(base).getTime() + horas * 60 * 60 * 1000).toISOString();
 }
 
+function calcularValorPacote(selecoes: SelecaoDestino[]): number {
+  let total = 0;
+  for (const s of selecoes) {
+    const noites = noitesEntre(s.dataInicio, s.dataFim) ?? 1;
+    total += noites * (s.adultos * 350 + s.criancas * 200);
+  }
+  return Math.max(total, 500);
+}
+
+const HORARIO_CAFE = "08:00";
+
+/**
+ * Monta a fila completa de sugestões do analista pra um plano, dia a dia,
+ * a partir dos destinos/datas escolhidos: hospedagem (com café da manhã já
+ * incluso) no dia 1, depois manhã/almoço/tarde todo dia, e jantar/vida
+ * noturna nos dias intermediários. Em produção quem decide essas sugestões
+ * é o analista, no backoffice — isso aqui simula um roteiro plausível
+ * enquanto esse backoffice não existe (ver `AtualizacaoBackoffice`).
+ */
+function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
+  const fila: SugestaoTemplate[] = [];
+
+  for (const selecao of selecoes) {
+    const destino = destinos.find((d) => d.slug === selecao.destinoSlug);
+    if (!destino || !selecao.dataInicio || !selecao.dataFim) continue;
+
+    const nomeCurto = destino.nome.split(",")[0] ?? destino.nome;
+    const noites = noitesEntre(selecao.dataInicio, selecao.dataFim) ?? 1;
+    const atracoes = destino.atracoes;
+    let indiceAtracao = 0;
+    const proximaAtracao = () => {
+      if (atracoes.length === 0) return null;
+      const atracao = atracoes[indiceAtracao % atracoes.length]!;
+      indiceAtracao += 1;
+      return atracao;
+    };
+
+    const cafeDaManha = (dia: number): Omit<ItemItinerario, "id"> => ({
+      dia,
+      horario: HORARIO_CAFE,
+      local: "Café da manhã no hotel",
+      descricao: "Incluso na hospedagem.",
+      imagem: hospedagemImg,
+    });
+
+    // Dia 1 — hospedagem (com café da manhã incluso), manhã, almoço e tarde.
+    fila.push({
+      texto: `Encontramos uma ótima acomodação em ${nomeCurto}, com café da manhã incluso servido a partir das ${HORARIO_CAFE}. Podemos reservar?`,
+      categoria: "acomodacao",
+      imagem: hospedagemImg,
+      itemItinerario: cafeDaManha(1),
+    });
+
+    const manha1 = proximaAtracao();
+    fila.push({
+      texto: manha1
+        ? `Ele aprovou? Ótimo — pra começar o dia 1, que tal ${manha1.nome}? ${manha1.descricao}`
+        : `Manhã livre para aproveitar ${nomeCurto} no dia 1.`,
+      categoria: "passeio",
+      imagem: manha1?.imagem ?? destino.imagem,
+      itemItinerario: {
+        dia: 1,
+        horario: "09:30",
+        local: manha1?.nome ?? nomeCurto,
+        descricao: manha1?.descricao ?? `Manhã livre em ${nomeCurto}.`,
+        imagem: manha1?.imagem ?? destino.imagem,
+      },
+    });
+
+    fila.push({
+      texto: "Reservamos o almoço num restaurante local bem avaliado, pertinho do roteiro da manhã.",
+      categoria: "refeicao",
+      itemItinerario: {
+        dia: 1,
+        horario: "12:30",
+        local: "Almoço",
+        descricao: "Restaurante local reservado pela nossa equipe.",
+        imagem: destino.imagem,
+      },
+    });
+
+    fila.push({
+      texto: `À tarde, sugerimos uma volta pelo centro de ${nomeCurto} — ótimo pra conhecer o comércio local.`,
+      categoria: "passeio",
+      itemItinerario: {
+        dia: 1,
+        horario: "15:30",
+        local: `Centro de ${nomeCurto}`,
+        descricao: "Tempo livre para lojinhas, cafés e artesanato local.",
+        imagem: destino.imagem,
+      },
+    });
+
+    // Dias intermediários — café da manhã já vem preenchido (mesmo hotel),
+    // manhã, almoço, tarde, jantar e vida noturna.
+    for (let dia = 2; dia <= noites; dia++) {
+      const manha = proximaAtracao();
+      fila.push({
+        texto: manha
+          ? `Bom dia! Pro dia ${dia}, sugerimos ${manha.nome} pela manhã. ${manha.descricao}`
+          : `Mais uma manhã livre em ${nomeCurto} no dia ${dia}.`,
+        categoria: "passeio",
+        imagem: manha?.imagem ?? destino.imagem,
+        itemItinerario: {
+          dia,
+          horario: "09:30",
+          local: manha?.nome ?? nomeCurto,
+          descricao: manha?.descricao ?? `Manhã livre em ${nomeCurto}.`,
+          imagem: manha?.imagem ?? destino.imagem,
+        },
+        // O café da manhã não precisa de sugestão própria — é o mesmo
+        // hotel já aceito no dia 1, então já vem preenchido automaticamente.
+        itensAutomaticos: [cafeDaManha(dia)],
+      });
+
+      fila.push({
+        texto: "Na volta, sugerimos o almoço num restaurante bem pertinho de onde vocês vão estar.",
+        categoria: "refeicao",
+        itemItinerario: {
+          dia,
+          horario: "12:30",
+          local: "Almoço",
+          descricao: "Restaurante local reservado pela nossa equipe.",
+          imagem: destino.imagem,
+        },
+      });
+
+      const tarde = proximaAtracao();
+      fila.push({
+        texto: tarde
+          ? `À tarde do dia ${dia}, que tal ${tarde.nome}? ${tarde.descricao}`
+          : `Tarde livre em ${nomeCurto} no dia ${dia}.`,
+        categoria: "passeio",
+        imagem: tarde?.imagem ?? destino.imagem,
+        itemItinerario: {
+          dia,
+          horario: "15:00",
+          local: tarde?.nome ?? nomeCurto,
+          descricao: tarde?.descricao ?? `Tarde livre em ${nomeCurto}.`,
+          imagem: tarde?.imagem ?? destino.imagem,
+        },
+      });
+
+      fila.push({
+        texto: "Pra fechar o dia, reservamos um jantar num restaurante bem avaliado por quem visita a região.",
+        categoria: "refeicao",
+        itemItinerario: {
+          dia,
+          horario: "19:30",
+          local: "Jantar",
+          descricao: "Restaurante local reservado pela nossa equipe.",
+          imagem: destino.imagem,
+        },
+      });
+
+      fila.push({
+        texto: "E pra fechar a noite, um bar com música ao vivo bem perto do hotel — topam?",
+        categoria: "geral",
+        itemItinerario: {
+          dia,
+          horario: "21:30",
+          local: "Bar com música ao vivo",
+          descricao: "Programação noturna opcional, perto da hospedagem.",
+          imagem: destino.imagem,
+        },
+      });
+    }
+
+    // Dia de saída — check-out e transfer de volta, incluído automaticamente
+    // junto com a última sugestão aceita (não precisa de sugestão própria).
+    const ultima = fila[fila.length - 1];
+    if (ultima) {
+      ultima.itensAutomaticos = [
+        ...(ultima.itensAutomaticos ?? []),
+        {
+          dia: noites + 1,
+          horario: "10:00",
+          local: `Transfer de saída de ${nomeCurto}`,
+          descricao: "Check-out e traslado de volta.",
+          imagem: transporteImg,
+        },
+      ];
+    }
+  }
+
+  return fila;
+}
+
 export function salvarPlanoViagem(
-  plano: Omit<PlanoViagem, "id" | "criadoEm" | "interacoes">,
+  plano: Omit<
+    PlanoViagem,
+    | "id"
+    | "criadoEm"
+    | "interacoes"
+    | "filaSugestoes"
+    | "sinalPago"
+    | "itinerario"
+    | "valorPacoteReais"
+    | "pacoteFechado"
+  >,
 ): PlanoViagem {
   const agora = new Date().toISOString();
+  const fila = gerarFilaDeSugestoes(plano.selecoes);
+  const [primeiraSugestao, ...restoDaFila] = fila;
+
+  const interacoes: Interacao[] = [
+    {
+      id: crypto.randomUUID(),
+      autor: "usuario",
+      texto: "Plano enviado para análise.",
+      criadoEm: agora,
+      tipo: "mensagem",
+    },
+    {
+      id: crypto.randomUUID(),
+      autor: "analista",
+      texto:
+        "Recebemos seu plano! Nosso time responde em até 34 horas com os próximos passos da sua viagem — já começamos a montar a proposta com base nos destinos e experiências que você escolheu.",
+      criadoEm: horasDepois(agora, 3),
+      tipo: "mensagem",
+    },
+  ];
+
+  if (primeiraSugestao) {
+    interacoes.push({
+      id: crypto.randomUUID(),
+      autor: "analista",
+      criadoEm: horasDepois(agora, 5),
+      tipo: "sugestao",
+      sugestaoStatus: "pendente",
+      texto: primeiraSugestao.texto,
+      categoria: primeiraSugestao.categoria,
+      imagem: primeiraSugestao.imagem,
+      itemItinerario: primeiraSugestao.itemItinerario,
+      itensAutomaticos: primeiraSugestao.itensAutomaticos,
+    });
+  }
+
   const registro: PlanoViagem = {
     ...plano,
     id: crypto.randomUUID(),
     criadoEm: agora,
-    interacoes: [
-      {
-        id: crypto.randomUUID(),
-        autor: "usuario",
-        texto: "Plano enviado para análise.",
-        criadoEm: agora,
-        tipo: "mensagem",
-      },
-      {
-        id: crypto.randomUUID(),
-        autor: "analista",
-        texto:
-          "Recebemos seu plano! Nosso time responde em até 34 horas com os próximos passos da sua viagem — já começamos a montar a proposta com base nos destinos e experiências que você escolheu.",
-        criadoEm: horasDepois(agora, 3),
-        tipo: "mensagem",
-      },
-      {
-        id: crypto.randomUUID(),
-        autor: "analista",
-        texto:
-          "Uma sugestão: que tal incluir um passeio de barco a mais no roteiro? Costuma ser um dos programas queridinhos de quem viaja com a gente.",
-        criadoEm: horasDepois(agora, 4),
-        tipo: "sugestao",
-        sugestaoStatus: "pendente",
-      },
-    ],
+    sinalPago: false,
+    itinerario: [],
+    filaSugestoes: restoDaFila,
+    valorPacoteReais: calcularValorPacote(plano.selecoes),
+    pacoteFechado: false,
+    interacoes,
   };
 
   const planos = readPlanos();
@@ -178,13 +443,225 @@ export function responderSugestao(
   if (index === -1) return null;
 
   const atual = planos[index]!;
+  const interacaoRespondida = (atual.interacoes ?? []).find(
+    (i) => i.id === interacaoId,
+  );
+
+  let interacoes = (atual.interacoes ?? []).map((i) =>
+    i.id === interacaoId ? { ...i, sugestaoStatus: status } : i,
+  );
+  let itinerario = atual.itinerario;
+  let filaSugestoes = atual.filaSugestoes ?? [];
+
+  if (status === "aceita" && interacaoRespondida) {
+    const novosItens = [
+      ...(interacaoRespondida.itemItinerario
+        ? [interacaoRespondida.itemItinerario]
+        : []),
+      ...(interacaoRespondida.itensAutomaticos ?? []),
+    ];
+    if (novosItens.length > 0) {
+      itinerario = [
+        ...itinerario,
+        ...novosItens.map((item) => ({ ...item, id: crypto.randomUUID() })),
+      ];
+    }
+
+    // A primeira sugestão aceita é sempre a hospedagem — é o gatilho pra
+    // pedir o sinal que libera acompanhar a etapa 6 em tempo real.
+    if (
+      interacaoRespondida.categoria === "acomodacao" &&
+      !interacoes.some((i) => i.tipo === "plano_pronto")
+    ) {
+      interacoes = [
+        ...interacoes,
+        {
+          id: crypto.randomUUID(),
+          autor: "analista",
+          criadoEm: new Date().toISOString(),
+          tipo: "plano_pronto",
+          texto:
+            "Show! Já vamos começar a preencher a programação da sua viagem. Quer acompanhar isso em tempo real na etapa 6?",
+        },
+      ];
+    }
+  }
+
+  const [proximaSugestao, ...restoDaFila] = filaSugestoes;
+  if (proximaSugestao) {
+    interacoes = [
+      ...interacoes,
+      {
+        id: crypto.randomUUID(),
+        autor: "analista",
+        criadoEm: new Date().toISOString(),
+        tipo: "sugestao",
+        sugestaoStatus: "pendente",
+        texto: proximaSugestao.texto,
+        categoria: proximaSugestao.categoria,
+        imagem: proximaSugestao.imagem,
+        itemItinerario: proximaSugestao.itemItinerario,
+        itensAutomaticos: proximaSugestao.itensAutomaticos,
+      },
+    ];
+    filaSugestoes = restoDaFila;
+  } else if (!interacoes.some((i) => i.tipo === "pacote_pronto")) {
+    // Não sobrou mais nenhuma sugestão — a viagem está com a programação
+    // completa, hora de revisar e fechar o pacote.
+    interacoes = [
+      ...interacoes,
+      {
+        id: crypto.randomUUID(),
+        autor: "analista",
+        criadoEm: new Date().toISOString(),
+        tipo: "pacote_pronto",
+        texto:
+          "Sua viagem está com a programação completa! Vamos revisar tudo e fechar o pacote?",
+      },
+    ];
+  }
+
   const atualizado: PlanoViagem = {
     ...atual,
-    interacoes: (atual.interacoes ?? []).map((i) =>
-      i.id === interacaoId ? { ...i, sugestaoStatus: status } : i,
-    ),
+    interacoes,
+    itinerario,
+    filaSugestoes,
   };
 
+  planos[index] = atualizado;
+  window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
+  window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
+
+  return atualizado;
+}
+
+/**
+ * Contrato do que chega do backoffice (onde o analista trabalha) sobre um
+ * plano — hoje aplicado localmente pela própria etapa 5/6 (ver
+ * `confirmarPagamentoSinal` e o seed em `salvarPlanoViagem`), mas pensado
+ * pra ser exatamente o payload que um webhook real vai entregar quando
+ * essa integração existir.
+ *
+ * Arquitetura pretendida: o analista aceita/envia uma sugestão no
+ * backoffice → a API do backoffice chama um endpoint desta aplicação (ou
+ * da marketplace.api) com esse payload → o servidor persiste no plano
+ * (banco compartilhado, não mais localStorage) → o servidor publica a
+ * atualização num canal por `planoId` (SSE ou WebSocket) que o navegador
+ * do cliente está escutando enquanto a etapa 5 estiver aberta → a tela
+ * reage em tempo real, sem precisar de refresh.
+ *
+ * A peça que falta pra isso funcionar de verdade é justamente esse
+ * "transporte" servidor → navegador específico do cliente, porque hoje o
+ * estado de cada plano vive só no localStorage do próprio navegador. Essa
+ * função é o ponto único de entrada pensado pra já isolar essa fronteira:
+ * é a única coisa que um handler de webhook (ou, por enquanto, a
+ * simulação local) precisa chamar.
+ */
+export type AtualizacaoBackoffice =
+  | {
+      tipo: "sugestao";
+      planoId: string;
+      texto: string;
+      categoria?: CategoriaSugestao;
+      imagem?: string;
+      itemItinerario?: Omit<ItemItinerario, "id">;
+      itensAutomaticos?: Omit<ItemItinerario, "id">[];
+    }
+  | { tipo: "mensagem"; planoId: string; texto: string }
+  | { tipo: "plano_pronto"; planoId: string; texto?: string }
+  | { tipo: "pacote_pronto"; planoId: string; texto?: string }
+  | {
+      tipo: "itinerario_pronto";
+      planoId: string;
+      itens: Omit<ItemItinerario, "id">[];
+    };
+
+export function aplicarAtualizacaoDoBackoffice(
+  atualizacao: AtualizacaoBackoffice,
+): PlanoViagem | null {
+  const planos = readPlanos();
+  const index = planos.findIndex((p) => p.id === atualizacao.planoId);
+  if (index === -1) return null;
+
+  const atual = planos[index]!;
+  let atualizado: PlanoViagem;
+
+  if (atualizacao.tipo === "itinerario_pronto") {
+    atualizado = {
+      ...atual,
+      itinerario: atualizacao.itens.map((item) => ({
+        ...item,
+        id: crypto.randomUUID(),
+      })),
+    };
+  } else {
+    const novaInteracao: Interacao = {
+      id: crypto.randomUUID(),
+      autor: "analista",
+      criadoEm: new Date().toISOString(),
+      texto:
+        atualizacao.tipo === "plano_pronto"
+          ? (atualizacao.texto ??
+            "Seu plano está pronto! Quer ver a programação completa da viagem?")
+          : atualizacao.tipo === "pacote_pronto"
+            ? (atualizacao.texto ??
+              "Sua viagem está com a programação completa! Vamos revisar tudo e fechar o pacote?")
+            : atualizacao.texto,
+      tipo: atualizacao.tipo,
+      ...(atualizacao.tipo === "sugestao"
+        ? {
+            sugestaoStatus: "pendente" as const,
+            categoria: atualizacao.categoria,
+            imagem: atualizacao.imagem,
+            itemItinerario: atualizacao.itemItinerario,
+            itensAutomaticos: atualizacao.itensAutomaticos,
+          }
+        : {}),
+    };
+    atualizado = {
+      ...atual,
+      interacoes: [...(atual.interacoes ?? []), novaInteracao],
+    };
+  }
+
+  planos[index] = atualizado;
+  window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
+  window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
+
+  return atualizado;
+}
+
+/**
+ * Cliente confirma o pagamento do sinal de R$200 — pago pra remunerar o
+ * trabalho do analista até aqui caso a viagem não seja fechada, e
+ * descontado do pacote se for. Libera a etapa 6, onde a programação vai
+ * aparecendo em tempo real conforme as sugestões forem sendo aceitas.
+ */
+export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
+  const planos = readPlanos();
+  const index = planos.findIndex((p) => p.id === planoId);
+  if (index === -1) return null;
+
+  const atual = planos[index]!;
+  const atualizado: PlanoViagem = { ...atual, sinalPago: true };
+  planos[index] = atualizado;
+  window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
+  window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
+
+  return atualizado;
+}
+
+/**
+ * Cliente confirma o pagamento final (etapa 8) e fecha o pacote completo —
+ * o valor do sinal já pago é descontado do total. Libera a etapa 9.
+ */
+export function fecharPacote(planoId: string): PlanoViagem | null {
+  const planos = readPlanos();
+  const index = planos.findIndex((p) => p.id === planoId);
+  if (index === -1) return null;
+
+  const atual = planos[index]!;
+  const atualizado: PlanoViagem = { ...atual, pacoteFechado: true };
   planos[index] = atualizado;
   window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
   window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));

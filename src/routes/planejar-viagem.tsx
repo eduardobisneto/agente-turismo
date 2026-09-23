@@ -3,6 +3,9 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  CreditCard,
+  Loader2,
+  Lock,
   MapPin,
   Plus,
   Send,
@@ -23,12 +26,14 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import {
   adicionarInteracao,
+  confirmarPagamentoSinal,
+  fecharPacote,
   getPlanosDoUsuario,
   noitesEntre,
   onPedirListaDeViagens,
   responderSugestao,
   salvarPlanoViagem,
-  type Interacao,
+  VALOR_SINAL_REAIS,
   type PlanoViagem,
   type SelecaoDestino,
 } from "@/lib/trip-plan";
@@ -1338,8 +1343,14 @@ function ListaPlanosView({
                       {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-900">
-                    Em análise
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide ${
+                      plano.pacoteFechado
+                        ? "bg-green-100 text-green-900"
+                        : "bg-amber-100 text-amber-900"
+                    }`}
+                  >
+                    {plano.pacoteFechado ? "Contrato fechado" : "Em análise"}
                   </span>
                 </button>
               );
@@ -1362,7 +1373,11 @@ type ConsultaStep =
   | "selecao"
   | "calendario"
   | "detalhes"
-  | "analise";
+  | "analise"
+  | "itinerario"
+  | "pacote"
+  | "pagamento"
+  | "fechado";
 
 const CONSULTA_STEP_ORDER: ConsultaStep[] = [
   "tipo",
@@ -1370,6 +1385,10 @@ const CONSULTA_STEP_ORDER: ConsultaStep[] = [
   "calendario",
   "detalhes",
   "analise",
+  "itinerario",
+  "pacote",
+  "pagamento",
+  "fechado",
 ];
 
 const CONSULTA_STEP_LABELS: Record<ConsultaStep, string> = {
@@ -1378,6 +1397,10 @@ const CONSULTA_STEP_LABELS: Record<ConsultaStep, string> = {
   calendario: "3. Datas e detalhes por destino",
   detalhes: "4. Resumo",
   analise: "5. Análise da nossa equipe",
+  itinerario: "6. Programação da viagem",
+  pacote: "7. Revisão do pacote",
+  pagamento: "8. Pagamento",
+  fechado: "9. Contratação fechada",
 };
 
 function DetalhePlanoView({
@@ -1393,10 +1416,11 @@ function DetalhePlanoView({
 }) {
   const [stepConsulta, setStepConsulta] = useState<ConsultaStep>("analise");
   const [destinoAtualIndex, setDestinoAtualIndex] = useState(0);
-  const [interacoes, setInteracoes] = useState<Interacao[]>(
-    plano.interacoes ?? [],
-  );
+  const [planoAtual, setPlanoAtual] = useState<PlanoViagem>(plano);
   const [mensagem, setMensagem] = useState("");
+  const [pagando, setPagando] = useState(false);
+
+  const interacoes = planoAtual.interacoes ?? [];
 
   const selecaoAtual = plano.selecoes[destinoAtualIndex];
   const destinoAtualInfo = selecaoAtual
@@ -1424,12 +1448,12 @@ function DetalhePlanoView({
 
   function handleEnviarMensagem() {
     if (!mensagem.trim()) return;
-    const atualizado = adicionarInteracao(plano.id, {
+    const atualizado = adicionarInteracao(planoAtual.id, {
       autor: "usuario",
       texto: mensagem.trim(),
       tipo: "mensagem",
     });
-    if (atualizado) setInteracoes(atualizado.interacoes);
+    if (atualizado) setPlanoAtual(atualizado);
     setMensagem("");
   }
 
@@ -1437,8 +1461,99 @@ function DetalhePlanoView({
     interacaoId: string,
     status: "aceita" | "recusada",
   ) {
-    const atualizado = responderSugestao(plano.id, interacaoId, status);
-    if (atualizado) setInteracoes(atualizado.interacoes);
+    const atualizado = responderSugestao(planoAtual.id, interacaoId, status);
+    if (atualizado) setPlanoAtual(atualizado);
+  }
+
+  async function handlePagarSinal() {
+    setPagando(true);
+    // Sem gateway de pagamento de verdade por trás disso ainda — simula o
+    // tempo de processamento antes de liberar a etapa 6.
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const atualizado = confirmarPagamentoSinal(planoAtual.id);
+    setPagando(false);
+    if (atualizado) {
+      setPlanoAtual(atualizado);
+      setStepConsulta("itinerario");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  async function handleFecharPacote() {
+    setPagando(true);
+    // Sem gateway de pagamento de verdade por trás disso ainda — simula o
+    // tempo de processamento do pagamento final antes de fechar o contrato.
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const atualizado = fecharPacote(planoAtual.id);
+    setPagando(false);
+    if (atualizado) {
+      setPlanoAtual(atualizado);
+      setStepConsulta("fechado");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  function renderProgramacaoDias() {
+    const dias = Array.from(
+      new Set(planoAtual.itinerario.map((item) => item.dia)),
+    ).sort((a, b) => a - b);
+
+    if (dias.length === 0) {
+      return (
+        <p className="text-center text-sm text-muted-foreground">
+          Sua programação ainda está sendo montada — volte em instantes.
+        </p>
+      );
+    }
+
+    return (
+      <>
+        {dias.map((dia) => {
+          const itensDoDia = planoAtual.itinerario.filter(
+            (item) => item.dia === dia,
+          );
+          return (
+            <div key={dia}>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Dia {dia}
+              </h3>
+              <div className="mt-4">
+                {itensDoDia.map((item, index) => {
+                  const isUltimo = index === itensDoDia.length - 1;
+                  return (
+                    <div key={item.id} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-primary/30">
+                          <img
+                            src={item.imagem}
+                            alt={item.local}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        {!isUltimo && (
+                          <div className="mt-1 w-0.5 flex-1 bg-border" />
+                        )}
+                      </div>
+                      <div className={isUltimo ? "flex-1" : "flex-1 pb-6"}>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {item.horario}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-foreground">
+                          {item.local}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.descricao}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </>
+    );
   }
 
   function renderPainelDestino() {
@@ -1653,8 +1768,14 @@ function DetalhePlanoView({
                 <h1 className="text-balance text-3xl md:text-4xl">
                   Viagem de {nomeUsuario} para {juntarNomes(nomesDestinos)}
                 </h1>
-                <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-amber-900">
-                  Em análise
+                <span
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide ${
+                    planoAtual.pacoteFechado
+                      ? "bg-green-100 text-green-900"
+                      : "bg-amber-100 text-amber-900"
+                  }`}
+                >
+                  {planoAtual.pacoteFechado ? "Contrato fechado" : "Em análise"}
                 </span>
               </div>
               <p className="mt-4 text-muted-foreground">
@@ -1689,7 +1810,15 @@ function DetalhePlanoView({
             <div className="flex items-center justify-between gap-1">
               {CONSULTA_STEP_ORDER.map((s, index) => {
                 const ativo = s === stepConsulta;
-                const consultavel = s !== "tipo";
+                const pacoteRevisavel = interacoes.some(
+                  (i) => i.tipo === "pacote_pronto",
+                );
+                const consultavel =
+                  s !== "tipo" &&
+                  (s !== "itinerario" || planoAtual.sinalPago) &&
+                  (s !== "pacote" || pacoteRevisavel) &&
+                  (s !== "pagamento" || pacoteRevisavel) &&
+                  (s !== "fechado" || planoAtual.pacoteFechado);
                 return (
                   <div key={s} className="flex flex-1 items-center gap-1">
                     <button
@@ -1971,6 +2100,14 @@ function DetalhePlanoView({
 
                             {interacao.tipo === "sugestao" && (
                               <div className="mt-3">
+                                {interacao.imagem && (
+                                  <img
+                                    src={interacao.imagem}
+                                    alt={interacao.texto}
+                                    className="mb-3 aspect-[4/3] w-full max-w-xs rounded-2xl object-cover"
+                                    loading="lazy"
+                                  />
+                                )}
                                 {interacao.sugestaoStatus === "aceita" ? (
                                   <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
                                     <Check className="h-3.5 w-3.5" />
@@ -2013,6 +2150,75 @@ function DetalhePlanoView({
                                 )}
                               </div>
                             )}
+
+                            {interacao.tipo === "plano_pronto" && (
+                              <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                                {planoAtual.sinalPago ? (
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                                      <Check className="h-3.5 w-3.5" />
+                                      Sinal pago
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setStepConsulta("itinerario")
+                                      }
+                                      className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+                                    >
+                                      Ver programação da viagem
+                                      <ArrowRight className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="text-sm text-muted-foreground">
+                                      Esse sinal remunera o trabalho da nossa
+                                      equipe até aqui e é descontado do valor
+                                      total assim que a viagem for fechada.
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={handlePagarSinal}
+                                      disabled={pagando}
+                                      className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+                                    >
+                                      {pagando ? (
+                                        <>
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                          Processando pagamento...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CreditCard className="h-4 w-4" />
+                                          Pagar sinal de R$ {VALOR_SINAL_REAIS}
+                                        </>
+                                      )}
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+
+                            {interacao.tipo === "pacote_pronto" && (
+                              <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                                {planoAtual.pacoteFechado ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                                    <Check className="h-3.5 w-3.5" />
+                                    Pacote fechado
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setStepConsulta("pacote")}
+                                    className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+                                  >
+                                    Revisar e fechar o pacote
+                                    <ArrowRight className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -2046,6 +2252,176 @@ function DetalhePlanoView({
                       </button>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {stepConsulta === "itinerario" &&
+                (() => {
+                  if (!planoAtual.sinalPago) {
+                    return (
+                      <div className="mx-auto max-w-2xl space-y-4 text-center">
+                        <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
+                        <h2 className="font-display text-2xl md:text-3xl">
+                          Programação da viagem
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          Essa etapa libera assim que o sinal de R${" "}
+                          {VALOR_SINAL_REAIS} for pago, na etapa 5 (Análise da
+                          nossa equipe).
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setStepConsulta("analise")}
+                          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Ir para a análise
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="mx-auto max-w-2xl space-y-10">
+                      <div className="text-center">
+                        <h2 className="font-display text-2xl md:text-3xl">
+                          Programação da viagem
+                        </h2>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Dia a dia com tudo que foi combinado com a nossa
+                          equipe. Ainda dá pra ajustar horários e locais na
+                          etapa 5.
+                        </p>
+                      </div>
+
+                      {renderProgramacaoDias()}
+                    </div>
+                  );
+                })()}
+
+              {stepConsulta === "pacote" && (
+                <div className="mx-auto max-w-2xl space-y-10">
+                  <div className="text-center">
+                    <h2 className="font-display text-2xl md:text-3xl">
+                      Revisão do pacote completo
+                    </h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Confira a programação da viagem inteira antes de fechar
+                      o pacote.
+                    </p>
+                  </div>
+
+                  {renderProgramacaoDias()}
+
+                  <div className="space-y-3 rounded-2xl border border-border bg-card p-5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Valor total do pacote
+                      </span>
+                      <span className="font-semibold text-foreground">
+                        R$ {planoAtual.valorPacoteReais.toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Sinal já pago
+                      </span>
+                      <span className="font-semibold text-primary">
+                        − R$ {VALOR_SINAL_REAIS.toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-border pt-3 text-base">
+                      <span className="font-semibold text-foreground">
+                        Saldo restante
+                      </span>
+                      <span className="font-semibold text-foreground">
+                        R${" "}
+                        {(
+                          planoAtual.valorPacoteReais - VALOR_SINAL_REAIS
+                        ).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-border pt-6">
+                    <button
+                      type="button"
+                      onClick={() => setStepConsulta("analise")}
+                      className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Ajustar com o analista
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStepConsulta("pagamento")}
+                      className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                      Fechar pacote
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {stepConsulta === "pagamento" && (
+                <div className="mx-auto max-w-md space-y-6 text-center">
+                  <h2 className="font-display text-2xl md:text-3xl">
+                    Pagamento final
+                  </h2>
+                  {planoAtual.pacoteFechado ? (
+                    <p className="text-sm text-muted-foreground">
+                      Pagamento já confirmado — sua viagem está garantida!
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Saldo restante do pacote, já descontado o sinal de R${" "}
+                        {VALOR_SINAL_REAIS}.
+                      </p>
+                      <p className="font-display text-3xl">
+                        R${" "}
+                        {(
+                          planoAtual.valorPacoteReais - VALOR_SINAL_REAIS
+                        ).toLocaleString("pt-BR")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleFecharPacote}
+                        disabled={pagando}
+                        className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+                      >
+                        {pagando ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Processando pagamento...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4" />
+                            Confirmar pagamento
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {stepConsulta === "fechado" && (
+                <div className="mx-auto max-w-md space-y-4 text-center">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                    <Check className="h-3.5 w-3.5" />
+                    Contratação fechada
+                  </span>
+                  <h2 className="font-display text-2xl md:text-3xl">
+                    Viagem confirmada!
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Recebemos o pagamento e sua viagem está garantida. Nossa
+                    equipe segue à disposição pra qualquer ajuste até a data
+                    da partida.
+                  </p>
                 </div>
               )}
             </div>
