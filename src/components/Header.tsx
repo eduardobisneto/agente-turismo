@@ -63,7 +63,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur print:hidden">
       <div className="container-tight flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 text-foreground">
           <Mountain className="h-6 w-6 text-primary" />

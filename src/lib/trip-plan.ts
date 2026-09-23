@@ -59,6 +59,8 @@ export interface ItemItinerario {
   local: string;
   descricao: string;
   imagem: string;
+  /** Duração aproximada da atividade (ex: "1h30"). */
+  duracao?: string | undefined;
 }
 
 /** Sugestão ainda não revelada ao cliente — fica na fila até a anterior ser respondida. */
@@ -157,6 +159,18 @@ function calcularValorPacote(selecoes: SelecaoDestino[]): number {
 
 const HORARIO_CAFE = "08:00";
 
+const RESTAURANTES_ALMOCO = [
+  "Restaurante Sabor da Terra",
+  "Cantina do Vale",
+  "Empório Regional",
+];
+const RESTAURANTES_JANTAR = [
+  "Recanto do Chef",
+  "Casa da Vovó",
+  "Point Gastronômico",
+];
+const PRATOS_SUGERIDOS = ["Massa", "Carne", "Frango", "Salada"];
+
 /**
  * Monta a fila completa de sugestões do analista pra um plano, dia a dia,
  * a partir dos destinos/datas escolhidos: hospedagem (com café da manhã já
@@ -182,6 +196,12 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
       indiceAtracao += 1;
       return atracao;
     };
+    let indiceRefeicao = 0;
+    const proximoPrato = () => {
+      const prato = PRATOS_SUGERIDOS[indiceRefeicao % PRATOS_SUGERIDOS.length]!;
+      indiceRefeicao += 1;
+      return prato;
+    };
 
     const cafeDaManha = (dia: number): Omit<ItemItinerario, "id"> => ({
       dia,
@@ -189,7 +209,36 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
       local: "Café da manhã no hotel",
       descricao: "Incluso na hospedagem.",
       imagem: hospedagemImg,
+      duracao: "30 min",
     });
+
+    const almoco = (dia: number): Omit<ItemItinerario, "id"> => {
+      const restaurante =
+        RESTAURANTES_ALMOCO[dia % RESTAURANTES_ALMOCO.length]!;
+      const prato = proximoPrato();
+      return {
+        dia,
+        horario: "12:30",
+        local: restaurante,
+        descricao: `Prato sugerido: ${prato}. Avise se preferir outra opção.`,
+        imagem: destino.imagem,
+        duracao: "1h",
+      };
+    };
+
+    const jantar = (dia: number): Omit<ItemItinerario, "id"> => {
+      const restaurante =
+        RESTAURANTES_JANTAR[dia % RESTAURANTES_JANTAR.length]!;
+      const prato = proximoPrato();
+      return {
+        dia,
+        horario: "19:30",
+        local: restaurante,
+        descricao: `Prato sugerido: ${prato}. Avise se preferir outra opção.`,
+        imagem: destino.imagem,
+        duracao: "1h30",
+      };
+    };
 
     // Dia 1 — hospedagem (com café da manhã incluso), manhã, almoço e tarde.
     fila.push({
@@ -212,19 +261,14 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         local: manha1?.nome ?? nomeCurto,
         descricao: manha1?.descricao ?? `Manhã livre em ${nomeCurto}.`,
         imagem: manha1?.imagem ?? destino.imagem,
+        duracao: "cerca de 2h",
       },
     });
 
     fila.push({
       texto: "Reservamos o almoço num restaurante local bem avaliado, pertinho do roteiro da manhã.",
       categoria: "refeicao",
-      itemItinerario: {
-        dia: 1,
-        horario: "12:30",
-        local: "Almoço",
-        descricao: "Restaurante local reservado pela nossa equipe.",
-        imagem: destino.imagem,
-      },
+      itemItinerario: almoco(1),
     });
 
     fila.push({
@@ -236,6 +280,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         local: `Centro de ${nomeCurto}`,
         descricao: "Tempo livre para lojinhas, cafés e artesanato local.",
         imagem: destino.imagem,
+        duracao: "cerca de 1h30",
       },
     });
 
@@ -255,6 +300,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           local: manha?.nome ?? nomeCurto,
           descricao: manha?.descricao ?? `Manhã livre em ${nomeCurto}.`,
           imagem: manha?.imagem ?? destino.imagem,
+          duracao: "cerca de 2h",
         },
         // O café da manhã não precisa de sugestão própria — é o mesmo
         // hotel já aceito no dia 1, então já vem preenchido automaticamente.
@@ -264,13 +310,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
       fila.push({
         texto: "Na volta, sugerimos o almoço num restaurante bem pertinho de onde vocês vão estar.",
         categoria: "refeicao",
-        itemItinerario: {
-          dia,
-          horario: "12:30",
-          local: "Almoço",
-          descricao: "Restaurante local reservado pela nossa equipe.",
-          imagem: destino.imagem,
-        },
+        itemItinerario: almoco(dia),
       });
 
       const tarde = proximaAtracao();
@@ -286,19 +326,14 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           local: tarde?.nome ?? nomeCurto,
           descricao: tarde?.descricao ?? `Tarde livre em ${nomeCurto}.`,
           imagem: tarde?.imagem ?? destino.imagem,
+          duracao: "cerca de 2h",
         },
       });
 
       fila.push({
         texto: "Pra fechar o dia, reservamos um jantar num restaurante bem avaliado por quem visita a região.",
         categoria: "refeicao",
-        itemItinerario: {
-          dia,
-          horario: "19:30",
-          local: "Jantar",
-          descricao: "Restaurante local reservado pela nossa equipe.",
-          imagem: destino.imagem,
-        },
+        itemItinerario: jantar(dia),
       });
 
       fila.push({
@@ -310,6 +345,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           local: "Bar com música ao vivo",
           descricao: "Programação noturna opcional, perto da hospedagem.",
           imagem: destino.imagem,
+          duracao: "cerca de 2h",
         },
       });
     }
@@ -326,6 +362,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           local: `Transfer de saída de ${nomeCurto}`,
           descricao: "Check-out e traslado de volta.",
           imagem: transporteImg,
+          duracao: "1h",
         },
       ];
     }
@@ -433,6 +470,58 @@ export function adicionarInteracao(
   return atualizado;
 }
 
+/**
+ * Revela a próxima sugestão da fila como uma nova interação pendente, ou,
+ * se a fila estiver vazia, avisa que a programação está completa
+ * ("pacote_pronto") — a menos que isso já tenha sido avisado antes.
+ */
+function revelarProximaSugestao(
+  interacoes: Interacao[],
+  filaSugestoes: SugestaoTemplate[],
+): { interacoes: Interacao[]; filaSugestoes: SugestaoTemplate[] } {
+  const [proximaSugestao, ...restoDaFila] = filaSugestoes;
+
+  if (proximaSugestao) {
+    return {
+      interacoes: [
+        ...interacoes,
+        {
+          id: crypto.randomUUID(),
+          autor: "analista",
+          criadoEm: new Date().toISOString(),
+          tipo: "sugestao",
+          sugestaoStatus: "pendente",
+          texto: proximaSugestao.texto,
+          categoria: proximaSugestao.categoria,
+          imagem: proximaSugestao.imagem,
+          itemItinerario: proximaSugestao.itemItinerario,
+          itensAutomaticos: proximaSugestao.itensAutomaticos,
+        },
+      ],
+      filaSugestoes: restoDaFila,
+    };
+  }
+
+  if (interacoes.some((i) => i.tipo === "pacote_pronto")) {
+    return { interacoes, filaSugestoes };
+  }
+
+  return {
+    interacoes: [
+      ...interacoes,
+      {
+        id: crypto.randomUUID(),
+        autor: "analista",
+        criadoEm: new Date().toISOString(),
+        tipo: "pacote_pronto",
+        texto:
+          "Sua viagem está com a programação completa! Vamos revisar tudo e fechar o pacote?",
+      },
+    ],
+    filaSugestoes,
+  };
+}
+
 export function responderSugestao(
   planoId: string,
   interacaoId: string,
@@ -452,6 +541,7 @@ export function responderSugestao(
   );
   let itinerario = atual.itinerario;
   let filaSugestoes = atual.filaSugestoes ?? [];
+  let sinalSolicitadoAgora = false;
 
   if (status === "aceita" && interacaoRespondida) {
     const novosItens = [
@@ -468,7 +558,11 @@ export function responderSugestao(
     }
 
     // A primeira sugestão aceita é sempre a hospedagem — é o gatilho pra
-    // pedir o sinal que libera acompanhar a etapa 6 em tempo real.
+    // pedir o sinal. O analista precisa dessa confirmação pra seguir com
+    // as próximas sugestões: a conversa pausa aqui, e só continua
+    // revelando a fila depois que o cliente pagar (ver
+    // `confirmarPagamentoSinal`), pra ele nunca ver a programação sendo
+    // montada — nem o pacote pronto pra revisão — antes de pagar.
     if (
       interacaoRespondida.categoria === "acomodacao" &&
       !interacoes.some((i) => i.tipo === "plano_pronto")
@@ -481,44 +575,17 @@ export function responderSugestao(
           criadoEm: new Date().toISOString(),
           tipo: "plano_pronto",
           texto:
-            "Show! Já vamos começar a preencher a programação da sua viagem. Quer acompanhar isso em tempo real na etapa 6?",
+            "Show! Pra eu seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, é só confirmar o pagamento do sinal.",
         },
       ];
+      sinalSolicitadoAgora = true;
     }
   }
 
-  const [proximaSugestao, ...restoDaFila] = filaSugestoes;
-  if (proximaSugestao) {
-    interacoes = [
-      ...interacoes,
-      {
-        id: crypto.randomUUID(),
-        autor: "analista",
-        criadoEm: new Date().toISOString(),
-        tipo: "sugestao",
-        sugestaoStatus: "pendente",
-        texto: proximaSugestao.texto,
-        categoria: proximaSugestao.categoria,
-        imagem: proximaSugestao.imagem,
-        itemItinerario: proximaSugestao.itemItinerario,
-        itensAutomaticos: proximaSugestao.itensAutomaticos,
-      },
-    ];
-    filaSugestoes = restoDaFila;
-  } else if (!interacoes.some((i) => i.tipo === "pacote_pronto")) {
-    // Não sobrou mais nenhuma sugestão — a viagem está com a programação
-    // completa, hora de revisar e fechar o pacote.
-    interacoes = [
-      ...interacoes,
-      {
-        id: crypto.randomUUID(),
-        autor: "analista",
-        criadoEm: new Date().toISOString(),
-        tipo: "pacote_pronto",
-        texto:
-          "Sua viagem está com a programação completa! Vamos revisar tudo e fechar o pacote?",
-      },
-    ];
+  if (!sinalSolicitadoAgora) {
+    const revelado = revelarProximaSugestao(interacoes, filaSugestoes);
+    interacoes = revelado.interacoes;
+    filaSugestoes = revelado.filaSugestoes;
   }
 
   const atualizado: PlanoViagem = {
@@ -602,7 +669,7 @@ export function aplicarAtualizacaoDoBackoffice(
       texto:
         atualizacao.tipo === "plano_pronto"
           ? (atualizacao.texto ??
-            "Seu plano está pronto! Quer ver a programação completa da viagem?")
+            "Show! Pra eu seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, é só confirmar o pagamento do sinal.")
           : atualizacao.tipo === "pacote_pronto"
             ? (atualizacao.texto ??
               "Sua viagem está com a programação completa! Vamos revisar tudo e fechar o pacote?")
@@ -634,8 +701,8 @@ export function aplicarAtualizacaoDoBackoffice(
 /**
  * Cliente confirma o pagamento do sinal de R$200 — pago pra remunerar o
  * trabalho do analista até aqui caso a viagem não seja fechada, e
- * descontado do pacote se for. Libera a etapa 6, onde a programação vai
- * aparecendo em tempo real conforme as sugestões forem sendo aceitas.
+ * descontado do pacote se for. Libera a etapa 6 (programação dia a dia),
+ * e a conversa pausada na etapa 5 volta a revelar as próximas sugestões.
  */
 export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
   const planos = readPlanos();
@@ -643,7 +710,19 @@ export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
   if (index === -1) return null;
 
   const atual = planos[index]!;
-  const atualizado: PlanoViagem = { ...atual, sinalPago: true };
+  // Pagamento confirmado — a conversa que ficou pausada pedindo o sinal
+  // agora segue, revelando a próxima sugestão da fila.
+  const revelado = revelarProximaSugestao(
+    atual.interacoes ?? [],
+    atual.filaSugestoes ?? [],
+  );
+
+  const atualizado: PlanoViagem = {
+    ...atual,
+    sinalPago: true,
+    interacoes: revelado.interacoes,
+    filaSugestoes: revelado.filaSugestoes,
+  };
   planos[index] = atualizado;
   window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
   window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
