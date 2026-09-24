@@ -320,6 +320,18 @@ const AEROPORTOS: Record<string, string> = {
   brotas: "Aeroporto Estadual de Araraquara (AQA)",
   ubatuba: "Aeroporto de São José dos Campos (SJK)",
 };
+const CONTATOS_TRANSFER = [
+  "Carlos Mendes (motorista) · (67) 99123-4567",
+  "Fernanda Lima (guia local) · (67) 99876-5432",
+  "Roberto Alves (motorista) · (67) 99456-7890",
+];
+const VEICULOS_TRANSFER = ["Van executiva", "Sedan confortável", "Micro-ônibus"];
+
+function gerarNumeroVoo(destinoSlug: string, indice: number): string {
+  let hash = 0;
+  for (const char of destinoSlug) hash = (hash * 31 + char.charCodeAt(0)) % 9000;
+  return `${1000 + ((hash + indice * 137) % 9000)}`;
+}
 
 /**
  * Monta a fila completa de sugestões do analista pra um plano, dia a dia,
@@ -410,6 +422,11 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
       categoria: "voo",
       opcoes: COMPANHIAS_AEREAS.map((c) => ({ id: c.toLowerCase(), label: c })),
     });
+    const numeroVooIda = gerarNumeroVoo(destino.slug, indiceSelecao);
+    const contatoTransfer =
+      CONTATOS_TRANSFER[indiceSelecao % CONTATOS_TRANSFER.length]!;
+    const veiculoTransfer =
+      VEICULOS_TRANSFER[indiceSelecao % VEICULOS_TRANSFER.length]!;
     fila.push({
       texto: `Encontramos um ótimo voo com a {{resposta}} até o ${aeroporto}, chegando por volta das 06:00. Podemos reservar?`,
       categoria: "voo",
@@ -417,7 +434,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         dia: 1,
         horario: "06:00",
         local: `Voo até ${nomeCurto}`,
-        descricao: `Chegada prevista no ${aeroporto}, com conexão conforme disponibilidade.`,
+        descricao: `Voo {{resposta}} nº ${numeroVooIda}, chegada prevista no ${aeroporto}, com conexão conforme disponibilidade.`,
         imagem: transporteImg,
         duracao: "cerca de 2h",
         endereco: aeroporto,
@@ -439,7 +456,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         dia: 1,
         horario: "07:00",
         local: "Transfer de chegada",
-        descricao: `Do ${aeroporto} até o ${hotel}.`,
+        descricao: `Transfer {{resposta}} do ${aeroporto} até o ${hotel}. Veículo: ${veiculoTransfer}. Contato: ${contatoTransfer}.`,
         imagem: transporteImg,
         duracao: "cerca de 1h",
         endereco: `Saindo do ${aeroporto}`,
@@ -464,7 +481,9 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
         dia: 1,
         horario: "09:30",
         local: manha1?.nome ?? nomeCurto,
-        descricao: manha1?.descricao ?? `Manhã livre em ${nomeCurto}.`,
+        descricao: manha1
+          ? `${manha1.descricao} Saída do ${hotel} · Transporte: ${veiculoTransfer}.`
+          : `Manhã livre em ${nomeCurto}.`,
         imagem: manha1?.imagem ?? destino.imagem,
         duracao: "cerca de 2h",
         endereco: manha1
@@ -513,7 +532,9 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           dia,
           horario: "09:30",
           local: manha?.nome ?? nomeCurto,
-          descricao: manha?.descricao ?? `Manhã livre em ${nomeCurto}.`,
+          descricao: manha
+            ? `${manha.descricao} Saída do ${hotel} · Transporte: ${veiculoTransfer}.`
+            : `Manhã livre em ${nomeCurto}.`,
           imagem: manha?.imagem ?? destino.imagem,
           duracao: "cerca de 2h",
           endereco: manha
@@ -542,7 +563,9 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           dia,
           horario: "15:00",
           local: tarde?.nome ?? nomeCurto,
-          descricao: tarde?.descricao ?? `Tarde livre em ${nomeCurto}.`,
+          descricao: tarde
+            ? `${tarde.descricao} Saída do ${hotel} · Transporte: ${veiculoTransfer}.`
+            : `Tarde livre em ${nomeCurto}.`,
           imagem: tarde?.imagem ?? destino.imagem,
           duracao: "cerca de 2h",
           endereco: tarde
@@ -582,7 +605,7 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           dia: noites + 1,
           horario: "10:00",
           local: `Transfer de saída de ${nomeCurto}`,
-          descricao: "Check-out e traslado de volta.",
+          descricao: `Check-out e traslado de volta ao ${aeroporto}. Veículo: ${veiculoTransfer}. Contato: ${contatoTransfer}.`,
           imagem: transporteImg,
           duracao: "1h",
           endereco: `Saindo do ${hotel} — ${destino.nome}`,

@@ -1780,7 +1780,7 @@ function DetalhePlanoView({
     return (
       <div className="space-y-8 text-left">
         <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="flex flex-wrap items-start justify-between gap-6 border-b border-border pb-4">
             <div>
               <p className="font-display text-xl">Aventura Organizada</p>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -1810,10 +1810,8 @@ function DetalhePlanoView({
               <p className="text-xs text-muted-foreground">{agente.email}</p>
             </div>
           </div>
-        </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <p className="text-sm">
               <span className="font-semibold text-foreground">Cliente:</span>{" "}
               {nomeUsuario}
