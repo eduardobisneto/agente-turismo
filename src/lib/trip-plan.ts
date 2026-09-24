@@ -462,10 +462,12 @@ export function salvarPlanoViagem(
   const agora = new Date().toISOString();
   const fila = gerarFilaDeSugestoes(plano.selecoes);
 
-  // A etapa 5 abre só com troca de mensagens — nenhuma sugestão aparece
-  // ainda. O analista revisa o plano, avisa do sinal e cobra — só depois
-  // do pagamento (ver `confirmarPagamentoSinal`) é que a primeira
-  // sugestão (a hospedagem) é revelada pra fila `filaSugestoes` inteira.
+  // A etapa 5 abre com uma conversa comercial de verdade — nenhuma
+  // sugestão aparece ainda. O analista dá boas-vindas, revisa o plano,
+  // EXPLICA o sinal (o que é e por que existe) e só pede a confirmação
+  // depois que o cliente topa. Só depois do pagamento (ver
+  // `confirmarPagamentoSinal`) é que a primeira sugestão (a hospedagem) é
+  // revelada pra fila `filaSugestoes` inteira.
   const interacoes: Interacao[] = [
     {
       id: crypto.randomUUID(),
@@ -478,7 +480,7 @@ export function salvarPlanoViagem(
       id: crypto.randomUUID(),
       autor: "analista",
       texto:
-        "Recebemos seu plano! Nosso time responde em até 34 horas com os próximos passos da sua viagem — já começamos a montar a proposta com base nos destinos e experiências que você escolheu.",
+        "Bem-vindo(a) à Aventura Organizada! Ficamos muito felizes que você tenha confiado a nós a organização da sua viagem e da diversão da sua família. Nosso time já está analisando tudo com carinho e volta com os próximos passos em até 24 horas.",
       criadoEm: horasDepois(agora, 3),
       tipo: "mensagem",
     },
@@ -486,17 +488,32 @@ export function salvarPlanoViagem(
       id: crypto.randomUUID(),
       autor: "analista",
       texto:
-        "Analisamos os destinos, datas e experiências que você escolheu, e já temos boas opções de hospedagem e passeios pra sua viagem.",
-      criadoEm: horasDepois(agora, 4),
+        "Já revisamos os destinos, datas e experiências que você escolheu — temos ótimas opções de hospedagem e passeios preparadas especialmente pra vocês.",
+      criadoEm: horasDepois(agora, 5),
       tipo: "mensagem",
     },
     {
       id: crypto.randomUUID(),
       autor: "analista",
+      texto:
+        "Antes de te mostrar as opções, preciso te explicar uma coisa: pra reservar cada etapa da viagem, cobramos um sinal de R$200. Esse valor garante o reconhecimento do nosso trabalho de pesquisa e montagem da viagem, e é 100% descontado do valor final caso você feche a viagem com a gente. Faz sentido pra você?",
       criadoEm: horasDepois(agora, 6),
+      tipo: "mensagem",
+    },
+    {
+      id: crypto.randomUUID(),
+      autor: "usuario",
+      texto: "Faz sentido sim! Pode seguir.",
+      criadoEm: horasDepois(agora, 6.5),
+      tipo: "mensagem",
+    },
+    {
+      id: crypto.randomUUID(),
+      autor: "analista",
+      criadoEm: horasDepois(agora, 7),
       tipo: "plano_pronto",
       texto:
-        "Pra seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, precisamos confirmar o sinal de R$200. Ele garante o reconhecimento do nosso trabalho de pesquisa e montagem da viagem, e é descontado do valor final caso você feche a viagem com a gente.",
+        "Perfeito! Então é só confirmar o pagamento do sinal que eu já sigo com as próximas sugestões e você acompanha a programação da viagem em tempo real.",
     },
   ];
 
@@ -737,7 +754,7 @@ export function aplicarAtualizacaoDoBackoffice(
       texto:
         atualizacao.tipo === "plano_pronto"
           ? (atualizacao.texto ??
-            "Pra seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, precisamos confirmar o sinal de R$200. Ele garante o reconhecimento do nosso trabalho de pesquisa e montagem da viagem, e é descontado do valor final caso você feche a viagem com a gente.")
+            "Perfeito! Então é só confirmar o pagamento do sinal que eu já sigo com as próximas sugestões e você acompanha a programação da viagem em tempo real.")
           : atualizacao.tipo === "pacote_pronto"
             ? (atualizacao.texto ??
               "Sua viagem está com a programação completa! Vamos revisar tudo e fechar o pacote?")

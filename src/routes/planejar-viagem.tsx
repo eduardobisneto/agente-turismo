@@ -2165,11 +2165,11 @@ function DetalhePlanoView({
                 </span>{" "}
                 Previsão de retorno até{" "}
                 {new Date(
-                  new Date(plano.criadoEm).getTime() + 34 * 60 * 60 * 1000,
+                  new Date(plano.criadoEm).getTime() + 24 * 60 * 60 * 1000,
                 ).toLocaleDateString("pt-BR")}{" "}
                 às{" "}
                 {new Date(
-                  new Date(plano.criadoEm).getTime() + 34 * 60 * 60 * 1000,
+                  new Date(plano.criadoEm).getTime() + 24 * 60 * 60 * 1000,
                 ).toLocaleTimeString("pt-BR", {
                   hour: "2-digit",
                   minute: "2-digit",
