@@ -34,6 +34,7 @@ import {
   getPlanosDoUsuario,
   noitesEntre,
   onPedirListaDeViagens,
+  responderPergunta,
   responderSugestao,
   salvarPlanoViagem,
   VALOR_SINAL_REAIS,
@@ -1594,6 +1595,11 @@ function DetalhePlanoView({
     if (atualizado) setPlanoAtual(atualizado);
   }
 
+  function handleResponderPergunta(interacaoId: string, opcaoId: string) {
+    const atualizado = responderPergunta(planoAtual.id, interacaoId, opcaoId);
+    if (atualizado) setPlanoAtual(atualizado);
+  }
+
   async function handlePagarSinal() {
     setPagando(true);
     // Sem gateway de pagamento de verdade por trás disso ainda — simula o
@@ -2546,7 +2552,32 @@ function DetalhePlanoView({
                                     loading="lazy"
                                   />
                                 )}
-                                {interacao.sugestaoStatus === "aceita" ? (
+                                {interacao.opcoes ? (
+                                  interacao.respostaEscolhida ? (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                                      <Check className="h-3.5 w-3.5" />
+                                      Respondido: {interacao.respostaEscolhida}
+                                    </span>
+                                  ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                      {interacao.opcoes.map((opcao) => (
+                                        <button
+                                          key={opcao.id}
+                                          type="button"
+                                          onClick={() =>
+                                            handleResponderPergunta(
+                                              interacao.id,
+                                              opcao.id,
+                                            )
+                                          }
+                                          className="inline-flex items-center gap-1.5 rounded-full border border-primary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary/10"
+                                        >
+                                          {opcao.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )
+                                ) : interacao.sugestaoStatus === "aceita" ? (
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
                                       <Check className="h-3.5 w-3.5" />

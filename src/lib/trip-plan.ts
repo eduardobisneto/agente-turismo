@@ -34,6 +34,12 @@ export type CategoriaSugestao =
   | "passeio"
   | "geral";
 
+/** Uma opção de resposta pra uma pergunta de múltipla escolha do analista. */
+export interface OpcaoResposta {
+  id: string;
+  label: string;
+}
+
 export interface Interacao {
   id: string;
   autor: "usuario" | "analista";
@@ -49,6 +55,15 @@ export interface Interacao {
   itemItinerario?: Omit<ItemItinerario, "id"> | undefined;
   /** Itens que entram junto, sem precisar de sugestão própria (ex: café da manhã dos dias seguintes, já incluso no mesmo hotel aceito antes). */
   itensAutomaticos?: Omit<ItemItinerario, "id">[] | undefined;
+  /**
+   * Building block comum pras perguntas de múltipla escolha do analista
+   * (companhia aérea, tipo de transfer, preferência de prato...) — quando
+   * presente, essa interação é uma pergunta com opções de resposta, não
+   * uma sugestão concreta pra aceitar/recusar. Ver `responderPergunta`.
+   */
+  opcoes?: OpcaoResposta[] | undefined;
+  /** Label da opção escolhida pelo cliente, depois de responder a pergunta. */
+  respostaEscolhida?: string | undefined;
 }
 
 export interface ItemItinerario {
@@ -73,13 +88,21 @@ export interface ItemItinerario {
   destinoSlug?: string | undefined;
 }
 
-/** Sugestão ainda não revelada ao cliente — fica na fila até a anterior ser respondida. */
+/**
+ * Sugestão (ou pergunta) ainda não revelada ao cliente — fica na fila até
+ * a anterior ser respondida. Quando `opcoes` está presente, é uma
+ * pergunta de múltipla escolha (sem `itemItinerario` próprio); senão, é
+ * uma sugestão concreta pra aceitar/recusar. O `texto` de uma sugestão
+ * pode conter o token `{{resposta}}`, substituído pela última opção
+ * escolhida numa pergunta anterior (ex: a companhia aérea preferida).
+ */
 export interface SugestaoTemplate {
   texto: string;
   categoria: CategoriaSugestao;
   imagem?: string;
-  itemItinerario: Omit<ItemItinerario, "id">;
+  itemItinerario?: Omit<ItemItinerario, "id">;
   itensAutomaticos?: Omit<ItemItinerario, "id">[];
+  opcoes?: OpcaoResposta[];
 }
 
 export interface PlanoViagem {
@@ -242,13 +265,6 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
       indiceAtracao += 1;
       return atracao;
     };
-    let indiceRefeicao = 0;
-    const proximoPrato = () => {
-      const prato = PRATOS_SUGERIDOS[indiceRefeicao % PRATOS_SUGERIDOS.length]!;
-      indiceRefeicao += 1;
-      return prato;
-    };
-
     const cafeDaManha = (dia: number): Omit<ItemItinerario, "id"> => ({
       dia,
       horario: HORARIO_CAFE,
@@ -259,16 +275,17 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
       endereco: enderecoHotel,
     });
 
+    // O prato preferido é perguntado uma vez só (ver pergunta logo
+    // abaixo) e reaproveitado em todas as refeições via {{resposta}}.
     const almoco = (dia: number): Omit<ItemItinerario, "id"> => {
       const restaurante =
         RESTAURANTES_ALMOCO[dia % RESTAURANTES_ALMOCO.length]!;
       const rua = RUAS_RESTAURANTES[dia % RUAS_RESTAURANTES.length]!;
-      const prato = proximoPrato();
       return {
         dia,
         horario: "12:30",
         local: restaurante,
-        descricao: `Prato sugerido: ${prato}. Avise se preferir outra opção.`,
+        descricao: "Prato sugerido: {{resposta}}. Avise se preferir outra opção.",
         imagem: destino.imagem,
         duracao: "1h",
         endereco: `${rua}, ${100 + dia * 10} — Centro, ${destino.nome}`,
@@ -279,23 +296,28 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
       const restaurante =
         RESTAURANTES_JANTAR[dia % RESTAURANTES_JANTAR.length]!;
       const rua = RUAS_RESTAURANTES[(dia + 1) % RUAS_RESTAURANTES.length]!;
-      const prato = proximoPrato();
       return {
         dia,
         horario: "19:30",
         local: restaurante,
-        descricao: `Prato sugerido: ${prato}. Avise se preferir outra opção.`,
+        descricao: "Prato sugerido: {{resposta}}. Avise se preferir outra opção.",
         imagem: destino.imagem,
         duracao: "1h30",
         endereco: `${rua}, ${200 + dia * 10} — Centro, ${destino.nome}`,
       };
     };
 
-    // Dia 1 — voo de ida, transfer de chegada, hospedagem (com café da
-    // manhã incluso), manhã, almoço e tarde.
+    // Dia 1 — voo de ida (pergunta a companhia aérea antes de sugerir),
+    // transfer de chegada (pergunta o tipo antes de sugerir), hospedagem
+    // (com café da manhã incluso), manhã, almoço e tarde.
     const aeroporto = AEROPORTOS[destino.slug] ?? `Aeroporto de ${nomeCurto}`;
     fila.push({
-      texto: `Pra chegar em ${nomeCurto}, temos boas opções de voo com ${COMPANHIAS_AEREAS.join(", ")} até o ${aeroporto}. Você tem preferência de companhia aérea?`,
+      texto: `Pra chegar em ${nomeCurto}, você tem preferência de companhia aérea?`,
+      categoria: "voo",
+      opcoes: COMPANHIAS_AEREAS.map((c) => ({ id: c.toLowerCase(), label: c })),
+    });
+    fila.push({
+      texto: `Encontramos um ótimo voo com a {{resposta}} até o ${aeroporto}, chegando por volta das 06:00. Podemos reservar?`,
       categoria: "voo",
       itemItinerario: {
         dia: 1,
@@ -309,7 +331,15 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
     });
 
     fila.push({
-      texto: `Do aeroporto até o ${hotel}, você prefere transfer privativo ou compartilhado?`,
+      texto: "Do aeroporto até a hospedagem, você prefere transfer privativo ou compartilhado?",
+      categoria: "transfer",
+      opcoes: [
+        { id: "privativo", label: "Privativo" },
+        { id: "compartilhado", label: "Compartilhado" },
+      ],
+    });
+    fila.push({
+      texto: `Reservamos o transfer {{resposta}} do ${aeroporto} até o ${hotel}. Podemos confirmar?`,
       categoria: "transfer",
       itemItinerario: {
         dia: 1,
@@ -347,6 +377,12 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           ? `Acesso pela zona rural de ${nomeCurto} — ${destino.nome}`
           : enderecoCentro,
       },
+    });
+
+    fila.push({
+      texto: "Pra acertar nas reservas dos restaurantes, qual tipo de prato vocês preferem?",
+      categoria: "refeicao",
+      opcoes: PRATOS_SUGERIDOS.map((p) => ({ id: p.toLowerCase(), label: p })),
     });
 
     fila.push({
@@ -464,7 +500,9 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
     // `destinoSlug` em cada objeto literal lá em cima.
     for (let i = inicioFila; i < fila.length; i++) {
       const sug = fila[i]!;
-      sug.itemItinerario = { ...sug.itemItinerario, destinoSlug: destino.slug };
+      if (sug.itemItinerario) {
+        sug.itemItinerario = { ...sug.itemItinerario, destinoSlug: destino.slug };
+      }
       if (sug.itensAutomaticos) {
         sug.itensAutomaticos = sug.itensAutomaticos.map((item) => ({
           ...item,
@@ -598,9 +636,24 @@ export function adicionarInteracao(
 }
 
 /**
- * Revela a próxima sugestão da fila como uma nova interação pendente, ou,
- * se a fila estiver vazia, avisa que a programação está completa
- * ("pacote_pronto") — a menos que isso já tenha sido avisado antes.
+ * Substitui o token `{{resposta}}` no texto de uma sugestão pela última
+ * opção que o cliente escolheu numa pergunta anterior (ex: a companhia
+ * aérea) — é assim que uma pergunta de múltipla escolha "alimenta" a
+ * sugestão concreta que vem logo depois dela na fila.
+ */
+function comRespostaAnterior(texto: string, interacoes: Interacao[]): string {
+  if (!texto.includes("{{resposta}}")) return texto;
+  const ultimaResposta = [...interacoes]
+    .reverse()
+    .find((i) => i.respostaEscolhida)?.respostaEscolhida;
+  return texto.replace("{{resposta}}", ultimaResposta ?? "a opção escolhida");
+}
+
+/**
+ * Revela a próxima sugestão (ou pergunta) da fila como uma nova interação
+ * pendente, ou, se a fila estiver vazia, avisa que a programação está
+ * completa ("pacote_pronto") — a menos que isso já tenha sido avisado
+ * antes.
  */
 function revelarProximaSugestao(
   interacoes: Interacao[],
@@ -609,6 +662,20 @@ function revelarProximaSugestao(
   const [proximaSugestao, ...restoDaFila] = filaSugestoes;
 
   if (proximaSugestao) {
+    const ehPergunta = !!proximaSugestao.opcoes;
+    // O token {{resposta}} pode aparecer tanto no texto do chat quanto na
+    // descrição do item que vai pra programação (ex: "Prato sugerido:
+    // {{resposta}}") — os dois precisam da substituição, senão o token
+    // literal vazaria pra etapa 6/7.
+    const itemItinerario = proximaSugestao.itemItinerario
+      ? {
+          ...proximaSugestao.itemItinerario,
+          descricao: comRespostaAnterior(
+            proximaSugestao.itemItinerario.descricao,
+            interacoes,
+          ),
+        }
+      : undefined;
     return {
       interacoes: [
         ...interacoes,
@@ -617,12 +684,13 @@ function revelarProximaSugestao(
           autor: "analista",
           criadoEm: new Date().toISOString(),
           tipo: "sugestao",
-          sugestaoStatus: "pendente",
-          texto: proximaSugestao.texto,
+          texto: comRespostaAnterior(proximaSugestao.texto, interacoes),
           categoria: proximaSugestao.categoria,
           imagem: proximaSugestao.imagem,
-          itemItinerario: proximaSugestao.itemItinerario,
+          itemItinerario,
           itensAutomaticos: proximaSugestao.itensAutomaticos,
+          opcoes: proximaSugestao.opcoes,
+          ...(ehPergunta ? {} : { sugestaoStatus: "pendente" as const }),
         },
       ],
       filaSugestoes: restoDaFila,
@@ -711,6 +779,58 @@ export function responderSugestao(
     filaSugestoes,
   };
 
+  planos[index] = atualizado;
+  window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
+  window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
+
+  return atualizado;
+}
+
+/**
+ * Cliente responde uma pergunta de múltipla escolha do analista (ex:
+ * companhia aérea, tipo de transfer, preferência de prato) — building
+ * block comum reaproveitado por qualquer categoria de sugestão, em vez
+ * de aceitar/recusar. A escolha fica registrada na própria pergunta e
+ * também aparece como mensagem da cliente na conversa; a próxima
+ * sugestão da fila é revelada normalmente, já com o texto adaptado à
+ * resposta (ver `comRespostaAnterior`).
+ */
+export function responderPergunta(
+  planoId: string,
+  interacaoId: string,
+  opcaoId: string,
+): PlanoViagem | null {
+  const planos = readPlanos();
+  const index = planos.findIndex((p) => p.id === planoId);
+  if (index === -1) return null;
+
+  const atual = planos[index]!;
+  const pergunta = (atual.interacoes ?? []).find((i) => i.id === interacaoId);
+  const opcaoEscolhida = pergunta?.opcoes?.find((o) => o.id === opcaoId);
+  const label = opcaoEscolhida?.label ?? opcaoId;
+
+  let interacoes = (atual.interacoes ?? []).map((i) =>
+    i.id === interacaoId ? { ...i, respostaEscolhida: label } : i,
+  );
+
+  // A resposta é dada pela cliente — aparece no escopo dela na conversa,
+  // igual ao aceite de uma sugestão comum.
+  interacoes = [
+    ...interacoes,
+    {
+      id: crypto.randomUUID(),
+      autor: "usuario",
+      criadoEm: new Date().toISOString(),
+      tipo: "mensagem",
+      texto: label,
+    },
+  ];
+
+  const revelado = revelarProximaSugestao(interacoes, atual.filaSugestoes ?? []);
+  interacoes = revelado.interacoes;
+  const filaSugestoes = revelado.filaSugestoes;
+
+  const atualizado: PlanoViagem = { ...atual, interacoes, filaSugestoes };
   planos[index] = atualizado;
   window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
   window.dispatchEvent(new Event(PLANOS_ATUALIZADOS_EVENT));
