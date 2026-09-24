@@ -63,6 +63,14 @@ export interface ItemItinerario {
   duracao?: string | undefined;
   /** Endereço/localização do local — já vem enriquecido a partir da etapa 6, pra versão final (etapa 7) ter o máximo de detalhe. */
   endereco?: string | undefined;
+  /**
+   * Destino a que esse item pertence — a viagem pode ter vários destinos
+   * (multi-destino), cada um com sua própria contagem de dias 1, 2, 3...
+   * Usado pra separar a programação por destino nas etapas 6 e 7, em vez
+   * de misturar dias de destinos diferentes que compartilham o mesmo
+   * número.
+   */
+  destinoSlug?: string | undefined;
 }
 
 /** Sugestão ainda não revelada ao cliente — fica na fila até a anterior ser respondida. */
@@ -207,10 +215,20 @@ const AEROPORTOS: Record<string, string> = {
 function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
   const fila: SugestaoTemplate[] = [];
 
-  for (const [indiceSelecao, selecao] of selecoes.entries()) {
+  // Viagem multi-destino: cada destino é tratado como um "pacote" próprio,
+  // em ordem cronológica (primeiro o destino com data de início mais
+  // cedo) — as sugestões de um destino só terminam pra depois começarem
+  // as do próximo.
+  const selecoesOrdenadas = [...selecoes].sort((a, b) => {
+    if (!a.dataInicio || !b.dataInicio) return 0;
+    return a.dataInicio.localeCompare(b.dataInicio);
+  });
+
+  for (const [indiceSelecao, selecao] of selecoesOrdenadas.entries()) {
     const destino = destinos.find((d) => d.slug === selecao.destinoSlug);
     if (!destino || !selecao.dataInicio || !selecao.dataFim) continue;
 
+    const inicioFila = fila.length;
     const nomeCurto = destino.nome.split(",")[0] ?? destino.nome;
     const noites = noitesEntre(selecao.dataInicio, selecao.dataFim) ?? 1;
     const atracoes = destino.atracoes;
@@ -440,6 +458,19 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
           endereco: `Saindo do ${hotel} — ${destino.nome}`,
         },
       ];
+    }
+
+    // Marca todos os itens desse destino de uma vez, em vez de repetir
+    // `destinoSlug` em cada objeto literal lá em cima.
+    for (let i = inicioFila; i < fila.length; i++) {
+      const sug = fila[i]!;
+      sug.itemItinerario = { ...sug.itemItinerario, destinoSlug: destino.slug };
+      if (sug.itensAutomaticos) {
+        sug.itensAutomaticos = sug.itensAutomaticos.map((item) => ({
+          ...item,
+          destinoSlug: destino.slug,
+        }));
+      }
     }
   }
 

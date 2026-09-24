@@ -1544,7 +1544,9 @@ function DetalhePlanoView({
   const [modalPagamento, setModalPagamento] = useState<
     "sinal" | "pacote" | null
   >(null);
-  const [diaProgramacaoAtual, setDiaProgramacaoAtual] = useState(1);
+  const [diaProgramacaoAtual, setDiaProgramacaoAtual] = useState<
+    Record<string, number>
+  >({});
 
   const interacoes = planoAtual.interacoes ?? [];
   const pacoteRevisavel = interacoes.some((i) => i.tipo === "pacote_pronto");
@@ -1697,13 +1699,15 @@ function DetalhePlanoView({
     const totalCriancas = plano.selecoes.reduce((t, s) => t + s.criancas, 0);
     const totalNoites = noitesEntre(inicioGeral, fimGeral);
 
-    const itensOrdenados = [...planoAtual.itinerario].sort((a, b) =>
-      a.dia !== b.dia ? a.dia - b.dia : a.horario.localeCompare(b.horario),
-    );
+    const selecoesOrdenadas = [...plano.selecoes].sort((a, b) => {
+      if (!a.dataInicio || !b.dataInicio) return 0;
+      return a.dataInicio.localeCompare(b.dataInicio);
+    });
+    const multiDestino = selecoesOrdenadas.length > 1;
 
-    function dataAbsoluta(dia: number): string {
-      if (!inicioGeral) return `Dia ${dia}`;
-      const data = new Date(`${inicioGeral}T00:00:00`);
+    function dataAbsoluta(dataInicioDestino: string | undefined, dia: number): string {
+      if (!dataInicioDestino) return `Dia ${dia}`;
+      const data = new Date(`${dataInicioDestino}T00:00:00`);
       data.setDate(data.getDate() + (dia - 1));
       return data.toLocaleDateString("pt-BR");
     }
@@ -1784,40 +1788,57 @@ function DetalhePlanoView({
           </div>
         </div>
 
-        <div>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Atividades
-          </h3>
-          <div className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border">
-            {itensOrdenados.map((item) => (
-              <div
-                key={item.id}
-                className="grid gap-1 p-4 sm:grid-cols-[150px_1fr] sm:gap-4"
-              >
-                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <p>{dataAbsoluta(item.dia)}</p>
-                  <p className="mt-0.5">
-                    {item.horario}
-                    {item.duracao ? ` · ${item.duracao}` : ""}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {item.local}
-                  </p>
-                  {item.endereco && (
-                    <p className="text-xs text-muted-foreground">
-                      {item.endereco}
-                    </p>
-                  )}
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {item.descricao}
-                  </p>
-                </div>
+        {selecoesOrdenadas.map((selecao) => {
+          const itensDoDestino = planoAtual.itinerario
+            .filter((item) => item.destinoSlug === selecao.destinoSlug)
+            .sort((a, b) =>
+              a.dia !== b.dia ? a.dia - b.dia : a.horario.localeCompare(b.horario),
+            );
+          if (itensDoDestino.length === 0) return null;
+
+          const destinoInfo = destinos.find(
+            (d) => d.slug === selecao.destinoSlug,
+          );
+
+          return (
+            <div key={selecao.destinoSlug}>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
+                {multiDestino
+                  ? `Atividades — ${destinoInfo?.nome ?? selecao.destinoSlug}`
+                  : "Atividades"}
+              </h3>
+              <div className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border">
+                {itensDoDestino.map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid gap-1 p-4 sm:grid-cols-[150px_1fr] sm:gap-4"
+                  >
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <p>{dataAbsoluta(selecao.dataInicio, item.dia)}</p>
+                      <p className="mt-0.5">
+                        {item.horario}
+                        {item.duracao ? ` · ${item.duracao}` : ""}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {item.local}
+                      </p>
+                      {item.endereco && (
+                        <p className="text-xs text-muted-foreground">
+                          {item.endereco}
+                        </p>
+                      )}
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {item.descricao}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          );
+        })}
 
         <div className="rounded-2xl border border-border bg-card p-5">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
@@ -1876,13 +1897,15 @@ function DetalhePlanoView({
     );
   }
 
-  /** Etapa 7 (interativa): navega um dia de cada vez, igual às etapas do passo a passo. */
+  /**
+   * Etapa 6 (interativa): navega um dia de cada vez, igual às etapas do
+   * passo a passo. Viagem multi-destino vira um bloco por destino, em
+   * ordem cronológica, cada um com sua própria navegação de dias — nunca
+   * dias de destinos diferentes misturados só porque compartilham o
+   * mesmo número.
+   */
   function renderProgramacaoPorDia() {
-    const dias = Array.from(
-      new Set(planoAtual.itinerario.map((item) => item.dia)),
-    ).sort((a, b) => a - b);
-
-    if (dias.length === 0) {
+    if (planoAtual.itinerario.length === 0) {
       return (
         <p className="text-center text-sm text-muted-foreground">
           Sua programação ainda está sendo montada — volte em instantes.
@@ -1890,42 +1913,78 @@ function DetalhePlanoView({
       );
     }
 
-    const diaAtivo = dias.includes(diaProgramacaoAtual)
-      ? diaProgramacaoAtual
-      : dias[0]!;
-    const itensDoDia = planoAtual.itinerario.filter(
-      (item) => item.dia === diaAtivo,
-    );
+    const selecoesOrdenadas = [...plano.selecoes].sort((a, b) => {
+      if (!a.dataInicio || !b.dataInicio) return 0;
+      return a.dataInicio.localeCompare(b.dataInicio);
+    });
+    const multiDestino = selecoesOrdenadas.length > 1;
 
     return (
-      <>
-        <div className="flex items-center justify-center gap-1">
-          {dias.map((dia, index) => (
-            <div key={dia} className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setDiaProgramacaoAtual(dia)}
-                aria-label={`Ir para o dia ${dia}`}
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                  dia === diaAtivo
-                    ? "bg-primary text-primary-foreground"
-                    : "border-2 border-primary bg-transparent text-primary hover:bg-primary/10"
-                }`}
-              >
-                {dia}
-              </button>
-              {index < dias.length - 1 && (
-                <div className="h-0.5 w-8 bg-primary" />
-              )}
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-sm font-medium text-muted-foreground">
-          Dia {diaAtivo}
-        </p>
+      <div className="space-y-10">
+        {selecoesOrdenadas.map((selecao) => {
+          const itensDoDestino = planoAtual.itinerario.filter(
+            (item) => item.destinoSlug === selecao.destinoSlug,
+          );
+          if (itensDoDestino.length === 0) return null;
 
-        {renderItensDoDia(itensDoDia)}
-      </>
+          const destinoInfo = destinos.find(
+            (d) => d.slug === selecao.destinoSlug,
+          );
+          const dias = Array.from(
+            new Set(itensDoDestino.map((item) => item.dia)),
+          ).sort((a, b) => a - b);
+          const diaSelecionado = diaProgramacaoAtual[selecao.destinoSlug] ?? 1;
+          const diaAtivo = dias.includes(diaSelecionado)
+            ? diaSelecionado
+            : dias[0]!;
+          const itensDoDia = itensDoDestino.filter(
+            (item) => item.dia === diaAtivo,
+          );
+
+          return (
+            <div key={selecao.destinoSlug}>
+              {multiDestino && (
+                <h3 className="text-center font-display text-xl">
+                  {destinoInfo?.nome ?? selecao.destinoSlug}
+                </h3>
+              )}
+              <div
+                className={`flex items-center justify-center gap-1 ${multiDestino ? "mt-4" : ""}`}
+              >
+                {dias.map((dia, index) => (
+                  <div key={dia} className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDiaProgramacaoAtual((atual) => ({
+                          ...atual,
+                          [selecao.destinoSlug]: dia,
+                        }))
+                      }
+                      aria-label={`Ir para o dia ${dia}${destinoInfo ? ` de ${destinoInfo.nome}` : ""}`}
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                        dia === diaAtivo
+                          ? "bg-primary text-primary-foreground"
+                          : "border-2 border-primary bg-transparent text-primary hover:bg-primary/10"
+                      }`}
+                    >
+                      {dia}
+                    </button>
+                    {index < dias.length - 1 && (
+                      <div className="h-0.5 w-8 bg-primary" />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-center text-sm font-medium text-muted-foreground">
+                Dia {diaAtivo}
+              </p>
+
+              <div className="mt-4">{renderItensDoDia(itensDoDia)}</div>
+            </div>
+          );
+        })}
+      </div>
     );
   }
 
