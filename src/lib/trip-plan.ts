@@ -188,6 +188,13 @@ const RUAS_RESTAURANTES = [
   "Avenida Central",
   "Rua do Comércio",
 ];
+const COMPANHIAS_AEREAS = ["LATAM", "GOL", "Azul"];
+const AEROPORTOS: Record<string, string> = {
+  bonito: "Aeroporto Internacional de Campo Grande (CGR)",
+  socorro: "Aeroporto Internacional de Viracopos, Campinas (VCP)",
+  brotas: "Aeroporto Estadual de Araraquara (AQA)",
+  ubatuba: "Aeroporto de São José dos Campos (SJK)",
+};
 
 /**
  * Monta a fila completa de sugestões do analista pra um plano, dia a dia,
@@ -266,7 +273,37 @@ function gerarFilaDeSugestoes(selecoes: SelecaoDestino[]): SugestaoTemplate[] {
       };
     };
 
-    // Dia 1 — hospedagem (com café da manhã incluso), manhã, almoço e tarde.
+    // Dia 1 — voo de ida, transfer de chegada, hospedagem (com café da
+    // manhã incluso), manhã, almoço e tarde.
+    const aeroporto = AEROPORTOS[destino.slug] ?? `Aeroporto de ${nomeCurto}`;
+    fila.push({
+      texto: `Pra chegar em ${nomeCurto}, temos boas opções de voo com ${COMPANHIAS_AEREAS.join(", ")} até o ${aeroporto}. Você tem preferência de companhia aérea?`,
+      categoria: "voo",
+      itemItinerario: {
+        dia: 1,
+        horario: "06:00",
+        local: `Voo até ${nomeCurto}`,
+        descricao: `Chegada prevista no ${aeroporto}, com conexão conforme disponibilidade.`,
+        imagem: transporteImg,
+        duracao: "cerca de 2h",
+        endereco: aeroporto,
+      },
+    });
+
+    fila.push({
+      texto: `Do aeroporto até o ${hotel}, você prefere transfer privativo ou compartilhado?`,
+      categoria: "transfer",
+      itemItinerario: {
+        dia: 1,
+        horario: "07:00",
+        local: "Transfer de chegada",
+        descricao: `Do ${aeroporto} até o ${hotel}.`,
+        imagem: transporteImg,
+        duracao: "cerca de 1h",
+        endereco: `Saindo do ${aeroporto}`,
+      },
+    });
+
     fila.push({
       texto: `Encontramos uma ótima opção de hospedagem no ${hotel}, em ${nomeCurto}, com café da manhã incluso servido a partir das ${HORARIO_CAFE}. Podemos reservar?`,
       categoria: "acomodacao",
@@ -459,7 +496,7 @@ export function salvarPlanoViagem(
       criadoEm: horasDepois(agora, 6),
       tipo: "plano_pronto",
       texto:
-        "Show! Pra eu seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, é só confirmar o pagamento do sinal.",
+        "Pra seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, precisamos confirmar o sinal de R$200. Ele garante o reconhecimento do nosso trabalho de pesquisa e montagem da viagem, e é descontado do valor final caso você feche a viagem com a gente.",
     },
   ];
 
@@ -598,6 +635,23 @@ export function responderSugestao(
     }
   }
 
+  // Quem aceita ou recusa é o cliente — isso precisa aparecer no escopo
+  // dele na conversa (autor "usuario"), não só como um selo dentro da
+  // mensagem do analista.
+  interacoes = [
+    ...interacoes,
+    {
+      id: crypto.randomUUID(),
+      autor: "usuario",
+      criadoEm: new Date().toISOString(),
+      tipo: "mensagem",
+      texto:
+        status === "aceita"
+          ? "Aceito! Pode reservar."
+          : "Não, obrigado. Vamos deixar essa de fora.",
+    },
+  ];
+
   const revelado = revelarProximaSugestao(interacoes, atual.filaSugestoes ?? []);
   interacoes = revelado.interacoes;
   const filaSugestoes = revelado.filaSugestoes;
@@ -683,7 +737,7 @@ export function aplicarAtualizacaoDoBackoffice(
       texto:
         atualizacao.tipo === "plano_pronto"
           ? (atualizacao.texto ??
-            "Show! Pra eu seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, é só confirmar o pagamento do sinal.")
+            "Pra seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, precisamos confirmar o sinal de R$200. Ele garante o reconhecimento do nosso trabalho de pesquisa e montagem da viagem, e é descontado do valor final caso você feche a viagem com a gente.")
           : atualizacao.tipo === "pacote_pronto"
             ? (atualizacao.texto ??
               "Sua viagem está com a programação completa! Vamos revisar tudo e fechar o pacote?")
@@ -725,10 +779,21 @@ export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
   if (index === -1) return null;
 
   const atual = planos[index]!;
-  // Pagamento confirmado — revela a primeira sugestão da fila (a
+  // Quem paga é o cliente — o pagamento entra no escopo dele na conversa
+  // (autor "usuario"), antes de revelar a primeira sugestão da fila (a
   // hospedagem), que até aqui ainda não tinha aparecido pro cliente.
+  const comConfirmacaoDoCliente = [
+    ...(atual.interacoes ?? []),
+    {
+      id: crypto.randomUUID(),
+      autor: "usuario" as const,
+      criadoEm: new Date().toISOString(),
+      tipo: "mensagem" as const,
+      texto: `Sinal de R$${VALOR_SINAL_REAIS} pago!`,
+    },
+  ];
   const revelado = revelarProximaSugestao(
-    atual.interacoes ?? [],
+    comConfirmacaoDoCliente,
     atual.filaSugestoes ?? [],
   );
 

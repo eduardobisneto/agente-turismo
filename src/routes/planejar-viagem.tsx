@@ -1398,10 +1398,16 @@ function ListaPlanosView({
                     className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide ${
                       plano.pacoteFechado
                         ? "bg-green-100 text-green-900"
-                        : "bg-amber-100 text-amber-900"
+                        : plano.pacoteRevisado
+                          ? "bg-blue-100 text-blue-900"
+                          : "bg-amber-100 text-amber-900"
                     }`}
                   >
-                    {plano.pacoteFechado ? "Contrato fechado" : "Em análise"}
+                    {plano.pacoteFechado
+                      ? "Contrato fechado"
+                      : plano.pacoteRevisado
+                        ? "Aguardando pagamento"
+                        : "Em análise"}
                   </span>
                 </button>
               );
@@ -2131,20 +2137,9 @@ function DetalhePlanoView({
               <span className="text-sm font-semibold uppercase tracking-wider text-primary">
                 Planejar viagem
               </span>
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
-                <h1 className="text-balance text-3xl md:text-4xl">
-                  Viagem de {nomeUsuario} para {juntarNomes(nomesDestinos)}
-                </h1>
-                <span
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide ${
-                    planoAtual.pacoteFechado
-                      ? "bg-green-100 text-green-900"
-                      : "bg-amber-100 text-amber-900"
-                  }`}
-                >
-                  {planoAtual.pacoteFechado ? "Contrato fechado" : "Em análise"}
-                </span>
-              </div>
+              <h1 className="mt-3 text-balance text-3xl md:text-4xl">
+                Viagem de {nomeUsuario} para {juntarNomes(nomesDestinos)}
+              </h1>
               <p className="mt-4 text-muted-foreground">
                 {inicioGeral && fimGeral
                   ? `${new Date(`${inicioGeral}T00:00:00`).toLocaleDateString("pt-BR")} a ${new Date(`${fimGeral}T00:00:00`).toLocaleDateString("pt-BR")}`
@@ -2152,8 +2147,23 @@ function DetalhePlanoView({
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Enviado em{" "}
-                {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}. Previsão
-                de retorno até{" "}
+                {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}.{" "}
+                <span
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide ${
+                    planoAtual.pacoteFechado
+                      ? "bg-green-100 text-green-900"
+                      : planoAtual.pacoteRevisado
+                        ? "bg-blue-100 text-blue-900"
+                        : "bg-amber-100 text-amber-900"
+                  }`}
+                >
+                  {planoAtual.pacoteFechado
+                    ? "Contrato fechado"
+                    : planoAtual.pacoteRevisado
+                      ? "Aguardando pagamento"
+                      : "Em análise"}
+                </span>{" "}
+                Previsão de retorno até{" "}
                 {new Date(
                   new Date(plano.criadoEm).getTime() + 34 * 60 * 60 * 1000,
                 ).toLocaleDateString("pt-BR")}{" "}

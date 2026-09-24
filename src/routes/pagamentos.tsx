@@ -92,7 +92,7 @@ function PagamentosPage() {
                       : "bg-amber-100 text-amber-900"
                   }`}
                 >
-                  {pagamento.status === "pago" ? "Pago" : "Pendente"}
+                  {pagamento.status === "pago" ? "Pago" : "Aguardando pagamento"}
                 </span>
               </button>
             ))}
