@@ -2776,10 +2776,19 @@ function DetalhePlanoView({
                             {interacao.tipo === "pacote_pronto" && (
                               <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
                                 {planoAtual.pacoteFechado ? (
-                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-                                    <Check className="h-3.5 w-3.5" />
-                                    Pacote fechado
-                                  </span>
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                                      <Check className="h-3.5 w-3.5" />
+                                      Pacote fechado
+                                    </span>
+                                    <Link
+                                      to="/pagamentos/$pagamentoId"
+                                      params={{ pagamentoId: `${planoAtual.id}:pacote` }}
+                                      className="text-xs font-semibold uppercase tracking-wide text-primary hover:underline"
+                                    >
+                                      Ver detalhes do pagamento
+                                    </Link>
+                                  </div>
                                 ) : (
                                   <button
                                     type="button"

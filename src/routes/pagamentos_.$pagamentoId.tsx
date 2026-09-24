@@ -15,6 +15,15 @@ const METODO_LABEL: Record<string, string> = {
   debito: "Cartão de débito",
   credito: "Cartão de crédito",
   boleto: "Boleto bancário",
+  outro: "Não informado",
+};
+
+const INFORMACOES_LABEL: Record<string, string> = {
+  pix: "Chave Pix",
+  debito: "Dados do cartão",
+  credito: "Dados do cartão",
+  boleto: "Linha digitável",
+  outro: "Informações do pagamento",
 };
 
 export const Route = createFileRoute("/pagamentos_/$pagamentoId")({
@@ -162,17 +171,43 @@ function DetalhePagamentoPage() {
             {pago && pagamento.detalhes && (
               <div className="rounded-2xl border border-border bg-card p-6">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Informações do pagamento
+                  {INFORMACOES_LABEL[pagamento.detalhes.metodo] ??
+                    "Informações do pagamento"}
                 </p>
                 <p className="mt-1 text-sm text-foreground">
                   {pagamento.detalhes.dadosMascarados}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Por segurança (LGPD), exibimos apenas dados mascarados —
-                  nunca o número completo do cartão ou dados sensíveis.
-                </p>
+                {pagamento.detalhes.metodo !== "outro" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Por segurança (LGPD), exibimos apenas dados mascarados —
+                    nunca o número completo do cartão ou dados sensíveis.
+                  </p>
+                )}
+                {pagamento.detalhes.metodo === "boleto" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Pagamentos por boleto dependem de compensação bancária,
+                    que pode levar até 3 dias úteis.
+                  </p>
+                )}
 
                 <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+                  {pagamento.detalhes.metodo === "credito" &&
+                    !!pagamento.detalhes.parcelas &&
+                    pagamento.detalhes.parcelas > 1 && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Parcelamento
+                        </p>
+                        <p className="mt-1 text-sm text-foreground">
+                          {pagamento.detalhes.parcelas}x de R${" "}
+                          {(
+                            pagamento.valorReais / pagamento.detalhes.parcelas
+                          ).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    )}
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Código de confirmação

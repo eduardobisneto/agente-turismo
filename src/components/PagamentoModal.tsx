@@ -12,7 +12,11 @@ import {
 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
-import type { DetalhesPagamentoRealizado } from "@/lib/trip-plan";
+import {
+  gerarCodigoConfirmacao,
+  gerarNotaFiscalUrl,
+  type DetalhesPagamentoRealizado,
+} from "@/lib/trip-plan";
 
 type MetodoPagamento = "pix" | "debito" | "credito" | "boleto";
 
@@ -22,41 +26,6 @@ const METODOS: { id: MetodoPagamento; label: string; icon: typeof Wallet }[] = [
   { id: "credito", label: "Crédito", icon: CreditCard },
   { id: "boleto", label: "Boleto", icon: Barcode },
 ];
-
-function gerarCodigoConfirmacao(): string {
-  return `AUTH${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-}
-
-/**
- * Mock de nota fiscal — sem backend de verdade, gera uma paginazinha HTML
- * como data URI (o navegador abre/baixa normalmente) já com os dados do
- * pagamento, em vez de um link morto.
- */
-function gerarNotaFiscalUrl(params: {
-  titulo: string;
-  valorReais: number;
-  metodoLabel: string;
-  codigoConfirmacao: string;
-}): string {
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Nota fiscal — Aventura Organizada</title>
-<style>body{font-family:system-ui,sans-serif;max-width:480px;margin:40px auto;color:#1c2b1c;padding:0 20px}
-h1{font-size:1.15rem;margin-bottom:0.25rem}
-.sub{color:#6b7a6b;font-size:0.85rem;margin-bottom:1.5rem}
-dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:0.9rem}
-dt{color:#6b7a6b}dd{margin:0;font-weight:600}</style>
-</head><body>
-<h1>Aventura Organizada</h1>
-<p class="sub">Nota fiscal de serviço — CNPJ 12.345.678/0001-90</p>
-<dl>
-<dt>Referente a</dt><dd>${params.titulo}</dd>
-<dt>Valor</dt><dd>R$ ${params.valorReais.toLocaleString("pt-BR")}</dd>
-<dt>Meio de pagamento</dt><dd>${params.metodoLabel}</dd>
-<dt>Código de confirmação</dt><dd>${params.codigoConfirmacao}</dd>
-<dt>Emitida em</dt><dd>${new Date().toLocaleString("pt-BR")}</dd>
-</dl>
-</body></html>`;
-  return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
-}
 
 function formatarNumeroCartao(valor: string): string {
   const digitos = valor.replace(/\D/g, "").slice(0, 16);
@@ -158,8 +127,7 @@ export function PagamentoModal({
       dadosMascarados = `Boleto terminado em ${linhaBoleto.slice(-4)}`;
     } else {
       const ultimosDigitos = numeroCartao.replace(/\D/g, "").slice(-4);
-      const parcelasTexto = metodo === "credito" && parcelas > 1 ? ` em ${parcelas}x` : "";
-      dadosMascarados = `Cartão •••• •••• •••• ${ultimosDigitos} — titular ${mascararNome(nomeCartao)}${parcelasTexto}`;
+      dadosMascarados = `Cartão •••• •••• •••• ${ultimosDigitos} — titular ${mascararNome(nomeCartao)}`;
     }
 
     const notaFiscalUrl = gerarNotaFiscalUrl({
@@ -175,6 +143,7 @@ export function PagamentoModal({
       codigoConfirmacao,
       codigoRetorno,
       notaFiscalUrl,
+      parcelas: metodo === "credito" ? parcelas : undefined,
     });
   }
 

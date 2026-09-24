@@ -115,11 +115,76 @@ export interface SugestaoTemplate {
  * confirmação e retorno da operadora, e o link da nota fiscal.
  */
 export interface DetalhesPagamentoRealizado {
-  metodo: "pix" | "debito" | "credito" | "boleto";
+  /** "outro" só aparece em pagamentos antigos, confirmados antes de o app passar a registrar o meio de pagamento. */
+  metodo: "pix" | "debito" | "credito" | "boleto" | "outro";
   dadosMascarados: string;
   codigoConfirmacao: string;
   codigoRetorno: string;
   notaFiscalUrl: string;
+  /** Só existe pra crédito parcelado — a tela de detalhe do pagamento mostra esse campo a mais só nesse caso. */
+  parcelas?: number | undefined;
+}
+
+export function gerarCodigoConfirmacao(): string {
+  return `AUTH${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+/**
+ * Mock de nota fiscal — sem backend de verdade, gera uma paginazinha HTML
+ * como data URI (o navegador abre/baixa normalmente) já com os dados do
+ * pagamento, em vez de um link morto.
+ */
+export function gerarNotaFiscalUrl(params: {
+  titulo: string;
+  valorReais: number;
+  metodoLabel: string;
+  codigoConfirmacao: string;
+}): string {
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Nota fiscal — Aventura Organizada</title>
+<style>body{font-family:system-ui,sans-serif;max-width:480px;margin:40px auto;color:#1c2b1c;padding:0 20px}
+h1{font-size:1.15rem;margin-bottom:0.25rem}
+.sub{color:#6b7a6b;font-size:0.85rem;margin-bottom:1.5rem}
+dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:0.9rem}
+dt{color:#6b7a6b}dd{margin:0;font-weight:600}</style>
+</head><body>
+<h1>Aventura Organizada</h1>
+<p class="sub">Nota fiscal de serviço — CNPJ 12.345.678/0001-90</p>
+<dl>
+<dt>Referente a</dt><dd>${params.titulo}</dd>
+<dt>Valor</dt><dd>R$ ${params.valorReais.toLocaleString("pt-BR")}</dd>
+<dt>Meio de pagamento</dt><dd>${params.metodoLabel}</dd>
+<dt>Código de confirmação</dt><dd>${params.codigoConfirmacao}</dd>
+<dt>Emitida em</dt><dd>${new Date().toLocaleString("pt-BR")}</dd>
+</dl>
+</body></html>`;
+  return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+}
+
+/**
+ * Alguns planos foram pagos antes de o app passar a registrar o meio de
+ * pagamento (sinalPagamentoDetalhes/pacotePagamentoDetalhes) — sem isso a
+ * tela de detalhe do pagamento ficava incompleta mesmo pra um pagamento já
+ * confirmado. Preenche um registro honesto (metodo "outro", sem fingir um
+ * cartão ou Pix que não existiu) só pra esses casos legados.
+ */
+function detalhesLegados(
+  descricao: string,
+  valorReais: number,
+): DetalhesPagamentoRealizado {
+  const codigoConfirmacao = gerarCodigoConfirmacao();
+  return {
+    metodo: "outro",
+    dadosMascarados:
+      "Pagamento confirmado antes do registro detalhado do meio de pagamento nesta versão do sistema.",
+    codigoConfirmacao,
+    codigoRetorno: `00-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+    notaFiscalUrl: gerarNotaFiscalUrl({
+      titulo: descricao,
+      valorReais,
+      metodoLabel: "Não informado",
+      codigoConfirmacao,
+    }),
+  };
 }
 
 export interface PlanoViagem {
@@ -1048,11 +1113,34 @@ export function fecharPacote(
   if (index === -1) return null;
 
   const atual = planos[index]!;
+  const valorFinal = atual.valorPacoteReais - VALOR_SINAL_REAIS;
+  // Espelha o evento gerado no pagamento do sinal — o cliente vê no
+  // histórico o valor pago e o analista confirma o fechamento, em vez do
+  // pagamento simplesmente "sumir" sem deixar rastro na conversa.
+  const interacoes = [
+    ...(atual.interacoes ?? []),
+    {
+      id: crypto.randomUUID(),
+      autor: "usuario" as const,
+      criadoEm: new Date().toISOString(),
+      tipo: "mensagem" as const,
+      texto: `Pagamento final de R$${valorFinal.toLocaleString("pt-BR")} pago! Pacote fechado.`,
+    },
+    {
+      id: crypto.randomUUID(),
+      autor: "analista" as const,
+      criadoEm: new Date().toISOString(),
+      tipo: "mensagem" as const,
+      texto:
+        "Recebemos o pagamento e sua viagem está garantida! Foi um prazer organizar tudo pra vocês — qualquer ajuste, é só chamar por aqui até a data da partida.",
+    },
+  ];
   const atualizado: PlanoViagem = {
     ...atual,
     pacoteFechado: true,
     pacoteFechadoEm: new Date().toISOString(),
     pacotePagamentoDetalhes: detalhes,
+    interacoes,
   };
   planos[index] = atualizado;
   window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
@@ -1084,15 +1172,57 @@ export interface Pagamento {
  * existe um pagamento de pacote depois que a programação está completa
  * ("pacote_pronto").
  */
+function nomesDosDestinos(plano: PlanoViagem): string {
+  return plano.selecoes
+    .map((s) => destinos.find((d) => d.slug === s.destinoSlug)?.nome)
+    .filter((n): n is string => !!n)
+    .join(", ");
+}
+
 export function getPagamentosDoUsuario(usuarioId: string): Pagamento[] {
+  // Alguns planos foram pagos antes de o app registrar o meio de
+  // pagamento — preenche esses casos legados com um registro honesto
+  // (metodo "outro") antes de montar a lista, pra a tela de detalhe nunca
+  // ficar incompleta pra um pagamento já confirmado.
+  let precisaPersistir = false;
+  const todosPlanos = readPlanos().map((plano) => {
+    if (plano.usuarioId !== usuarioId) return plano;
+    let atualizado = plano;
+    const descricaoDestino = nomesDosDestinos(plano) || "viagem";
+    if (plano.sinalPago && !plano.sinalPagamentoDetalhes) {
+      atualizado = {
+        ...atualizado,
+        sinalPagamentoDetalhes: detalhesLegados(
+          `Sinal — viagem para ${descricaoDestino}`,
+          VALOR_SINAL_REAIS,
+        ),
+      };
+      precisaPersistir = true;
+    }
+    if (plano.pacoteFechado && !plano.pacotePagamentoDetalhes) {
+      atualizado = {
+        ...atualizado,
+        pacotePagamentoDetalhes: detalhesLegados(
+          `Fechamento do pacote — viagem para ${descricaoDestino}`,
+          plano.valorPacoteReais - VALOR_SINAL_REAIS,
+        ),
+      };
+      precisaPersistir = true;
+    }
+    return atualizado;
+  });
+  if (precisaPersistir) {
+    window.localStorage.setItem(PLANOS_KEY, JSON.stringify(todosPlanos));
+  }
+
   const pagamentos: Pagamento[] = [];
 
-  for (const plano of getPlanosDoUsuario(usuarioId)) {
-    const nomesDestinos = plano.selecoes
-      .map((s) => destinos.find((d) => d.slug === s.destinoSlug)?.nome)
-      .filter((n): n is string => !!n)
-      .join(", ");
-    const descricaoDestino = nomesDestinos || "viagem";
+  const planosDoUsuario = todosPlanos
+    .filter((plano) => plano.usuarioId === usuarioId)
+    .sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
+
+  for (const plano of planosDoUsuario) {
+    const descricaoDestino = nomesDosDestinos(plano) || "viagem";
 
     const pedidoSinal = plano.interacoes?.find(
       (i) => i.tipo === "plano_pronto",
