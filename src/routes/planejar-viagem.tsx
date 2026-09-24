@@ -1550,6 +1550,14 @@ function DetalhePlanoView({
   const [conteudoImpressao, setConteudoImpressao] = useState<
     "ficha" | "pagamento"
   >("ficha");
+  // A etapa 7 só fica acessível pelo indicador de passos depois que o
+  // cliente passar pela etapa 6 e clicar em "Revisar e fechar o pacote" —
+  // antes disso, mesmo com pacoteRevisavel true, não dá pra pular direto.
+  // Se o pacote já foi revisado/fechado em uma sessão anterior, o cliente
+  // já passou por ali de verdade, então a etapa continua acessível.
+  const [chegouAoPacote, setChegouAoPacote] = useState(
+    () => !!plano.pacoteRevisado || !!plano.pacoteFechado,
+  );
   const [diaProgramacaoAtual, setDiaProgramacaoAtual] = useState<
     Record<string, number>
   >({});
@@ -1772,7 +1780,7 @@ function DetalhePlanoView({
     return (
       <div className="space-y-8 text-left">
         <div className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex flex-wrap items-start justify-between gap-6 border-b border-border pb-4">
+          <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
               <p className="font-display text-xl">Aventura Organizada</p>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -1802,8 +1810,10 @@ function DetalhePlanoView({
               <p className="text-xs text-muted-foreground">{agente.email}</p>
             </div>
           </div>
+        </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="grid gap-2 sm:grid-cols-2">
             <p className="text-sm">
               <span className="font-semibold text-foreground">Cliente:</span>{" "}
               {nomeUsuario}
@@ -1840,51 +1850,6 @@ function DetalhePlanoView({
                 : ""}
             </p>
           </div>
-
-          {resumoPorDestino.length > 0 && (
-            <div className="mt-4 border-t border-border pt-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                Resumo da viagem
-              </p>
-              <div className="mt-2 space-y-3">
-                {resumoPorDestino.map((r) => (
-                  <div key={r.selecao.destinoSlug}>
-                    {multiDestino && (
-                      <p className="text-sm font-semibold text-foreground">
-                        {r.nome}
-                      </p>
-                    )}
-                    <div className="mt-1 grid gap-1.5 sm:grid-cols-3">
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold text-foreground">
-                          Acomodação:
-                        </span>{" "}
-                        {r.acomodacoes.length > 0
-                          ? r.acomodacoes.join(", ")
-                          : "a confirmar"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold text-foreground">
-                          Refeições:
-                        </span>{" "}
-                        {r.refeicoes.length > 0
-                          ? r.refeicoes.join(", ")
-                          : "a confirmar"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold text-foreground">
-                          Passeios e lazer:
-                        </span>{" "}
-                        {r.passeios.length > 0
-                          ? r.passeios.join(", ")
-                          : "a confirmar"}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {selecoesOrdenadas.map((selecao) => {
@@ -1898,9 +1863,35 @@ function DetalhePlanoView({
           const destinoInfo = destinos.find(
             (d) => d.slug === selecao.destinoSlug,
           );
+          const resumoDestino = resumoPorDestino.find(
+            (r) => r.selecao.destinoSlug === selecao.destinoSlug,
+          );
 
           return (
             <div key={selecao.destinoSlug}>
+              {resumoDestino && (
+                <div className="mb-4 rounded-2xl border border-border bg-card p-6">
+                  {multiDestino && (
+                    <p className="font-display text-lg">{resumoDestino.nome}</p>
+                  )}
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Hospedagem em{" "}
+                    {resumoDestino.acomodacoes.length > 0
+                      ? resumoDestino.acomodacoes.join(", ")
+                      : "a confirmar"}
+                    , com refeições em{" "}
+                    {resumoDestino.refeicoes.length > 0
+                      ? resumoDestino.refeicoes.join(", ")
+                      : "a confirmar"}
+                    . Passeios e lazer:{" "}
+                    {resumoDestino.passeios.length > 0
+                      ? resumoDestino.passeios.join(", ")
+                      : "a confirmar"}
+                    .
+                  </p>
+                </div>
+              )}
+
               <h3 className="text-xs font-semibold uppercase tracking-wide text-primary">
                 {multiDestino
                   ? `Atividades — ${destinoInfo?.nome ?? selecao.destinoSlug}`
@@ -2356,7 +2347,9 @@ function DetalhePlanoView({
                   (s !== "itinerario" ||
                     (planoAtual.sinalPago && pacoteRevisavel)) &&
                   (s !== "pacote" ||
-                    (planoAtual.sinalPago && pacoteRevisavel)) &&
+                    (planoAtual.sinalPago &&
+                      pacoteRevisavel &&
+                      chegouAoPacote)) &&
                   (s !== "pagamento" ||
                     (planoAtual.sinalPago &&
                       pacoteRevisavel &&
@@ -2887,7 +2880,10 @@ function DetalhePlanoView({
                         {pacoteRevisavel && !planoAtual.pacoteFechado && (
                           <button
                             type="button"
-                            onClick={() => setStepConsulta("pacote")}
+                            onClick={() => {
+                              setChegouAoPacote(true);
+                              setStepConsulta("pacote");
+                            }}
                             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
                           >
                             Revisar e fechar o pacote
