@@ -2553,30 +2553,40 @@ function DetalhePlanoView({
                                   />
                                 )}
                                 {interacao.opcoes ? (
-                                  interacao.respostaEscolhida ? (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-                                      <Check className="h-3.5 w-3.5" />
-                                      Respondido: {interacao.respostaEscolhida}
-                                    </span>
-                                  ) : (
-                                    <div className="flex flex-wrap gap-2">
-                                      {interacao.opcoes.map((opcao) => (
+                                  <div className="flex flex-wrap gap-2">
+                                    {interacao.opcoes.map((opcao) => {
+                                      const respondida =
+                                        !!interacao.respostaEscolhida;
+                                      const escolhida =
+                                        interacao.respostaEscolhida ===
+                                        opcao.label;
+                                      return (
                                         <button
                                           key={opcao.id}
                                           type="button"
+                                          disabled={respondida}
                                           onClick={() =>
                                             handleResponderPergunta(
                                               interacao.id,
                                               opcao.id,
                                             )
                                           }
-                                          className="inline-flex items-center gap-1.5 rounded-full border border-primary px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary/10"
+                                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+                                            escolhida
+                                              ? "bg-primary text-primary-foreground"
+                                              : respondida
+                                                ? "cursor-default border border-border text-muted-foreground/50"
+                                                : "border border-primary text-primary hover:bg-primary/10"
+                                          }`}
                                         >
+                                          {escolhida && (
+                                            <Check className="h-3.5 w-3.5" />
+                                          )}
                                           {opcao.label}
                                         </button>
-                                      ))}
-                                    </div>
-                                  )
+                                      );
+                                    })}
+                                  </div>
                                 ) : interacao.sugestaoStatus === "aceita" ? (
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">

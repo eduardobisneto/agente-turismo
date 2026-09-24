@@ -822,7 +822,7 @@ export function responderPergunta(
       autor: "usuario",
       criadoEm: new Date().toISOString(),
       tipo: "mensagem",
-      texto: label,
+      texto: `Respondi: ${label}`,
     },
   ];
 
