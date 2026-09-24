@@ -133,6 +133,14 @@ export interface PlanoViagem {
 
 export const VALOR_SINAL_REAIS = 200;
 
+/**
+ * Prazo prometido pro analista dar o primeiro retorno sobre o plano
+ * enviado — hoje fixo aqui, mas pensado como um parâmetro que o
+ * backoffice vai poder configurar (por agência, por época do ano, por
+ * carga de trabalho da equipe etc.), não um número espalhado pelo código.
+ */
+export const PRAZO_RESPOSTA_ANALISTA_HORAS = 24;
+
 // v2: campos de data/pessoas/interesses/inclusos migraram de nível global
 // pra dentro de cada SelecaoDestino. Muda a versão da chave sempre que o
 // formato dos dados salvos mudar, pra planos salvos com o formato antigo
@@ -548,8 +556,7 @@ export function salvarPlanoViagem(
     {
       id: crypto.randomUUID(),
       autor: "analista",
-      texto:
-        "Bem-vindo(a) à Aventura Organizada! Ficamos muito felizes que você tenha confiado a nós a organização da sua viagem e da diversão da sua família. Nosso time já está analisando tudo com carinho e volta com os próximos passos em até 24 horas.",
+      texto: `Bem-vindo(a) à Aventura Organizada! Ficamos muito felizes que você tenha confiado a nós a organização da sua viagem e da diversão da sua família. Nosso time já está analisando tudo com carinho e volta com os próximos passos em até ${PRAZO_RESPOSTA_ANALISTA_HORAS} horas.`,
       criadoEm: horasDepois(agora, 3),
       tipo: "mensagem",
     },

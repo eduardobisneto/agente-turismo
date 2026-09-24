@@ -34,6 +34,7 @@ import {
   getPlanosDoUsuario,
   noitesEntre,
   onPedirListaDeViagens,
+  PRAZO_RESPOSTA_ANALISTA_HORAS,
   responderPergunta,
   responderSugestao,
   salvarPlanoViagem,
@@ -2212,7 +2213,9 @@ function DetalhePlanoView({
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Enviado em{" "}
-                {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}.{" "}
+                {new Date(plano.criadoEm).toLocaleDateString("pt-BR")}.
+              </p>
+              <p className="mt-2">
                 <span
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide ${
                     planoAtual.pacoteFechado
@@ -2227,14 +2230,18 @@ function DetalhePlanoView({
                     : planoAtual.pacoteRevisado
                       ? "Aguardando pagamento"
                       : "Em análise"}
-                </span>{" "}
+                </span>
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
                 Previsão de retorno até{" "}
                 {new Date(
-                  new Date(plano.criadoEm).getTime() + 24 * 60 * 60 * 1000,
+                  new Date(plano.criadoEm).getTime() +
+                    PRAZO_RESPOSTA_ANALISTA_HORAS * 60 * 60 * 1000,
                 ).toLocaleDateString("pt-BR")}{" "}
                 às{" "}
                 {new Date(
-                  new Date(plano.criadoEm).getTime() + 24 * 60 * 60 * 1000,
+                  new Date(plano.criadoEm).getTime() +
+                    PRAZO_RESPOSTA_ANALISTA_HORAS * 60 * 60 * 1000,
                 ).toLocaleTimeString("pt-BR", {
                   hour: "2-digit",
                   minute: "2-digit",
