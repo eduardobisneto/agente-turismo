@@ -424,8 +424,11 @@ export function salvarPlanoViagem(
 ): PlanoViagem {
   const agora = new Date().toISOString();
   const fila = gerarFilaDeSugestoes(plano.selecoes);
-  const [primeiraSugestao, ...restoDaFila] = fila;
 
+  // A etapa 5 abre só com troca de mensagens — nenhuma sugestão aparece
+  // ainda. O analista revisa o plano, avisa do sinal e cobra — só depois
+  // do pagamento (ver `confirmarPagamentoSinal`) é que a primeira
+  // sugestão (a hospedagem) é revelada pra fila `filaSugestoes` inteira.
   const interacoes: Interacao[] = [
     {
       id: crypto.randomUUID(),
@@ -442,22 +445,23 @@ export function salvarPlanoViagem(
       criadoEm: horasDepois(agora, 3),
       tipo: "mensagem",
     },
-  ];
-
-  if (primeiraSugestao) {
-    interacoes.push({
+    {
       id: crypto.randomUUID(),
       autor: "analista",
-      criadoEm: horasDepois(agora, 5),
-      tipo: "sugestao",
-      sugestaoStatus: "pendente",
-      texto: primeiraSugestao.texto,
-      categoria: primeiraSugestao.categoria,
-      imagem: primeiraSugestao.imagem,
-      itemItinerario: primeiraSugestao.itemItinerario,
-      itensAutomaticos: primeiraSugestao.itensAutomaticos,
-    });
-  }
+      texto:
+        "Analisamos os destinos, datas e experiências que você escolheu, e já temos boas opções de hospedagem e passeios pra sua viagem.",
+      criadoEm: horasDepois(agora, 4),
+      tipo: "mensagem",
+    },
+    {
+      id: crypto.randomUUID(),
+      autor: "analista",
+      criadoEm: horasDepois(agora, 6),
+      tipo: "plano_pronto",
+      texto:
+        "Show! Pra eu seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, é só confirmar o pagamento do sinal.",
+    },
+  ];
 
   const registro: PlanoViagem = {
     ...plano,
@@ -465,7 +469,7 @@ export function salvarPlanoViagem(
     criadoEm: agora,
     sinalPago: false,
     itinerario: [],
-    filaSugestoes: restoDaFila,
+    filaSugestoes: fila,
     valorPacoteReais: calcularValorPacote(plano.selecoes),
     pacoteFechado: false,
     interacoes,
@@ -578,8 +582,6 @@ export function responderSugestao(
     i.id === interacaoId ? { ...i, sugestaoStatus: status } : i,
   );
   let itinerario = atual.itinerario;
-  let filaSugestoes = atual.filaSugestoes ?? [];
-  let sinalSolicitadoAgora = false;
 
   if (status === "aceita" && interacaoRespondida) {
     const novosItens = [
@@ -594,37 +596,11 @@ export function responderSugestao(
         ...novosItens.map((item) => ({ ...item, id: crypto.randomUUID() })),
       ];
     }
-
-    // A primeira sugestão aceita é sempre a hospedagem — é o gatilho pra
-    // pedir o sinal. O analista precisa dessa confirmação pra seguir com
-    // as próximas sugestões: a conversa pausa aqui, e só continua
-    // revelando a fila depois que o cliente pagar (ver
-    // `confirmarPagamentoSinal`), pra ele nunca ver a programação sendo
-    // montada — nem o pacote pronto pra revisão — antes de pagar.
-    if (
-      interacaoRespondida.categoria === "acomodacao" &&
-      !interacoes.some((i) => i.tipo === "plano_pronto")
-    ) {
-      interacoes = [
-        ...interacoes,
-        {
-          id: crypto.randomUUID(),
-          autor: "analista",
-          criadoEm: new Date().toISOString(),
-          tipo: "plano_pronto",
-          texto:
-            "Show! Pra eu seguir com as próximas sugestões e você acompanhar a programação da viagem em tempo real, é só confirmar o pagamento do sinal.",
-        },
-      ];
-      sinalSolicitadoAgora = true;
-    }
   }
 
-  if (!sinalSolicitadoAgora) {
-    const revelado = revelarProximaSugestao(interacoes, filaSugestoes);
-    interacoes = revelado.interacoes;
-    filaSugestoes = revelado.filaSugestoes;
-  }
+  const revelado = revelarProximaSugestao(interacoes, atual.filaSugestoes ?? []);
+  interacoes = revelado.interacoes;
+  const filaSugestoes = revelado.filaSugestoes;
 
   const atualizado: PlanoViagem = {
     ...atual,
@@ -739,8 +715,9 @@ export function aplicarAtualizacaoDoBackoffice(
 /**
  * Cliente confirma o pagamento do sinal de R$200 — pago pra remunerar o
  * trabalho do analista até aqui caso a viagem não seja fechada, e
- * descontado do pacote se for. Libera a etapa 6 (programação dia a dia),
- * e a conversa pausada na etapa 5 volta a revelar as próximas sugestões.
+ * descontado do pacote se for. Libera a etapa 6 (programação dia a dia) e
+ * destrava a etapa 5: nenhuma sugestão aparece antes disso — é só depois
+ * do pagamento que o analista revela a primeira (a hospedagem).
  */
 export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
   const planos = readPlanos();
@@ -748,8 +725,8 @@ export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
   if (index === -1) return null;
 
   const atual = planos[index]!;
-  // Pagamento confirmado — a conversa que ficou pausada pedindo o sinal
-  // agora segue, revelando a próxima sugestão da fila.
+  // Pagamento confirmado — revela a primeira sugestão da fila (a
+  // hospedagem), que até aqui ainda não tinha aparecido pro cliente.
   const revelado = revelarProximaSugestao(
     atual.interacoes ?? [],
     atual.filaSugestoes ?? [],
