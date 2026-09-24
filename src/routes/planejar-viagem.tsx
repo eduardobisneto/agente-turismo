@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowRight,
@@ -39,6 +39,7 @@ import {
   responderSugestao,
   salvarPlanoViagem,
   VALOR_SINAL_REAIS,
+  type DetalhesPagamentoRealizado,
   type PlanoViagem,
   type SelecaoDestino,
 } from "@/lib/trip-plan";
@@ -1546,6 +1547,9 @@ function DetalhePlanoView({
   const [modalPagamento, setModalPagamento] = useState<
     "sinal" | "pacote" | null
   >(null);
+  const [conteudoImpressao, setConteudoImpressao] = useState<
+    "ficha" | "pagamento"
+  >("ficha");
   const [diaProgramacaoAtual, setDiaProgramacaoAtual] = useState<
     Record<string, number>
   >({});
@@ -1601,14 +1605,14 @@ function DetalhePlanoView({
     if (atualizado) setPlanoAtual(atualizado);
   }
 
-  async function handlePagarSinal() {
+  async function handlePagarSinal(detalhes: DetalhesPagamentoRealizado) {
     setPagando(true);
     // Sem gateway de pagamento de verdade por trás disso ainda — simula o
     // tempo de processamento. Fica na própria etapa 5 depois de pagar — só
     // mostra "Sinal pago" e segue a conversa; as etapas 6 e 7 só liberam
     // juntas quando o analista avisar que a programação está completa.
     await new Promise((resolve) => setTimeout(resolve, 1200));
-    const atualizado = confirmarPagamentoSinal(planoAtual.id);
+    const atualizado = confirmarPagamentoSinal(planoAtual.id, detalhes);
     setPagando(false);
     setModalPagamento(null);
     if (atualizado) {
@@ -1625,12 +1629,12 @@ function DetalhePlanoView({
     }
   }
 
-  async function handleFecharPacote() {
+  async function handleFecharPacote(detalhes: DetalhesPagamentoRealizado) {
     setPagando(true);
     // Sem gateway de pagamento de verdade por trás disso ainda — simula o
     // tempo de processamento do pagamento final antes de fechar o contrato.
     await new Promise((resolve) => setTimeout(resolve, 1200));
-    const atualizado = fecharPacote(planoAtual.id);
+    const atualizado = fecharPacote(planoAtual.id, detalhes);
     setPagando(false);
     setModalPagamento(null);
     if (atualizado) {
@@ -1722,6 +1726,49 @@ function DetalhePlanoView({
     const agente = agenteDoPlano(planoAtual.id);
     const impostos = Math.round(planoAtual.valorPacoteReais * 0.08);
 
+    const resumoPorDestino = selecoesOrdenadas
+      .map((selecao) => {
+        const itensDestino = planoAtual.itinerario.filter(
+          (item) => item.destinoSlug === selecao.destinoSlug,
+        );
+        const acomodacoes = Array.from(
+          new Set(
+            itensDestino
+              .filter((i) => i.categoria === "acomodacao")
+              .map((i) => i.local),
+          ),
+        );
+        const refeicoes = Array.from(
+          new Set(
+            itensDestino
+              .filter((i) => i.categoria === "refeicao")
+              .map((i) => i.local),
+          ),
+        );
+        const passeios = Array.from(
+          new Set(
+            itensDestino
+              .filter((i) => i.categoria === "passeio")
+              .map((i) => i.local),
+          ),
+        );
+        return {
+          selecao,
+          nome:
+            destinos.find((d) => d.slug === selecao.destinoSlug)?.nome ??
+            selecao.destinoSlug,
+          acomodacoes,
+          refeicoes,
+          passeios,
+        };
+      })
+      .filter(
+        (r) =>
+          r.acomodacoes.length > 0 ||
+          r.refeicoes.length > 0 ||
+          r.passeios.length > 0,
+      );
+
     return (
       <div className="space-y-8 text-left">
         <div className="rounded-2xl border border-border bg-card p-6">
@@ -1793,6 +1840,51 @@ function DetalhePlanoView({
                 : ""}
             </p>
           </div>
+
+          {resumoPorDestino.length > 0 && (
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Resumo da viagem
+              </p>
+              <div className="mt-2 space-y-3">
+                {resumoPorDestino.map((r) => (
+                  <div key={r.selecao.destinoSlug}>
+                    {multiDestino && (
+                      <p className="text-sm font-semibold text-foreground">
+                        {r.nome}
+                      </p>
+                    )}
+                    <div className="mt-1 grid gap-1.5 sm:grid-cols-3">
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground">
+                          Acomodação:
+                        </span>{" "}
+                        {r.acomodacoes.length > 0
+                          ? r.acomodacoes.join(", ")
+                          : "a confirmar"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground">
+                          Refeições:
+                        </span>{" "}
+                        {r.refeicoes.length > 0
+                          ? r.refeicoes.join(", ")
+                          : "a confirmar"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground">
+                          Passeios e lazer:
+                        </span>{" "}
+                        {r.passeios.length > 0
+                          ? r.passeios.join(", ")
+                          : "a confirmar"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {selecoesOrdenadas.map((selecao) => {
@@ -2648,10 +2740,19 @@ function DetalhePlanoView({
                             {interacao.tipo === "plano_pronto" && (
                               <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
                                 {planoAtual.sinalPago ? (
-                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-                                    <Check className="h-3.5 w-3.5" />
-                                    Sinal pago
-                                  </span>
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                                      <Check className="h-3.5 w-3.5" />
+                                      Sinal pago
+                                    </span>
+                                    <Link
+                                      to="/pagamentos/$pagamentoId"
+                                      params={{ pagamentoId: `${planoAtual.id}:sinal` }}
+                                      className="text-xs font-semibold uppercase tracking-wide text-primary hover:underline"
+                                    >
+                                      Ver detalhes do pagamento
+                                    </Link>
+                                  </div>
                                 ) : (
                                   <button
                                     type="button"
@@ -2857,9 +2958,36 @@ function DetalhePlanoView({
                       </button>
                     </>
                   ) : planoAtual.pacoteFechado ? (
-                    <p className="text-sm text-muted-foreground">
-                      Pagamento já confirmado — sua viagem está garantida!
-                    </p>
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Pagamento já confirmado — sua viagem está garantida!
+                      </p>
+                      {planoAtual.pacotePagamentoDetalhes && (
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setConteudoImpressao("pagamento");
+                              window.print();
+                            }}
+                            className="inline-flex items-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary/10"
+                          >
+                            <Download className="h-4 w-4" />
+                            Baixar PDF com detalhes do pagamento
+                          </button>
+                          <a
+                            href={planoAtual.pacotePagamentoDetalhes.notaFiscalUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            download="nota-fiscal.html"
+                            className="inline-flex items-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary/10"
+                          >
+                            <Download className="h-4 w-4" />
+                            Baixar nota fiscal
+                          </a>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <>
                       <p className="text-sm text-muted-foreground">
@@ -2911,7 +3039,10 @@ function DetalhePlanoView({
                   </p>
                   <button
                     type="button"
-                    onClick={() => window.print()}
+                    onClick={() => {
+                      setConteudoImpressao("ficha");
+                      window.print();
+                    }}
                     className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
                   >
                     <Download className="h-4 w-4" />
@@ -2923,13 +3054,74 @@ function DetalhePlanoView({
             </div>
 
             {/* Relatório completo pra impressão/PDF — só aparece ao imprimir. */}
-            <div className="hidden print:block">
-              <h1 className="font-display text-2xl">Confirmação de viagem</h1>
-              <p className="mt-1 text-sm font-semibold">
-                Contratação fechada — programação completa a seguir.
-              </p>
-              <div className="mt-6">{renderFichaProgramacao()}</div>
-            </div>
+            {conteudoImpressao === "ficha" && (
+              <div className="hidden print:block">
+                <h1 className="font-display text-2xl">Confirmação de viagem</h1>
+                <p className="mt-1 text-sm font-semibold">
+                  Contratação fechada — programação completa a seguir.
+                </p>
+                <div className="mt-6">{renderFichaProgramacao()}</div>
+              </div>
+            )}
+
+            {/* Comprovante de pagamento do pacote pra impressão/PDF. */}
+            {conteudoImpressao === "pagamento" &&
+              planoAtual.pacotePagamentoDetalhes && (
+                <div className="hidden print:block">
+                  <h1 className="font-display text-2xl">
+                    Comprovante de pagamento
+                  </h1>
+                  <p className="mt-1 text-sm font-semibold">
+                    Aventura Organizada — CNPJ 12.345.678/0001-90
+                  </p>
+                  <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                    <dt className="text-muted-foreground">Viagem</dt>
+                    <dd className="font-semibold">
+                      {juntarNomes(nomesDestinos)}
+                    </dd>
+                    <dt className="text-muted-foreground">Referente a</dt>
+                    <dd className="font-semibold">
+                      Fechamento do pacote — viagem para{" "}
+                      {juntarNomes(nomesDestinos)}
+                    </dd>
+                    <dt className="text-muted-foreground">Valor pago</dt>
+                    <dd className="font-semibold">
+                      R${" "}
+                      {(
+                        planoAtual.valorPacoteReais - VALOR_SINAL_REAIS
+                      ).toLocaleString("pt-BR")}
+                    </dd>
+                    <dt className="text-muted-foreground">Data e hora</dt>
+                    <dd className="font-semibold">
+                      {planoAtual.pacoteFechadoEm
+                        ? new Date(planoAtual.pacoteFechadoEm).toLocaleString(
+                            "pt-BR",
+                          )
+                        : "—"}
+                    </dd>
+                    <dt className="text-muted-foreground">Meio de pagamento</dt>
+                    <dd className="font-semibold">
+                      {planoAtual.pacotePagamentoDetalhes.metodo}
+                    </dd>
+                    <dt className="text-muted-foreground">Dados do pagamento</dt>
+                    <dd className="font-semibold">
+                      {planoAtual.pacotePagamentoDetalhes.dadosMascarados}
+                    </dd>
+                    <dt className="text-muted-foreground">
+                      Código de confirmação
+                    </dt>
+                    <dd className="font-semibold">
+                      {planoAtual.pacotePagamentoDetalhes.codigoConfirmacao}
+                    </dd>
+                    <dt className="text-muted-foreground">
+                      Código de retorno
+                    </dt>
+                    <dd className="font-semibold">
+                      {planoAtual.pacotePagamentoDetalhes.codigoRetorno}
+                    </dd>
+                  </dl>
+                </div>
+              )}
           </div>
         </div>
       </section>

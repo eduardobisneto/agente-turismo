@@ -23,6 +23,7 @@ import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as DestinosSlugRouteImport } from './routes/destinos_.$slug'
 import { Route as ExperienciasSlugRouteImport } from './routes/experiencias_.$slug'
+import { Route as PagamentosPagamentoIdRouteImport } from './routes/pagamentos_.$pagamentoId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +95,11 @@ const ExperienciasSlugRoute = ExperienciasSlugRouteImport.update({
   path: '/experiencias/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PagamentosPagamentoIdRoute = PagamentosPagamentoIdRouteImport.update({
+  id: '/pagamentos_/$pagamentoId',
+  path: '/pagamentos/$pagamentoId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/destinos/$slug': typeof DestinosSlugRoute
   '/experiencias/$slug': typeof ExperienciasSlugRoute
+  '/pagamentos/$pagamentoId': typeof PagamentosPagamentoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/destinos/$slug': typeof DestinosSlugRoute
   '/experiencias/$slug': typeof ExperienciasSlugRoute
+  '/pagamentos/$pagamentoId': typeof PagamentosPagamentoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/destinos_/$slug': typeof DestinosSlugRoute
   '/experiencias_/$slug': typeof ExperienciasSlugRoute
+  '/pagamentos_/$pagamentoId': typeof PagamentosPagamentoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/destinos/$slug'
     | '/experiencias/$slug'
+    | '/pagamentos/$pagamentoId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/destinos/$slug'
     | '/experiencias/$slug'
+    | '/pagamentos/$pagamentoId'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/destinos_/$slug'
     | '/experiencias_/$slug'
+    | '/pagamentos_/$pagamentoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   DestinosSlugRoute: typeof DestinosSlugRoute
   ExperienciasSlugRoute: typeof ExperienciasSlugRoute
+  PagamentosPagamentoIdRoute: typeof PagamentosPagamentoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExperienciasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pagamentos_/$pagamentoId': {
+      id: '/pagamentos_/$pagamentoId'
+      path: '/pagamentos/$pagamentoId'
+      fullPath: '/pagamentos/$pagamentoId'
+      preLoaderRoute: typeof PagamentosPagamentoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   DestinosSlugRoute: DestinosSlugRoute,
   ExperienciasSlugRoute: ExperienciasSlugRoute,
+  PagamentosPagamentoIdRoute: PagamentosPagamentoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

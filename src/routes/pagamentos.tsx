@@ -33,11 +33,8 @@ function PagamentosPage() {
 
   function abrirPagamento(pagamento: Pagamento) {
     navigate({
-      to: "/planejar-viagem",
-      search: {
-        planoId: pagamento.planoId,
-        step: pagamento.tipo === "sinal" ? "analise" : "pagamento",
-      },
+      to: "/pagamentos/$pagamentoId",
+      params: { pagamentoId: pagamento.id },
     });
   }
 

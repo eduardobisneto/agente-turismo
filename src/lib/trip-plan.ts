@@ -86,6 +86,8 @@ export interface ItemItinerario {
    * número.
    */
   destinoSlug?: string | undefined;
+  /** Categoria de origem do item (herdada da sugestão que o gerou) — usada pra montar o resumo da etapa 7 (acomodações, refeições, passeios...). */
+  categoria?: CategoriaSugestao | undefined;
 }
 
 /**
@@ -105,6 +107,21 @@ export interface SugestaoTemplate {
   opcoes?: OpcaoResposta[];
 }
 
+/**
+ * Registro do que aconteceu num pagamento de verdade (sinal ou saldo do
+ * pacote) — gerado pelo `PagamentoModal` na hora da confirmação, com os
+ * dados que uma tela de detalhe de pagamento precisa mostrar: meio usado,
+ * dado mascarado (LGPD — nunca o número completo do cartão), código de
+ * confirmação e retorno da operadora, e o link da nota fiscal.
+ */
+export interface DetalhesPagamentoRealizado {
+  metodo: "pix" | "debito" | "credito" | "boleto";
+  dadosMascarados: string;
+  codigoConfirmacao: string;
+  codigoRetorno: string;
+  notaFiscalUrl: string;
+}
+
 export interface PlanoViagem {
   id: string;
   criadoEm: string;
@@ -119,6 +136,8 @@ export interface PlanoViagem {
   sinalPago: boolean;
   /** Data/hora em que o sinal foi confirmado — usada na ficha da viagem (etapa 7/9). */
   sinalPagoEm?: string | undefined;
+  /** Meio de pagamento, dados mascarados e códigos de confirmação do sinal — usado na tela de detalhe do pagamento. */
+  sinalPagamentoDetalhes?: DetalhesPagamentoRealizado | undefined;
   /** Programação dia a dia, sendo montada conforme as sugestões vão sendo aceitas. */
   itinerario: ItemItinerario[];
   /** Cliente revisou a ficha completa na etapa 7 e confirmou que está tudo certo — só depois disso a etapa 8 (pagamento final) libera. */
@@ -129,6 +148,8 @@ export interface PlanoViagem {
   pacoteFechado: boolean;
   /** Data/hora em que o pagamento final foi confirmado — usada na ficha da viagem (etapa 7/9). */
   pacoteFechadoEm?: string | undefined;
+  /** Meio de pagamento, dados mascarados e códigos de confirmação do saldo final — usado na tela de detalhe do pagamento. */
+  pacotePagamentoDetalhes?: DetalhesPagamentoRealizado | undefined;
 }
 
 export const VALOR_SINAL_REAIS = 200;
@@ -753,7 +774,11 @@ export function responderSugestao(
     if (novosItens.length > 0) {
       itinerario = [
         ...itinerario,
-        ...novosItens.map((item) => ({ ...item, id: crypto.randomUUID() })),
+        ...novosItens.map((item) => ({
+          ...item,
+          id: crypto.randomUUID(),
+          categoria: item.categoria ?? interacaoRespondida.categoria,
+        })),
       ];
     }
   }
@@ -948,7 +973,10 @@ export function aplicarAtualizacaoDoBackoffice(
  * destrava a etapa 5: nenhuma sugestão aparece antes disso — é só depois
  * do pagamento que o analista revela a primeira (a hospedagem).
  */
-export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
+export function confirmarPagamentoSinal(
+  planoId: string,
+  detalhes: DetalhesPagamentoRealizado,
+): PlanoViagem | null {
   const planos = readPlanos();
   const index = planos.findIndex((p) => p.id === planoId);
   if (index === -1) return null;
@@ -976,6 +1004,7 @@ export function confirmarPagamentoSinal(planoId: string): PlanoViagem | null {
     ...atual,
     sinalPago: true,
     sinalPagoEm: new Date().toISOString(),
+    sinalPagamentoDetalhes: detalhes,
     interacoes: revelado.interacoes,
     filaSugestoes: revelado.filaSugestoes,
   };
@@ -1010,7 +1039,10 @@ export function confirmarRevisaoDoPacote(planoId: string): PlanoViagem | null {
  * Cliente confirma o pagamento final (etapa 8) e fecha o pacote completo —
  * o valor do sinal já pago é descontado do total. Libera a etapa 9.
  */
-export function fecharPacote(planoId: string): PlanoViagem | null {
+export function fecharPacote(
+  planoId: string,
+  detalhes: DetalhesPagamentoRealizado,
+): PlanoViagem | null {
   const planos = readPlanos();
   const index = planos.findIndex((p) => p.id === planoId);
   if (index === -1) return null;
@@ -1020,6 +1052,7 @@ export function fecharPacote(planoId: string): PlanoViagem | null {
     ...atual,
     pacoteFechado: true,
     pacoteFechadoEm: new Date().toISOString(),
+    pacotePagamentoDetalhes: detalhes,
   };
   planos[index] = atualizado;
   window.localStorage.setItem(PLANOS_KEY, JSON.stringify(planos));
@@ -1031,11 +1064,17 @@ export function fecharPacote(planoId: string): PlanoViagem | null {
 export interface Pagamento {
   id: string;
   planoId: string;
+  /** Identificador da viagem (destinos), pra localizar a que pagamento se refere sem abrir a viagem. */
+  destinoNomes: string;
   tipo: "sinal" | "pacote";
   descricao: string;
   valorReais: number;
   status: "pendente" | "pago";
   dataVencimento: string;
+  /** Data/hora em que foi efetivamente pago — só existe quando `status === "pago"`. */
+  dataPagamento?: string | undefined;
+  /** Meio, dados mascarados e códigos de confirmação — só existe quando `status === "pago"`. */
+  detalhes?: DetalhesPagamentoRealizado | undefined;
 }
 
 /**
@@ -1062,11 +1101,14 @@ export function getPagamentosDoUsuario(usuarioId: string): Pagamento[] {
       pagamentos.push({
         id: `${plano.id}:sinal`,
         planoId: plano.id,
+        destinoNomes: descricaoDestino,
         tipo: "sinal",
         descricao: `Sinal — viagem para ${descricaoDestino}`,
         valorReais: VALOR_SINAL_REAIS,
         status: plano.sinalPago ? "pago" : "pendente",
         dataVencimento: horasDepois(pedidoSinal.criadoEm, 48),
+        dataPagamento: plano.sinalPagoEm,
+        detalhes: plano.sinalPagamentoDetalhes,
       });
     }
 
@@ -1077,17 +1119,31 @@ export function getPagamentosDoUsuario(usuarioId: string): Pagamento[] {
       pagamentos.push({
         id: `${plano.id}:pacote`,
         planoId: plano.id,
+        destinoNomes: descricaoDestino,
         tipo: "pacote",
         descricao: `Fechamento do pacote — viagem para ${descricaoDestino}`,
         valorReais: plano.valorPacoteReais - VALOR_SINAL_REAIS,
         status: plano.pacoteFechado ? "pago" : "pendente",
         dataVencimento: horasDepois(pedidoPacote.criadoEm, 72),
+        dataPagamento: plano.pacoteFechadoEm,
+        detalhes: plano.pacotePagamentoDetalhes,
       });
     }
   }
 
   return pagamentos.sort((a, b) =>
     a.dataVencimento.localeCompare(b.dataVencimento),
+  );
+}
+
+/** Busca um pagamento específico do usuário pelo id (`${planoId}:sinal` ou `${planoId}:pacote`) — usado na tela de detalhe do pagamento. */
+export function getPagamentoPorId(
+  usuarioId: string,
+  pagamentoId: string,
+): Pagamento | null {
+  return (
+    getPagamentosDoUsuario(usuarioId).find((p) => p.id === pagamentoId) ??
+    null
   );
 }
 
